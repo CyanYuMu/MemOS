@@ -1,0 +1,599 @@
+from __future__ import annotations
+
+import concurrent.futures
+import contextlib
+import json
+import traceback
+
+from datetime import datetime, timezone
+from typing import TYPE_CHECKING
+
+from memos.context.context import ContextThreadPoolExecutor
+from memos.log import get_logger
+from memos.mem_reader.custom_extract import use_custom_extract_prompt
+from memos.mem_reader.prompt_runtime import prompt_scope
+from memos.mem_reader.tag_matcher import apply_semantic_custom_tags
+from memos.mem_scheduler.schemas.message_schemas import ScheduleMessageItem
+from memos.mem_scheduler.schemas.task_schemas import (
+    LONG_TERM_MEMORY_TYPE,
+    MEM_ORGANIZE_TASK_LABEL,
+    MEM_READ_TASK_LABEL,
+    USER_INPUT_TYPE,
+)
+from memos.mem_scheduler.task_schedule_modules.base_handler import BaseSchedulerHandler
+from memos.mem_scheduler.utils.filter_utils import transform_name_to_key
+from memos.mem_scheduler.utils.misc_utils import is_playground_api
+from memos.memories.textual.tree import TreeTextMemory
+
+
+logger = get_logger(__name__)
+
+
+def _propagate_owner_fields(source_items: list, refined_items: list) -> None:
+    """Carry the owner fields of the fast input onto refined memories.
+
+    The refinement pipeline re-extracts memories and does not necessarily keep
+    custom metadata, so owner scope would otherwise be lost for async adds.
+    Only propagated when all source items share one owner (the common case:
+    one extraction view per task).
+    """
+    owners = {
+        (getattr(item.metadata, "owner_type", None), getattr(item.metadata, "owner_id", None))
+        for item in source_items
+        if getattr(item.metadata, "owner_type", None)
+    }
+    if len(owners) != 1:
+        return
+    owner_type, owner_id = next(iter(owners))
+    source = source_items[0].metadata
+    for item in refined_items:
+        item.metadata.owner_type = owner_type
+        item.metadata.owner_id = owner_id
+        for field in ("user_id", "agent_id", "group_id", "task_id", "expires_at"):
+            value = getattr(source, field, None)
+            if value and not getattr(item.metadata, field, None):
+                setattr(item.metadata, field, value)
+
+
+def _archive_two_stage_coarse_nodes(
+    *, text_mem, user_name: str, task_id: str | None, fine_memories: list
+) -> None:
+    from memos.memories.textual.two_stage import archive_coarse_nodes, two_stage_enabled
+
+    if not two_stage_enabled() or not task_id:
+        return
+    try:
+        archive_coarse_nodes(
+            getattr(text_mem, "graph_store", None),
+            user_name=user_name,
+            task_id=task_id,
+            fine_memories=fine_memories,
+        )
+    except Exception:
+        logger.warning("Failed to archive two-stage coarse nodes", exc_info=True)
+
+
+if TYPE_CHECKING:
+    from memos.types.general_types import UserContext
+
+
+class MemReadMessageHandler(BaseSchedulerHandler):
+    @property
+    def expected_task_label(self) -> str:
+        return MEM_READ_TASK_LABEL
+
+    def batch_handler(
+        self, user_id: str, mem_cube_id: str, batch: list[ScheduleMessageItem]
+    ) -> None:
+        logger.info(
+            "[DIAGNOSTIC] mem_read_handler batch_handler called. Batch size: %s", len(batch)
+        )
+
+        with ContextThreadPoolExecutor(max_workers=min(8, len(batch))) as executor:
+            futures = [executor.submit(self.process_message, msg) for msg in batch]
+            for future in concurrent.futures.as_completed(futures):
+                try:
+                    future.result()
+                except Exception as e:
+                    logger.error("Thread task failed: %s", e, stack_info=True)
+
+    def process_message(self, message: ScheduleMessageItem):
+        try:
+            user_id = message.user_id
+            mem_cube_id = message.mem_cube_id
+            mem_cube = self.scheduler_context.get_mem_cube()
+            if mem_cube is None:
+                logger.error(
+                    "mem_cube is None for user_id=%s, mem_cube_id=%s, skipping processing",
+                    user_id,
+                    mem_cube_id,
+                    stack_info=True,
+                )
+                return
+
+            content = message.content
+            user_name = message.user_name
+            info = message.info or {}
+            chat_history = message.chat_history
+            user_context = message.user_context
+
+            mem_ids = json.loads(content) if isinstance(content, str) else content
+            if not mem_ids:
+                return
+
+            logger.info(
+                "Processing mem_read for user_id=%s, mem_cube_id=%s, mem_ids=%s",
+                user_id,
+                mem_cube_id,
+                mem_ids,
+            )
+
+            text_mem = mem_cube.text_mem
+            if not isinstance(text_mem, TreeTextMemory):
+                logger.error("Expected TreeTextMemory but got %s", type(text_mem).__name__)
+                return
+
+            self._process_memories_with_reader(
+                mem_ids=mem_ids,
+                user_id=user_id,
+                mem_cube_id=mem_cube_id,
+                text_mem=text_mem,
+                user_name=user_name,
+                custom_tags=info.get("custom_tags", None),
+                task_id=message.task_id,
+                info=info,
+                chat_history=chat_history,
+                user_context=user_context,
+            )
+
+            logger.info(
+                "Successfully processed mem_read for user_id=%s, mem_cube_id=%s",
+                user_id,
+                mem_cube_id,
+            )
+
+        except Exception as e:
+            logger.error("Error processing mem_read message: %s", e, stack_info=True)
+
+    def _process_memories_with_reader(
+        self,
+        mem_ids: list[str],
+        user_id: str,
+        mem_cube_id: str,
+        text_mem: TreeTextMemory,
+        user_name: str,
+        custom_tags: list[str] | None = None,
+        task_id: str | None = None,
+        info: dict | None = None,
+        chat_history: list | None = None,
+        user_context: UserContext | None = None,
+    ) -> None:
+        logger.info(
+            "[DIAGNOSTIC] mem_read_handler._process_memories_with_reader called. mem_ids: %s, user_id: %s, mem_cube_id: %s, task_id: %s",
+            mem_ids,
+            user_id,
+            mem_cube_id,
+            task_id,
+        )
+        kb_log_content: list[dict] = []
+        try:
+            mem_reader = self.scheduler_context.get_mem_reader()
+            if mem_reader is None:
+                logger.warning(
+                    "mem_reader not available in scheduler, skipping enhanced processing"
+                )
+                return
+
+            # Get the original fast memory (raw chunk) items
+            memory_items = []
+            for mem_id in mem_ids:
+                try:
+                    memory_item = text_mem.get(mem_id, user_name=user_name)
+                    memory_items.append(memory_item)
+                except Exception as e:
+                    logger.warning(
+                        "[_process_memories_with_reader] Failed to get memory %s: %s", mem_id, e
+                    )
+                    continue
+
+            if not memory_items:
+                logger.warning("No valid memory items found for processing")
+                return
+
+            from memos.memories.textual.tree_text_memory.organize.manager import (
+                extract_working_binding_ids,
+            )
+
+            bindings_to_delete = extract_working_binding_ids(memory_items)
+            logger.info(
+                "Extracted %s working_binding ids to cleanup: %s",
+                len(bindings_to_delete),
+                list(bindings_to_delete),
+            )
+
+            logger.info("Processing %s memories with mem_reader", len(memory_items))
+
+            info = dict(info or {})
+            custom_extract_prompt = info.pop("custom_extract_prompt", None)
+            custom_tags_match = info.pop("custom_tags_match", None)
+
+            transfer_failed = False
+            try:
+                with (
+                    prompt_scope(mem_cube_id or user_name),
+                    use_custom_extract_prompt(custom_extract_prompt),
+                ):
+                    processed_memories = mem_reader.fine_transfer_simple_mem(
+                        memory_items,
+                        type="chat",
+                        custom_tags=custom_tags,
+                        user_name=user_name,
+                        chat_history=chat_history,
+                        user_context=user_context,
+                    )
+            except Exception as e:
+                # 抽取失败(LLM/embedder 超时、限流、解析失败)时不能继续走删除:
+                # 下面的清理会把唯一一份原始 fast memory 删掉,且没有可回滚的副本。
+                transfer_failed = True
+                logger.error(
+                    "%s: Fail to transfer mem, keeping raw memories %s: %s",
+                    e,
+                    mem_ids,
+                    memory_items,
+                )
+                processed_memories = []
+
+            if processed_memories and len(processed_memories) > 0:
+                flattened_memories = []
+                for memory_list in processed_memories:
+                    flattened_memories.extend(memory_list)
+
+                logger.info("mem_reader processed %s enhanced memories", len(flattened_memories))
+
+                if flattened_memories:
+                    apply_semantic_custom_tags(
+                        flattened_memories,
+                        custom_tags,
+                        getattr(mem_reader, "embedder", None),
+                        enabled=custom_tags_match,
+                    )
+                    _propagate_owner_fields(memory_items, flattened_memories)
+                    mem_group = [
+                        memory
+                        for memory in flattened_memories
+                        if memory.metadata.memory_type != "RawFileMemory"
+                    ]
+                    enhanced_mem_ids = text_mem.add(mem_group, user_name=user_name)
+                    logger.info(
+                        "Added %s enhanced memories: %s",
+                        len(enhanced_mem_ids),
+                        enhanced_mem_ids,
+                    )
+
+                    _archive_two_stage_coarse_nodes(
+                        text_mem=text_mem,
+                        user_name=user_name,
+                        task_id=task_id,
+                        fine_memories=mem_group,
+                    )
+
+                    # add raw file nodes and edges
+                    if mem_reader.save_rawfile:
+                        raw_file_mem_group = [
+                            memory
+                            for memory in flattened_memories
+                            if memory.metadata.memory_type == "RawFileMemory"
+                        ]
+                        text_mem.add_rawfile_nodes_n_edges(
+                            raw_file_mem_group,
+                            enhanced_mem_ids,
+                            user_id=user_id,
+                            user_name=user_name,
+                        )
+                        logger.info("Added %s Rawfile memories.", len(raw_file_mem_group))
+
+                    self._try_submit_organize_task(
+                        enhanced_mem_ids=enhanced_mem_ids,
+                        text_mem=text_mem,
+                        user_id=user_id,
+                        mem_cube_id=mem_cube_id,
+                        user_name=user_name,
+                    )
+
+                    # fallback to simple deduplication logic when mem version switch is off
+                    if getattr(mem_reader, "memory_version_switch", "off") != "on":
+                        # Mark merged_from memories as archived when provided in memory metadata
+                        summary_memories = [
+                            memory
+                            for memory in flattened_memories
+                            if memory.metadata.memory_type != "RawFileMemory"
+                        ]
+                        if mem_reader.graph_db:
+                            for memory in summary_memories:
+                                merged_from = (memory.metadata.info or {}).get("merged_from")
+                                if merged_from:
+                                    old_ids = (
+                                        merged_from
+                                        if isinstance(merged_from, (list | tuple | set))
+                                        else [merged_from]
+                                    )
+                                    for old_id in old_ids:
+                                        try:
+                                            mem_reader.graph_db.update_node(
+                                                str(old_id),
+                                                {"status": "archived"},
+                                                user_name=user_name,
+                                            )
+                                            logger.info(
+                                                "[Scheduler] Archived merged_from memory: %s",
+                                                old_id,
+                                            )
+                                        except Exception as e:
+                                            logger.warning(
+                                                "[Scheduler] Failed to archive merged_from memory %s: %s",
+                                                old_id,
+                                                e,
+                                            )
+                        else:
+                            has_merged_from = any(
+                                (m.metadata.info or {}).get("merged_from") for m in summary_memories
+                            )
+                            if has_merged_from:
+                                logger.warning(
+                                    "[Scheduler] merged_from provided but graph_db is unavailable; skip archiving."
+                                )
+
+                    playground_api = is_playground_api()
+                    if not playground_api:
+                        kb_log_content = []
+                        for item in flattened_memories:
+                            metadata = getattr(item, "metadata", None)
+                            file_ids = getattr(metadata, "file_ids", None) if metadata else None
+                            source_doc_id = (
+                                file_ids[0] if isinstance(file_ids, list) and file_ids else None
+                            )
+                            # Use merged_from to determine ADD vs UPDATE.
+                            # The upstream mem_reader sets this during fine extraction when
+                            # the new memory was merged with an existing one.
+                            item_merged_from = (getattr(item.metadata, "info", None) or {}).get(
+                                "merged_from"
+                            )
+                            kb_log_content.append(
+                                {
+                                    "log_source": "KNOWLEDGE_BASE_LOG",
+                                    "trigger_source": info.get("trigger_source", "Messages")
+                                    if info
+                                    else "Messages",
+                                    "operation": "UPDATE" if item_merged_from else "ADD",
+                                    "memory_id": item.id,
+                                    "content": item.memory,
+                                    "original_content": None,
+                                    "source_doc_id": source_doc_id,
+                                }
+                            )
+                        if kb_log_content:
+                            logger.info(
+                                "[DIAGNOSTIC] mem_read_handler: Creating event log for KB update. Label: knowledgeBaseUpdate, user_id: %s, mem_cube_id: %s, task_id: %s. KB content: %s",
+                                user_id,
+                                mem_cube_id,
+                                task_id,
+                                json.dumps(kb_log_content, indent=2),
+                            )
+                            event = self.scheduler_context.services.create_event_log(
+                                label="knowledgeBaseUpdate",
+                                from_memory_type=USER_INPUT_TYPE,
+                                to_memory_type=LONG_TERM_MEMORY_TYPE,
+                                user_id=user_id,
+                                mem_cube_id=mem_cube_id,
+                                mem_cube=self.scheduler_context.get_mem_cube(),
+                                memcube_log_content=kb_log_content,
+                                metadata=None,
+                                memory_len=len(kb_log_content),
+                                memcube_name=self.scheduler_context.services.map_memcube_name(
+                                    mem_cube_id
+                                ),
+                            )
+                            event.log_content = (
+                                f"Knowledge Base Memory Update: {len(kb_log_content)} changes."
+                            )
+                            event.task_id = task_id
+                            self.scheduler_context.services.submit_web_logs([event])
+                    else:
+                        add_content_legacy: list[dict] = []
+                        add_meta_legacy: list[dict] = []
+                        update_content_legacy: list[dict] = []
+                        update_meta_legacy: list[dict] = []
+                        for item_id, item in zip(
+                            enhanced_mem_ids, flattened_memories, strict=False
+                        ):
+                            key = getattr(item.metadata, "key", None) or transform_name_to_key(
+                                name=item.memory
+                            )
+                            item_merged_from = (getattr(item.metadata, "info", None) or {}).get(
+                                "merged_from"
+                            )
+                            meta_entry = {
+                                "ref_id": item_id,
+                                "id": item_id,
+                                "key": item.metadata.key,
+                                "memory": item.memory,
+                                "memory_type": item.metadata.memory_type,
+                                "status": item.metadata.status,
+                                "confidence": item.metadata.confidence,
+                                "tags": item.metadata.tags,
+                                "updated_at": getattr(item.metadata, "updated_at", None)
+                                or getattr(item.metadata, "update_at", None),
+                            }
+                            if item_merged_from:
+                                update_content_legacy.append(
+                                    {"content": f"{key}: {item.memory}", "ref_id": item_id}
+                                )
+                                update_meta_legacy.append(meta_entry)
+                            else:
+                                add_content_legacy.append(
+                                    {"content": f"{key}: {item.memory}", "ref_id": item_id}
+                                )
+                                add_meta_legacy.append(meta_entry)
+                        if add_content_legacy:
+                            event = self.scheduler_context.services.create_event_log(
+                                label="addMemory",
+                                from_memory_type=USER_INPUT_TYPE,
+                                to_memory_type=LONG_TERM_MEMORY_TYPE,
+                                user_id=user_id,
+                                mem_cube_id=mem_cube_id,
+                                mem_cube=self.scheduler_context.get_mem_cube(),
+                                memcube_log_content=add_content_legacy,
+                                metadata=add_meta_legacy,
+                                memory_len=len(add_content_legacy),
+                                memcube_name=self.scheduler_context.services.map_memcube_name(
+                                    mem_cube_id
+                                ),
+                            )
+                            event.task_id = task_id
+                            self.scheduler_context.services.submit_web_logs([event])
+                        if update_content_legacy:
+                            event = self.scheduler_context.services.create_event_log(
+                                label="updateMemory",
+                                from_memory_type=USER_INPUT_TYPE,
+                                to_memory_type=LONG_TERM_MEMORY_TYPE,
+                                user_id=user_id,
+                                mem_cube_id=mem_cube_id,
+                                mem_cube=self.scheduler_context.get_mem_cube(),
+                                memcube_log_content=update_content_legacy,
+                                metadata=update_meta_legacy,
+                                memory_len=len(update_content_legacy),
+                                memcube_name=self.scheduler_context.services.map_memcube_name(
+                                    mem_cube_id
+                                ),
+                            )
+                            event.task_id = task_id
+                            self.scheduler_context.services.submit_web_logs([event])
+                else:
+                    logger.info("No enhanced memories generated by mem_reader")
+            else:
+                logger.info("mem_reader returned no processed memories")
+
+            if transfer_failed:
+                logger.error(
+                    "Fine extraction failed for mem_ids=%s; skip raw/working cleanup to "
+                    "avoid deleting the only copy",
+                    mem_ids,
+                )
+                return
+
+            delete_ids = list(mem_ids)
+            if bindings_to_delete:
+                delete_ids.extend(list(bindings_to_delete))
+            delete_ids = list(dict.fromkeys(delete_ids))
+            if delete_ids:
+                try:
+                    if getattr(mem_reader, "memory_version_switch", "off") != "on":
+                        text_mem.delete(delete_ids, user_name=user_name)
+                        logger.info(
+                            "Delete raw/working mem_ids: %s for user_name: %s",
+                            delete_ids,
+                            user_name,
+                        )
+                    else:
+                        # change to soft-delete for mem versions
+                        flattened_memories = []
+                        if processed_memories and len(processed_memories) > 0:
+                            for memory_list in processed_memories:
+                                flattened_memories.extend(memory_list)
+                        allowed_types = ["UserMemory", "LongTermMemory"]
+                        text_mem.soft_delete(
+                            delete_ids,
+                            user_name,
+                            [
+                                mem.id
+                                for mem in flattened_memories
+                                if mem.metadata.memory_type in allowed_types
+                            ],
+                        )
+                        logger.info(
+                            "Soft delete raw/working mem_ids: %s for user_name: %s",
+                            delete_ids,
+                            user_name,
+                        )
+                except Exception as e:
+                    logger.warning("Failed to delete some mem_ids %s: %s", delete_ids, e)
+            else:
+                logger.info("No mem_ids to delete (nothing to cleanup)")
+
+            text_mem.memory_manager.remove_and_refresh_memory(user_name=user_name)
+            logger.info("Remove and Refresh Memories")
+            logger.debug("Finished add %s memory: %s", user_id, mem_ids)
+
+        except Exception as exc:
+            logger.error(
+                "Error in _process_memories_with_reader: %s",
+                traceback.format_exc(),
+                exc_info=True,
+            )
+            with contextlib.suppress(Exception):
+                playground_api = is_playground_api()
+                if not playground_api:
+                    if not kb_log_content:
+                        trigger_source = (
+                            info.get("trigger_source", "Messages") if info else "Messages"
+                        )
+                        kb_log_content = [
+                            {
+                                "log_source": "KNOWLEDGE_BASE_LOG",
+                                "trigger_source": trigger_source,
+                                "operation": "ADD",
+                                "memory_id": mem_id,
+                                "content": None,
+                                "original_content": None,
+                                "source_doc_id": None,
+                            }
+                            for mem_id in mem_ids
+                        ]
+                    event = self.scheduler_context.services.create_event_log(
+                        label="knowledgeBaseUpdate",
+                        from_memory_type=USER_INPUT_TYPE,
+                        to_memory_type=LONG_TERM_MEMORY_TYPE,
+                        user_id=user_id,
+                        mem_cube_id=mem_cube_id,
+                        mem_cube=self.scheduler_context.get_mem_cube(),
+                        memcube_log_content=kb_log_content,
+                        metadata=None,
+                        memory_len=len(kb_log_content),
+                        memcube_name=self.scheduler_context.services.map_memcube_name(mem_cube_id),
+                    )
+                    event.log_content = f"Knowledge Base Memory Update failed: {exc!s}"
+                    event.task_id = task_id
+                    event.status = "failed"
+                    self.scheduler_context.services.submit_web_logs([event])
+
+    def _try_submit_organize_task(
+        self,
+        enhanced_mem_ids: list[str],
+        text_mem: TreeTextMemory,
+        user_id: str,
+        mem_cube_id: str,
+        user_name: str,
+    ) -> None:
+        """Submit a MEM_ORGANIZE task so the reorganizer can run optimize_structure."""
+        try:
+            reorganizer = getattr(text_mem.memory_manager, "reorganizer", None)
+            if not reorganizer or not getattr(reorganizer, "is_reorganize", False):
+                return
+
+            message_item = ScheduleMessageItem(
+                user_id=user_id,
+                mem_cube_id=mem_cube_id,
+                label=MEM_ORGANIZE_TASK_LABEL,
+                content=json.dumps(enhanced_mem_ids),
+                timestamp=datetime.now(tz=timezone.utc),
+                user_name=user_name,
+            )
+            self.scheduler_context.services.submit_messages([message_item])
+            logger.info(
+                "[mem_read_handler] Submitted MEM_ORGANIZE task for user_id=%s, mem_cube_id=%s, mem_ids=%s",
+                user_id,
+                mem_cube_id,
+                enhanced_mem_ids,
+            )
+        except Exception as e:
+            logger.error("Failed to enqueue MEM_ORGANIZE task: %s", e, exc_info=True)

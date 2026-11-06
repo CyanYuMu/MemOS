@@ -1,0 +1,196 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "memos.memos.fullname" . }}
+  labels:
+    {{- include "memos.labels" . | nindent 4 }}
+    app.kubernetes.io/component: api
+spec:
+  replicas: {{ .Values.memos.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "memos.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: api
+  template:
+    metadata:
+      labels:
+        {{- include "memos.labels" . | nindent 8 }}
+        app.kubernetes.io/component: api
+      {{- with .Values.memos.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    spec:
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if or .Values.neo4j.enabled .Values.qdrant.enabled .Values.redis.enabled }}
+      initContainers:
+        {{- if .Values.neo4j.enabled }}
+        - name: wait-for-neo4j
+          image: {{ .Values.memos.initContainerImage }}
+          command: ['sh', '-c', 'until nc -z {{ include "memos.neo4j.fullname" . }} {{ .Values.neo4j.service.boltPort }}; do echo waiting for neo4j; sleep 2; done;']
+        {{- end }}
+        {{- if .Values.qdrant.enabled }}
+        - name: wait-for-qdrant
+          image: {{ .Values.memos.initContainerImage }}
+          command: ['sh', '-c', 'until nc -z {{ include "memos.qdrant.fullname" . }} {{ .Values.qdrant.service.httpPort }}; do echo waiting for qdrant; sleep 2; done;']
+        {{- end }}
+        {{- if .Values.redis.enabled }}
+        - name: wait-for-redis
+          image: {{ .Values.memos.initContainerImage }}
+          command: ['sh', '-c', 'until nc -z {{ include "memos.redis.fullname" . }} {{ .Values.redis.service.port }}; do echo waiting for redis; sleep 2; done;']
+        {{- end }}
+      {{- end }}
+      containers:
+        - name: memos
+          image: "{{ .Values.memos.image.repository }}:{{ .Values.memos.image.tag }}"
+          imagePullPolicy: {{ .Values.memos.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8000
+          envFrom:
+            - configMapRef:
+                name: {{ include "memos.memos.fullname" . }}
+            {{- if or .Values.memos.secret.create .Values.memos.secret.name }}
+            # create=true 时指向 chart 自建的 Secret；create=false 但给了 name 时，
+            # 指向那个由外部管理的 Secret（整份 key 都注入）。
+            - secretRef:
+                name: {{ include "memos.secretName" . }}
+            {{- end }}
+            {{- with .Values.memos.extraEnvFrom }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          {{- if or .Values.memos.secretRefs .Values.memos.extraEnv (and .Values.redis.enabled .Values.redis.auth.enabled) (and .Values.neo4j.enabled .Values.neo4j.auth.enabled) }}
+          env:
+            {{- range .Values.memos.secretRefs }}
+            - name: {{ .envName }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .secretName }}
+                  key: {{ .key }}
+            {{- end }}
+            {{- if and .Values.redis.enabled .Values.redis.auth.enabled }}
+            # 用 chart 自带的 Redis 时，密码从它自己的 Secret 取，不必手写。
+            - name: MEMSCHEDULER_REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "memos.redis.fullname" . }}
+                  key: redis-password
+            {{- end }}
+            {{- if and .Values.neo4j.enabled .Values.neo4j.auth.enabled }}
+            # 同理：chart 自带的 neo4j 的密码，从它自己的 Secret 取。
+            - name: NEO4J_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "memos.neo4j.fullname" . }}
+                  key: neo4j-password
+            {{- end }}
+            {{- with .Values.memos.extraEnv }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          {{- end }}
+          {{- if or .Values.memos.persistence.enabled .Values.memos.extraVolumeMounts }}
+          volumeMounts:
+            {{- if .Values.memos.persistence.enabled }}
+            - name: api-data
+              mountPath: {{ .Values.memos.persistence.mountPath }}
+            {{- end }}
+            {{- with .Values.memos.extraVolumeMounts }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          {{- end }}
+          resources:
+            {{- toYaml .Values.memos.resources | nindent 12 }}
+          {{- if .Values.memos.probes.startup.enabled }}
+          startupProbe:
+            httpGet:
+              path: {{ .Values.memos.probes.startup.path }}
+              port: 8000
+            failureThreshold: {{ .Values.memos.probes.startup.failureThreshold }}
+            periodSeconds: {{ .Values.memos.probes.startup.periodSeconds }}
+          {{- end }}
+          {{- if .Values.memos.probes.liveness.enabled }}
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.memos.probes.liveness.path }}
+              port: 8000
+            initialDelaySeconds: {{ .Values.memos.probes.liveness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.memos.probes.liveness.periodSeconds }}
+          {{- end }}
+          {{- if .Values.memos.probes.readiness.enabled }}
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.memos.probes.readiness.path }}
+              port: 8000
+            initialDelaySeconds: {{ .Values.memos.probes.readiness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.memos.probes.readiness.periodSeconds }}
+          {{- end }}
+      {{- if or .Values.memos.persistence.enabled .Values.memos.extraVolumes }}
+      volumes:
+        {{- if and .Values.memos.persistence.enabled (not .Values.memos.persistence.existingClaim) }}
+        - name: api-data
+          persistentVolumeClaim:
+            claimName: {{ include "memos.pvcName" . }}
+        {{- else if .Values.memos.persistence.enabled }}
+        - name: api-data
+          persistentVolumeClaim:
+            claimName: {{ .Values.memos.persistence.existingClaim }}
+        {{- end }}
+        {{- with .Values.memos.extraVolumes }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- end }}
+      {{- with .Values.memos.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.memos.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.memos.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "memos.memos.fullname" . }}
+  labels:
+    {{- include "memos.labels" . | nindent 4 }}
+    app.kubernetes.io/component: api
+spec:
+  type: {{ .Values.memos.service.type }}
+  ports:
+    - name: http
+      port: {{ .Values.memos.service.port }}
+      targetPort: http
+      {{- if and .Values.memos.service.nodePort (or (eq .Values.memos.service.type "NodePort") (eq .Values.memos.service.type "LoadBalancer")) }}
+      nodePort: {{ .Values.memos.service.nodePort }}
+      {{- end }}
+  selector:
+    {{- include "memos.labels" . | nindent 4 }}
+    app.kubernetes.io/component: api
+{{- if and .Values.memos.persistence.enabled (not .Values.memos.persistence.existingClaim) }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "memos.pvcName" . }}
+  labels:
+    {{- include "memos.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  {{- if .Values.global.storageClass }}
+  storageClassName: {{ .Values.global.storageClass | quote }}
+  {{- else if .Values.memos.persistence.storageClass }}
+  storageClassName: {{ .Values.memos.persistence.storageClass | quote }}
+  {{- end }}
+  resources:
+    requests:
+      storage: {{ .Values.memos.persistence.size }}
+{{- end }}

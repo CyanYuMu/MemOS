@@ -1,0 +1,68 @@
+name: memos-hugegraph-dev
+
+# Starts every local component required by the Python HugeGraph demo except
+# HugeGraph itself. HugeGraph is an external service configured in ../.env.
+#
+# TODO(hugegraph): dev/demo compose only. It neither provisions the HugeGraph
+# server nor loads docker/hugegraph-schema.groovy, and GRAPH_DB_BACKEND is
+# hardcoded to hugegraph. A working stack still requires the HugeGraph server,
+# its GraphSpace/graph and the schema to be created out of band; nothing here
+# fails fast when that has not happened.
+services:
+  memos:
+    container_name: memos-api-hugegraph
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    ports:
+      - "8000:8000"
+    env_file:
+      - ../.env
+    environment:
+      PYTHONPATH: /app/src
+      FILE_LOCAL_PATH: /app/data/files
+      GRAPH_DB_BACKEND: hugegraph
+      QDRANT_HOST: qdrant
+      QDRANT_PORT: 6333
+    depends_on:
+      qdrant:
+        condition: service_healthy
+    volumes:
+      - ../src:/app/src
+      - memos_files:/app/data/files
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    networks:
+      - memos_hugegraph_network
+
+  qdrant:
+    image: qdrant/qdrant:v1.15.3
+    container_name: memos-qdrant-hugegraph
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrant_hugegraph_data:/qdrant/storage
+    environment:
+      QDRANT__SERVICE__GRPC_PORT: 6334
+      QDRANT__SERVICE__HTTP_PORT: 6333
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:6333/healthz"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+    networks:
+      - memos_hugegraph_network
+
+volumes:
+  memos_files:
+  qdrant_hugegraph_data:
+
+networks:
+  memos_hugegraph_network:
+    driver: bridge

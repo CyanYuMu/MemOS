@@ -1,0 +1,48 @@
+# 最小可用的一套覆盖值：全新安装，Neo4j / Qdrant 由 chart 自带，Secret 由 chart 创建。
+#   helm install memos deploy/helm -n <ns> --create-namespace -f values-example.yaml
+#
+# 只想改几个点的话不用这个文件，直接 --set 就行：
+#   helm install memos deploy/helm --set memos.image.tag=xxx --set memos.replicaCount=2
+
+memos:
+  image:
+    repository: example.invalid/gyq/memos
+    tag: "2.0.33"
+
+  # chart 自己建 Secret。密钥不进 values 的话，用下面的 secretRefs 指向已有 Secret。
+  secret:
+    create: true
+    data:
+      OPENAI_API_KEY: "sk-your-key"
+      MEMRADER_API_KEY: "sk-your-key"
+      NEO4J_PASSWORD: "change-this-password"
+
+  env:
+    OPENAI_API_BASE: "https://api.openai.com/v1"
+    MEMRADER_API_BASE: "https://api.openai.com/v1"
+    MOS_CHAT_MODEL: "gpt-4o-mini"
+    MEMRADER_MODEL: "gpt-4o-mini"
+    MOS_EMBEDDER_MODEL: "text-embedding-3-small"
+    MOS_EMBEDDER_API_BASE: "https://api.openai.com/v1"
+    MOS_EMBEDDER_API_KEY: "sk-your-key"
+    # 单机示例没有独立的重排服务，关掉
+    MOS_RERANKER_BACKEND: "cosine_local"
+    MOS_RERANKER_URL: ""
+    MOS_ENABLE_SCHEDULER: "false"
+
+# 示例里调度器关掉了，就不需要 redis
+redis:
+  enabled: false
+
+neo4j:
+  auth:
+    password: "change-this-password"
+
+ingress:
+  enabled: true
+  className: nginx
+  hosts:
+    - host: memos.yourdomain.com
+      paths:
+        - path: /
+          pathType: Prefix

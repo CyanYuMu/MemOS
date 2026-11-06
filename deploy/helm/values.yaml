@@ -1,0 +1,278 @@
+fullnameOverride: ""
+
+global:
+  imagePullSecrets: []
+  storageClass: ""
+
+memos:
+  image:
+    repository: example.invalid/gyq/memos
+    tag: "2.0.33"
+    pullPolicy: IfNotPresent
+
+  replicaCount: 1
+
+  service:
+    type: NodePort
+    port: 8000
+    # 仅 type=NodePort / LoadBalancer 时生效；留空则由集群随机分配
+    nodePort: 8976
+
+  # initContainer（等待依赖就绪）用的镜像。私有集群里 Docker Hub 可能拉不到，可换成内网地址。
+  initContainerImage: busybox:1.36
+
+  resources:
+    limits:
+      cpu: "2"
+      memory: 16Gi
+    requests:
+      cpu: 500m
+      memory: 1Gi
+
+  # 明文环境变量，渲染进 chart 自己的 ConfigMap，容器用 envFrom 全量注入。
+  # 覆盖任意一项：--set memos.env.MOS_CHAT_MODEL=xxx
+  env:
+    TZ: "Asia/Shanghai"
+    PYTHONPATH: "/app/src"
+    MEMOS_BASE_PATH: "/app"
+    # 下面三个在线上不在 ConfigMap 里，而是直接写在 Deployment 的容器 env 上；chart 统一收进 ConfigMap。
+    # MEMOS_LOG_LEVEL=INFO 会把 INFO 抬到 stdout，其中含用户记忆正文（见 CHANGELOG 的日志瘦身一节）。
+    # 不想要就 --set memos.env.MEMOS_LOG_LEVEL=WARNING，或设成空串让它不渲染。
+    MEMOS_LOG_LEVEL: "INFO"
+    HF_ENDPOINT: "https://huggingface.co"
+    HF_HUB_ETAG_TIMEOUT: "5"
+
+    # 插件。内置插件靠 entry_points 发现，镜像里必须已经 pip install 过本包，
+    # 否则这里写了名字也没有任何插件会被加载。
+    MEMOS_ENABLED_PLUGINS: "dream,hallucination_guard"
+    MEMOS_HALLUCINATION_GUARD: "true"
+    MEMOS_HALLUCINATION_GUARD_ENFORCE: "false"
+    MEMOS_HALLUCINATION_GUARD_PREF: "true"
+
+    # 数据落盘位置，配合 persistence 使用
+    MOS_CUBE_PATH: "/data/memos"
+
+    # 通用开关
+    ASYNC_MODE: "sync"
+    MOS_ENABLE_DEFAULT_CUBE_CONFIG: "true"
+    MOS_ENABLE_REORGANIZE: "true"
+    MOS_ENABLE_SCHEDULER: "true"
+    MOS_TEXT_MEM_TYPE: "general_text"
+    ENABLE_INTERNET: "false"
+    ENABLE_PREFERENCE_MEMORY: "true"
+    PREFERENCE_ADDER_MODE: "fast"
+
+    # 抽取 / 对话模型
+    MOS_CHAT_MODEL_PROVIDER: "openai"
+    MOS_CHAT_MODEL: "DeepSeek-V4-Flash"
+    MOS_CHAT_TEMPERATURE: "0.8"
+    MOS_MAX_TOKENS: "8192"
+    MOS_TOP_P: "0.9"
+    MOS_TOP_K: "50"
+    OPENAI_API_BASE: "https://example.invalid/v1"
+    MEMRADER_MODEL: "DeepSeek-V4-Flash-内部"
+    MEMRADER_API_BASE: "https://example.invalid/v1"
+    MEMRADER_MAX_TOKENS: "128000"
+
+    # 嵌入服务
+    EMBEDDING_DIMENSION: "1024"
+    MOS_EMBEDDER_BACKEND: "universal_api"
+    MOS_EMBEDDER_PROVIDER: "openai"
+    MOS_EMBEDDER_MODEL: "jina-embeddings-v5-text-small-retrieval"
+    MOS_EMBEDDER_API_BASE: "http://memos-emb-server:8080/v1"
+    MOS_EMBEDDER_API_KEY: "-"
+    MOS_EMBEDDER_TIMEOUT: "60"
+
+    # 重排服务
+    MOS_RERANKER_BACKEND: "http_bge"
+    MOS_RERANKER_URL: "http://memos-rerank-server:8080/v1/rerank"
+    MOS_RERANKER_MODEL: "gte-multilingual-reranker-base"
+    MOS_RERANKER_STRATEGY: "single_turn"
+    MOS_FEEDBACK_RERANKER_BACKEND: "http_bge"
+    MOS_FEEDBACK_RERANKER_MODEL: "gte-multilingual-reranker-base"
+
+    # 调度器
+    MOS_SCHEDULER_TOP_K: "10"
+    MEMSCHEDULER_USE_REDIS_QUEUE: "true"
+    MEMSCHEDULER_REDIS_HOST: ""
+    MEMSCHEDULER_REDIS_PORT: "6379"
+    MEMSCHEDULER_REDIS_DB: "0"
+
+    # 图库。neo4j.enabled=true 时下面三个会被 in-cluster Service 覆盖
+    NEO4J_BACKEND: "neo4j-community"
+    NEO4J_URI: ""
+    NEO4J_USER: "neo4j"
+    NEO4J_DB_NAME: "neo4j"
+    MOS_NEO4J_SHARED_DB: "false"
+
+    # 向量库。qdrant.enabled=true 时下面两个会被 in-cluster Service 覆盖
+    QDRANT_HOST: ""
+    QDRANT_PORT: "6333"
+
+  # 追加 env（数组，支持 valueFrom），--set memos.extraEnv[0].name=... 亦可
+  extraEnv: []
+
+  # 追加 envFrom
+  extraEnvFrom: []
+
+  # 引用已存在的 Secret 作为环境变量。生产环境用这个，四个敏感值分散在两个 Secret 里。
+  secretRefs: []
+  # - envName: OPENAI_API_KEY
+  #   secretName: memos-original-api-secret
+  #   key: openai-api-key
+  # - envName: MEMRADER_API_KEY
+  #   secretName: memos-original-api-secret
+  #   key: memrader-api-key
+  # - envName: NEO4J_PASSWORD
+  #   secretName: memos-original-api-secret
+  #   key: neo4j-password
+  # - envName: MEMSCHEDULER_REDIS_PASSWORD
+  #   secretName: memos-original-redis-secret
+  #   key: redis-password
+
+  # 或者让 chart 自己建一个 Secret（全新安装时用，secretRefs 留空即可）
+  secret:
+    # true = chart 创建这个 Secret；false 且 name 非空 = 指向一个外部管理的已有 Secret
+    create: false
+    name: ""
+    data: {}
+
+  persistence:
+    enabled: true
+    size: 10Gi
+    storageClass: ""
+    existingClaim: ""
+    mountPath: "/data/memos"
+
+  # 额外卷与挂载；文件应优先打进镜像，这里只用于临时补齐
+  extraVolumes: []
+  extraVolumeMounts: []
+
+  probes:
+    # 启动探针。应用从容器起到 Ready 要 ~84 秒（import numpy/sklearn/transformers 再连
+    # Neo4j/Qdrant），期间 8000 端口还没监听。没有 startupProbe 的话，liveness 会在
+    # 30 + 3×10 = 60 秒时把容器杀掉，永远起不来——线上为此配了 60×5 秒的宽限。
+    startup:
+      enabled: true
+      path: /health
+      failureThreshold: 60
+      periodSeconds: 5
+    liveness:
+      enabled: true
+      path: /health
+      initialDelaySeconds: 30
+      periodSeconds: 10
+    readiness:
+      enabled: true
+      path: /health
+      initialDelaySeconds: 10
+      periodSeconds: 5
+
+  podAnnotations: {}
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+neo4j:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: neo4j
+    tag: "5.26.4"
+    pullPolicy: IfNotPresent
+
+  service:
+    type: ClusterIP
+    httpPort: 7474
+    boltPort: 7687
+
+  auth:
+    enabled: true
+    user: neo4j
+    # 必须改。留空会直接 fail，避免起一个空密码的图库。
+    password: "memos-change-me"
+    acceptLicense: "yes"
+
+  persistence:
+    enabled: true
+    size: 10Gi
+    # neo4j 的 /logs 是独立的一个 PVC，容量单独给
+    logsSize: 1Gi
+    storageClass: ""
+
+  resources:
+    limits:
+      cpu: "2"
+      memory: 4Gi
+    requests:
+      cpu: 500m
+      memory: 1Gi
+
+qdrant:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: qdrant/qdrant
+    tag: "v1.15.3"
+    pullPolicy: IfNotPresent
+
+  service:
+    type: ClusterIP
+    httpPort: 6333
+    grpcPort: 6334
+
+  persistence:
+    enabled: true
+    size: 10Gi
+    storageClass: ""
+
+  resources:
+    limits:
+      cpu: "1"
+      memory: 2Gi
+    requests:
+      cpu: 250m
+      memory: 512Mi
+
+# 调度器的 Redis 队列。默认开，这样 chart 装出来就是一套自洽可用的环境
+# （MEMSCHEDULER_USE_REDIS_QUEUE 默认为 true，没有 redis 时应用会退回在容器里
+#  spawn redis-server，而镜像里没有那个二进制）。生产环境是独立部署 + 独立 Secret，
+# 用 --set redis.enabled=false --set memos.env.MEMSCHEDULER_REDIS_HOST=memos-original-redis 指过去。
+redis:
+  enabled: true
+  image:
+    repository: redis
+    tag: "7.4-alpine"
+    pullPolicy: IfNotPresent
+
+  service:
+    port: 6379
+
+  auth:
+    # 默认不设密码（集群内单实例）。开启时密码必填，否则直接 fail。
+    enabled: false
+    password: ""
+
+  persistence:
+    enabled: true
+    size: 1Gi
+    storageClass: ""
+
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    - host: memos.local
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+  tls: []
