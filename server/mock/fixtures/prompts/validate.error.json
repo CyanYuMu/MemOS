@@ -1,0 +1,9 @@
+{
+  "code": 0,
+  "data": {
+    "ok": false,
+    "errors": [{ "code": "missing_placeholder", "message": "缺少必填占位符 {chunk_text}。请把它放回正文，否则模型看不到对应的内容。" }],
+    "warnings": []
+  },
+  "message": "success"
+}

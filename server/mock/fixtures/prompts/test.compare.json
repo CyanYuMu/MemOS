@@ -1,0 +1,60 @@
+{
+  "code": 0,
+  "data": {
+    "runs": [
+      {
+        "label": "draft",
+        "ok": true,
+        "parseOk": true,
+        "fallbackTriggered": false,
+        "contract": { "ok": true, "missing": [] },
+        "output": {
+          "memory list": [
+            {
+              "key": "项目部署方式改为蓝绿发布",
+              "memory_type": "UserMemory",
+              "value": "用户于2026年10月29日告知助手，其项目部署方式已改为蓝绿发布，回滚只需切换流量，不再需要停机。",
+              "tags": ["项目部署", "蓝绿发布", "回滚", "流量切换"],
+              "memory_form": "state"
+            }
+          ],
+          "summary": "用户于2026年10月29日向助手说明，其项目部署方式已调整为蓝绿发布。该方式下回滚通过切换流量完成，无需停机。助手对此表示理解并确认了蓝绿发布回滚依赖流量切换的机制。"
+        },
+        "rawOutput": "{\n  \"memory list\": [\n    {\n      \"key\": \"项目部署方式改为蓝绿发布\",\n      \"memory_type\": \"UserMemory\",\n      \"value\": \"用户于2026年10月29日告知助手，其项目部署方式已改为蓝绿发布，回滚只需切换流量，不再需要停机。\",\n      \"tags\": [\"项目部署\", \"蓝绿发布\", \"回滚\", \"流量切换\"],\n      \"memory_form\": \"state\"\n    }\n  ],\n  \"summary\": \"用户于2026年10月29日向助手说明，其项目部署方式已调整为蓝绿发布。该方式下回滚通过切换流量完成，无需停机。助手对此表示理解并确认了蓝绿发布回滚依赖流量切换的机制。\"\n}",
+        "truncated": false,
+        "latencyMs": 2514,
+        "model": "DeepSeek-V4.1-Flash",
+        "usage": { "calls": 1, "completionTokens": 163, "promptTokens": 2120, "totalTokens": 2283 },
+        "usedSlots": [{ "key": "extract.chat", "lang": "zh", "source": "draft", "versionId": 0 }],
+        "warnings": []
+      },
+      {
+        "label": "default",
+        "ok": true,
+        "parseOk": true,
+        "fallbackTriggered": false,
+        "contract": { "ok": true, "missing": [] },
+        "output": {
+          "memory list": [
+            {
+              "key": "项目部署方式改为蓝绿发布",
+              "memory_type": "LongTermMemory",
+              "value": "2026年10月29日，用户告知其项目已将部署方式改为蓝绿发布，回滚只需切换流量，不再需要停机；助手确认理解该回滚机制。",
+              "tags": ["项目", "部署方式", "蓝绿发布", "回滚", "流量切换"],
+              "memory_form": "state"
+            }
+          ],
+          "summary": "用户目前负责的项目已采用蓝绿发布作为部署方式。2026年10月29日，用户向助手说明这一变更，强调回滚时只需切换流量、无需停机，助手对此机制表示理解。这反映出用户关注部署的连续性与快速回滚能力。"
+        },
+        "rawOutput": "{\n  \"memory list\": [\n    {\n      \"key\": \"项目部署方式改为蓝绿发布\",\n      \"memory_type\": \"LongTermMemory\",\n      \"value\": \"2026年10月29日，用户告知其项目已将部署方式改为蓝绿发布，回滚只需切换流量，不再需要停机；助手确认理解该回滚机制。\",\n      \"tags\": [\"项目\", \"部署方式\", \"蓝绿发布\", \"回滚\", \"流量切换\"],\n      \"memory_form\": \"state\"\n    }\n  ],\n  \"summary\": \"用户目前负责的项目已采用蓝绿发布作为部署方式。2026年10月29日，用户向助手说明这一变更，强调回滚时只需切换流量、无需停机，助手对此机制表示理解。这反映出用户关注部署的连续性与快速回滚能力。\"\n}",
+        "truncated": false,
+        "latencyMs": 3191,
+        "model": "DeepSeek-V4.1-Flash",
+        "usage": { "calls": 1, "completionTokens": 177, "promptTokens": 2120, "totalTokens": 2297 },
+        "usedSlots": [{ "key": "extract.chat", "lang": "zh", "source": "default", "versionId": 0 }],
+        "warnings": []
+      }
+    ]
+  },
+  "message": "success"
+}

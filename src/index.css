@@ -1,0 +1,130 @@
+@import 'tailwindcss';
+/* 样式表编译产物，按原顺序加载以保持 @layer 优先级：
+   properties → theme → base → components → utilities */
+@import './styles/base.css';
+@import './styles/theme-runtime.css';
+@import './styles/components.css';
+@import './styles/icons.css';
+/* 本项目新写的工具类，必须排在上面这些样式之后 */
+@import './styles/console-extra.css';
+
+/* 暗色是**手动切换**（记忆在 localStorage），不是跟随系统就完事——用户要能固定偏好。
+   Tailwind v4 默认的 `dark:` 走 `prefers-color-scheme`，这里改成认 `<html class="dark">`。
+   首帧由 index.html 里的内联脚本打好类名，避免亮色闪一下再变暗。 */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ------------------------------------------------------------------ 语义色
+ *
+ * 页面里原来散着几百个 `zinc-50 … zinc-900` 和十六进制字面量。暗色主题如果靠逐个
+ * 加 `dark:` 变体来做，漏一处就是一块不跟着变的白底——而这不会报错、不会在 lint 里
+ * 露出来（AGENTS.md 第 5 条说的就是这个坑）。
+ *
+ * 所以颜色收敛成这两组变量，页面只写 `bg-surface` / `text-ink` 这类语义类：
+ *   亮色：浅灰画布 + 白卡片 + 冷灰文字
+ *   暗色：Tokyo Night蓝灰画布 + 相近层级卡片 + 柔和浅紫文字
+ * `@theme inline` 让工具类直接引用变量，`.dark` 下改值即可整体翻转。
+ */
+@theme inline {
+  --color-canvas: var(--app-canvas);
+  --color-surface: var(--app-surface);
+  --color-surface-muted: var(--app-surface-muted);
+  --color-surface-hover: var(--app-surface-hover);
+  --color-line: var(--app-line);
+  --color-line-strong: var(--app-line-strong);
+  --color-ink: var(--app-ink);
+  --color-ink-secondary: var(--app-ink-secondary);
+  --color-ink-muted: var(--app-ink-muted);
+  --color-ink-faint: var(--app-ink-faint);
+  --color-accent: var(--app-accent);
+  --color-accent-hover: var(--app-accent-hover);
+  --color-accent-soft: var(--app-accent-soft);
+  --color-on-accent: var(--app-on-accent);
+  --color-danger: var(--app-danger);
+  --color-danger-soft: var(--app-danger-soft);
+  --color-success: var(--app-success);
+  --color-success-soft: var(--app-success-soft);
+  --color-warning: var(--app-warning);
+  --color-warning-soft: var(--app-warning-soft);
+}
+
+:root {
+  --app-canvas: #f0f2f5;
+  --app-surface: #ffffff;
+  --app-surface-muted: #f8fafc;
+  --app-surface-hover: #eef1f5;
+  --app-line: #e4e7ec;
+  --app-line-strong: #cbd5e1;
+  --app-ink: #0f172a;
+  --app-ink-secondary: #334155;
+  --app-ink-muted: #596a80;
+  --app-ink-faint: #626c80;
+  --app-accent: #4044ed;
+  --app-accent-hover: #3438d8;
+  --app-accent-soft: #eaeaff;
+  --app-on-accent: #ffffff;
+  --app-danger: #e11d48;
+  --app-danger-soft: #fff1f2;
+  --app-success: #047857;
+  --app-success-soft: #ecfdf5;
+  --app-warning: #b45309;
+  --app-warning-soft: #fffbeb;
+  /* 动效：曲线与时长只在这里定义一份，CSS 关键帧和 `src/lib/motion.ts` 用同一组值。
+     改了这里记得同步那边，否则 CSS 动画和 motion 动画会变成两种手感。 */
+  --ease-emphasized: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-soft: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-exit: cubic-bezier(0.4, 0, 1, 1);
+  --ease-slide: cubic-bezier(0.32, 0.72, 0, 1);
+  --dur-fast: 120ms;
+  --dur-base: 220ms;
+  --dur-slide: 280ms;
+  /* `transition-colors` / `transition-transform` 不写时长与曲线时用这两个。
+     Tailwind 自带的默认是 150ms + ease-in-out，跟上面这套「进场 expo-out、退场 ease-in」
+     对不上；写在 :root 里才排得比 Tailwind 的默认值靠后，能覆盖它。 */
+  --default-transition-duration: var(--dur-fast);
+  --default-transition-timing-function: var(--ease-soft);
+  color-scheme: light;
+}
+
+.dark {
+  --app-canvas: #1a1b26;
+  --app-surface: #222638;
+  --app-surface-muted: #1f2335;
+  --app-surface-hover: #292e42;
+  --app-line: #343b55;
+  --app-line-strong: #545c7e;
+  --app-ink: #c0caf5;
+  --app-ink-secondary: #a9b1d6;
+  --app-ink-muted: #9aa5ca;
+  --app-ink-faint: #929bc0;
+  --app-accent: #7aa2f7;
+  --app-accent-hover: #9ab8fa;
+  --app-accent-soft: #293653;
+  --app-on-accent: #1a1b26;
+  --app-danger: #f7768e;
+  --app-danger-soft: #392937;
+  --app-success: #9ece6a;
+  --app-success-soft: #293b35;
+  --app-warning: #e0af68;
+  --app-warning-soft: #3a3433;
+  color-scheme: dark;
+}
+
+/* 根节点需要的最小尺寸约束与全局字号微调（由 16px 微调至 16.5px，整体视觉更清晰饱满） */
+html {
+  font-size: 16.5px;
+}
+html,
+body,
+#root {
+  height: 100%;
+}
+body {
+  margin: 0;
+  background-color: var(--app-canvas);
+  color: var(--app-ink);
+  /* 切换主题时让底色与文字有一个短过渡，而不是硬切；
+     不写成 `* { transition: all }`——那会把布局动画也拖慢。 */
+  transition:
+    background-color 0.18s ease,
+    color 0.18s ease;
+}

@@ -1,0 +1,326 @@
+{
+  "code": 0,
+  "data": {
+    "prompts": [
+      {
+        "key": "extract.chat",
+        "group": "extract",
+        "title": {
+          "en": "Conversation extraction",
+          "zh": "对话抽取"
+        },
+        "summary": {
+          "en": "Turns a conversation into memory items",
+          "zh": "把一段对话整理成记忆条目"
+        },
+        "languages": ["zh", "en"],
+        "editable": true,
+        "state": {
+          "en": {
+            "source": "default",
+            "versionId": 0,
+            "versionNo": 0,
+            "updatedAt": null,
+            "author": null
+          },
+          "zh": {
+            "source": "default",
+            "versionId": 0,
+            "versionNo": 0,
+            "updatedAt": null,
+            "author": null
+          }
+        }
+      },
+      {
+        "key": "extract.doc",
+        "group": "extract",
+        "title": {
+          "en": "Document extraction",
+          "zh": "文档抽取"
+        },
+        "summary": {
+          "en": "Turns document chunks into memory items",
+          "zh": "把文档章节整理成记忆条目"
+        },
+        "languages": ["zh", "en"],
+        "editable": true,
+        "state": {
+          "en": {
+            "source": "default",
+            "versionId": 0,
+            "versionNo": 0,
+            "updatedAt": null,
+            "author": null
+          },
+          "zh": {
+            "source": "project",
+            "versionId": 10,
+            "versionNo": 1,
+            "updatedAt": "2026-10-28T21:44:56.030131+00:00",
+            "author": "prompt-editor"
+          }
+        }
+      },
+      {
+        "key": "extract.general_string",
+        "group": "extract",
+        "title": {
+          "en": "Plain text extraction",
+          "zh": "通用文本抽取"
+        },
+        "summary": {
+          "en": "Turns plain text without a document source into memory items",
+          "zh": "把没有文档来源的纯文本整理成记忆条目"
+        },
+        "languages": ["zh", "en"],
+        "editable": true,
+        "state": {
+          "en": {
+            "source": "default",
+            "versionId": 0,
+            "versionNo": 0,
+            "updatedAt": null,
+            "author": null
+          },
+          "zh": {
+            "source": "default",
+            "versionId": 0,
+            "versionNo": 0,
+            "updatedAt": null,
+            "author": null
+          }
+        }
+      },
+      {
+        "key": "extract.preference_explicit",
+        "group": "extract",
+        "title": {
+          "en": "Explicit preference extraction",
+          "zh": "显式偏好抽取"
+        },
+        "summary": {
+          "en": "Finds preferences the user states outright",
+          "zh": "从一问一答里找出用户明确说过的偏好"
+        },
+        "languages": ["zh", "en"],
+        "editable": true,
+        "state": {
+          "en": {
+            "source": "default",
+            "versionId": 0,
+            "versionNo": 0,
+            "updatedAt": null,
+            "author": null
+          },
+          "zh": {
+            "source": "default",
+            "versionId": 0,
+            "versionNo": 0,
+            "updatedAt": null,
+            "author": null
+          }
+        }
+      },
+      {
+        "key": "extract.preference_implicit",
+        "group": "extract",
+        "title": {
+          "en": "Implicit preference extraction",
+          "zh": "隐式偏好抽取"
+        },
+        "summary": {
+          "en": "Infers preferences the user did not state",
+          "zh": "从一问一答里推断用户没说出口的偏好"
+        },
+        "languages": ["zh", "en"],
+        "editable": true,
+        "state": {
+          "en": {
+            "source": "default",
+            "versionId": 0,
+            "versionNo": 0,
+            "updatedAt": null,
+            "author": null
+          },
+          "zh": {
+            "source": "default",
+            "versionId": 0,
+            "versionNo": 0,
+            "updatedAt": null,
+            "author": null
+          }
+        }
+      },
+      {
+        "key": "extract.event",
+        "group": "extract",
+        "title": {
+          "en": "Event extraction",
+          "zh": "事件抽取"
+        },
+        "summary": {
+          "en": "Turns events in a conversation into event memories",
+          "zh": "把对话里的具体事件整理成事件记忆"
+        },
+        "languages": ["en"],
+        "editable": true,
+        "state": {
+          "en": {
+            "source": "project",
+            "versionId": 9,
+            "versionNo": 1,
+            "updatedAt": "2026-10-28T21:44:06.082106+00:00",
+            "author": "prompt-editor"
+          }
+        }
+      },
+      {
+        "key": "extract.tool_trajectory",
+        "group": "extract",
+        "title": {
+          "en": "Tool trajectory extraction",
+          "zh": "工具轨迹抽取"
+        },
+        "summary": {
+          "en": "Turns a tool-calling trajectory into reusable experience",
+          "zh": "把一次工具调用的过程整理成可复用的经验"
+        },
+        "languages": ["zh", "en"],
+        "editable": true,
+        "state": {
+          "en": {
+            "source": "default",
+            "versionId": 0,
+            "versionNo": 0,
+            "updatedAt": null,
+            "author": null
+          },
+          "zh": {
+            "source": "default",
+            "versionId": 0,
+            "versionNo": 0,
+            "updatedAt": null,
+            "author": null
+          }
+        }
+      },
+      {
+        "key": "process.hallucination_filter",
+        "group": "process",
+        "title": {
+          "en": "Hallucination filter",
+          "zh": "幻觉过滤"
+        },
+        "summary": {
+          "en": "Checks each extracted memory against the conversation",
+          "zh": "逐条判断抽取出的记忆有没有对话依据"
+        },
+        "languages": ["en"],
+        "editable": true,
+        "state": {
+          "en": {
+            "source": "default",
+            "versionId": 0,
+            "versionNo": 0,
+            "updatedAt": null,
+            "author": null
+          }
+        }
+      },
+      {
+        "key": "dream.motive",
+        "group": "dream",
+        "title": {
+          "en": "Motive formation",
+          "zh": "动机形成"
+        },
+        "summary": {
+          "en": "Decides which memories are worth consolidating",
+          "zh": "决定哪些记忆值得整理，并给出理由"
+        },
+        "languages": ["en"],
+        "editable": true,
+        "state": {
+          "en": {
+            "source": "default",
+            "versionId": 0,
+            "versionNo": 0,
+            "updatedAt": null,
+            "author": null
+          }
+        }
+      },
+      {
+        "key": "dream.reasoning",
+        "group": "dream",
+        "title": {
+          "en": "Consolidation reasoning",
+          "zh": "深度推理"
+        },
+        "summary": {
+          "en": "Reasons across memories into one insight",
+          "zh": "按动机把相关记忆想透，产出一条洞察"
+        },
+        "languages": ["en"],
+        "editable": true,
+        "state": {
+          "en": {
+            "source": "default",
+            "versionId": 0,
+            "versionNo": 0,
+            "updatedAt": null,
+            "author": null
+          }
+        }
+      },
+      {
+        "key": "dream.context_binding",
+        "group": "dream",
+        "title": {
+          "en": "Context binding",
+          "zh": "上下文绑定"
+        },
+        "summary": {
+          "en": "Groups memories into long-lived contexts",
+          "zh": "把记忆归到长期上下文中"
+        },
+        "languages": ["en"],
+        "editable": true,
+        "state": {
+          "en": {
+            "source": "default",
+            "versionId": 0,
+            "versionNo": 0,
+            "updatedAt": null,
+            "author": null
+          }
+        }
+      },
+      {
+        "key": "dream.context_summary",
+        "group": "dream",
+        "title": {
+          "en": "Context summary",
+          "zh": "上下文摘要"
+        },
+        "summary": {
+          "en": "Folds new memories into a context summary",
+          "zh": "把新记忆合并进已有上下文的摘要"
+        },
+        "languages": ["en"],
+        "editable": true,
+        "state": {
+          "en": {
+            "source": "default",
+            "versionId": 0,
+            "versionNo": 0,
+            "updatedAt": null,
+            "author": null
+          }
+        }
+      }
+    ]
+  },
+  "message": "success"
+}

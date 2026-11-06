@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/logo.svg?v=hugegraph" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Graph Memory 控制台</title>
+    <script>
+      /* 首帧前定主题：等 React 挂载再改 class 的话，暗色用户会先看到一帧白底。
+         取值与 src/lib/theme.tsx 保持一致（'light' | 'dark' | 'system'）。 */
+      ;(function () {
+        try {
+          var saved = localStorage.getItem('console.theme')
+          var dark = saved === 'dark' || (saved !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+          if (dark) document.documentElement.classList.add('dark')
+        } catch (e) {}
+      })()
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script src="/runtime-config.js"></script>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

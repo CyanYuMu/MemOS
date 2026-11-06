@@ -1,0 +1,5102 @@
+{
+  "components": {
+    "responses": {
+      "ApiKey": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Envelope"
+                },
+                {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/ApiKey"
+                    }
+                  },
+                  "type": "object"
+                }
+              ]
+            }
+          }
+        },
+        "description": "成功，返回密钥对象"
+      },
+      "ApiKeyRecords": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Envelope"
+                },
+                {
+                  "properties": {
+                    "data": {
+                      "properties": {
+                        "records": {
+                          "items": {
+                            "$ref": "#/components/schemas/ApiKey"
+                          },
+                          "type": "array"
+                        },
+                        "total": {
+                          "type": "integer"
+                        }
+                      },
+                      "required": ["records", "total"],
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                }
+              ]
+            }
+          }
+        },
+        "description": "成功，列表键 `records`"
+      },
+      "DeleteResult": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Envelope"
+                },
+                {
+                  "properties": {
+                    "data": {
+                      "properties": {
+                        "deleted": {
+                          "type": "integer"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                }
+              ]
+            }
+          }
+        },
+        "description": "成功，返回删除条数"
+      },
+      "ErrorBadGateway": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorEnvelope"
+            }
+          }
+        },
+        "description": "记忆服务拒绝了请求或模型调用失败；`code` 为 50143 或 50200"
+      },
+      "ErrorBadRequest": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorEnvelope"
+            }
+          }
+        },
+        "description": "参数不合法"
+      },
+      "ErrorForbidden": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorEnvelope"
+            }
+          }
+        },
+        "description": "当前账号没有该项目的操作权限"
+      },
+      "ErrorGatewayTimeout": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorEnvelope"
+            }
+          }
+        },
+        "description": "模型响应超时；`code` 为 50400"
+      },
+      "ErrorNotFound": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorEnvelope"
+            }
+          }
+        },
+        "description": "资源不存在（例如提示词 key 不存在）"
+      },
+      "ErrorPayloadTooLarge": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorEnvelope"
+            }
+          }
+        },
+        "description": "请求体或正文超过上限；`code` 为 41300"
+      },
+      "ErrorUnauthorized": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorEnvelope"
+            }
+          }
+        },
+        "description": "未登录或登录已过期"
+      },
+      "ErrorUnavailable": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorEnvelope"
+            }
+          }
+        },
+        "description": "记忆服务暂时不可用；`code` 为 50300"
+      },
+      "ExtractDebug": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Envelope"
+                },
+                {
+                  "properties": {
+                    "data": {
+                      "properties": {
+                        "extractionTypes": {
+                          "items": {
+                            "$ref": "#/components/schemas/MemoryDetailType"
+                          },
+                          "type": "array"
+                        },
+                        "results": {
+                          "items": {
+                            "$ref": "#/components/schemas/ExtractResult"
+                          },
+                          "type": "array"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                }
+              ]
+            }
+          }
+        },
+        "description": "成功，返回抽取结果"
+      },
+      "GraphPage": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Envelope"
+                },
+                {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/GraphPageBody"
+                    }
+                  },
+                  "type": "object"
+                }
+              ]
+            }
+          }
+        },
+        "description": "成功，返回图谱节点、边与统计"
+      },
+      "Health": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Envelope"
+                },
+                {
+                  "properties": {
+                    "data": {
+                      "properties": {
+                        "checkedAt": {
+                          "type": "string"
+                        },
+                        "gateway": {
+                          "$ref": "#/components/schemas/HealthCheck"
+                        },
+                        "status": {
+                          "enum": ["ok", "degraded", "down"],
+                          "type": "string"
+                        },
+                        "upstream": {
+                          "$ref": "#/components/schemas/HealthCheck"
+                        }
+                      },
+                      "required": ["status", "gateway", "upstream", "checkedAt"],
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                }
+              ]
+            }
+          }
+        },
+        "description": "成功，网关与上游的探测结果"
+      },
+      "KnowledgeBase": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Envelope"
+                },
+                {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/KnowledgeBase"
+                    }
+                  },
+                  "type": "object"
+                }
+              ]
+            }
+          }
+        },
+        "description": "成功，返回知识库对象"
+      },
+      "KnowledgeBaseRecords": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Envelope"
+                },
+                {
+                  "properties": {
+                    "data": {
+                      "properties": {
+                        "records": {
+                          "items": {
+                            "$ref": "#/components/schemas/KnowledgeBase"
+                          },
+                          "type": "array"
+                        },
+                        "total": {
+                          "type": "integer"
+                        }
+                      },
+                      "required": ["records", "total"],
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                }
+              ]
+            }
+          }
+        },
+        "description": "成功，列表键 `records`"
+      },
+      "KnowledgeFileRecords": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Envelope"
+                },
+                {
+                  "properties": {
+                    "data": {
+                      "properties": {
+                        "records": {
+                          "items": {
+                            "$ref": "#/components/schemas/KnowledgeFile"
+                          },
+                          "type": "array"
+                        },
+                        "total": {
+                          "type": "integer"
+                        }
+                      },
+                      "required": ["records", "total"],
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                }
+              ]
+            }
+          }
+        },
+        "description": "成功，列表键 `records`"
+      },
+      "LogDetail": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Envelope"
+                },
+                {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/LogDetail"
+                    }
+                  },
+                  "type": "object"
+                }
+              ]
+            }
+          }
+        },
+        "description": "成功，返回日志详情"
+      },
+      "LogList": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Envelope"
+                },
+                {
+                  "properties": {
+                    "data": {
+                      "properties": {
+                        "logs": {
+                          "items": {
+                            "$ref": "#/components/schemas/RequestLog"
+                          },
+                          "type": "array"
+                        },
+                        "total": {
+                          "type": "integer"
+                        }
+                      },
+                      "required": ["logs", "total"],
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                }
+              ]
+            }
+          }
+        },
+        "description": "成功，列表键 `logs`"
+      },
+      "Memory": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Envelope"
+                },
+                {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Memory"
+                    }
+                  },
+                  "type": "object"
+                }
+              ]
+            }
+          }
+        },
+        "description": "成功，返回记忆对象"
+      },
+      "MemoryList": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Envelope"
+                },
+                {
+                  "properties": {
+                    "data": {
+                      "properties": {
+                        "current": {
+                          "type": "integer"
+                        },
+                        "memListItemResponseList": {
+                          "items": {
+                            "$ref": "#/components/schemas/Memory"
+                          },
+                          "type": "array"
+                        },
+                        "total": {
+                          "type": "integer"
+                        }
+                      },
+                      "required": ["memListItemResponseList", "total"],
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                }
+              ]
+            }
+          }
+        },
+        "description": "成功，列表键 `memListItemResponseList`"
+      },
+      "MemoryRecords": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Envelope"
+                },
+                {
+                  "properties": {
+                    "data": {
+                      "properties": {
+                        "records": {
+                          "items": {
+                            "$ref": "#/components/schemas/Memory"
+                          },
+                          "type": "array"
+                        },
+                        "size": {
+                          "type": "integer"
+                        },
+                        "total": {
+                          "type": "integer"
+                        }
+                      },
+                      "required": ["records", "total"],
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                }
+              ]
+            }
+          }
+        },
+        "description": "成功，列表键 `records`，多一个 `size`"
+      },
+      "Meta": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Envelope"
+                },
+                {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Meta"
+                    }
+                  },
+                  "type": "object"
+                }
+              ]
+            }
+          }
+        },
+        "description": "成功，返回运行信息"
+      },
+      "ModelsRecords": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Envelope"
+                },
+                {
+                  "properties": {
+                    "data": {
+                      "properties": {
+                        "records": {
+                          "items": {
+                            "$ref": "#/components/schemas/ModelEntry"
+                          },
+                          "type": "array"
+                        },
+                        "total": {
+                          "type": "integer"
+                        }
+                      },
+                      "required": ["records", "total"],
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                }
+              ]
+            }
+          }
+        },
+        "description": "成功，列表键 `records`"
+      },
+      "Ok": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Envelope"
+                },
+                {
+                  "properties": {
+                    "data": {
+                      "additionalProperties": true,
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                }
+              ]
+            }
+          }
+        },
+        "description": "成功"
+      },
+      "ProfileTemplate": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Envelope"
+                },
+                {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/ProfileTemplate"
+                    }
+                  },
+                  "type": "object"
+                }
+              ]
+            }
+          }
+        },
+        "description": "成功，返回模板对象"
+      },
+      "ProfileTemplateList": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Envelope"
+                },
+                {
+                  "properties": {
+                    "data": {
+                      "properties": {
+                        "current": {
+                          "type": "integer"
+                        },
+                        "list": {
+                          "items": {
+                            "$ref": "#/components/schemas/ProfileTemplate"
+                          },
+                          "type": "array"
+                        },
+                        "pages": {
+                          "type": "integer"
+                        },
+                        "size": {
+                          "type": "integer"
+                        },
+                        "total": {
+                          "type": "integer"
+                        }
+                      },
+                      "required": ["list", "total"],
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                }
+              ]
+            }
+          }
+        },
+        "description": "成功，列表键 `list`"
+      },
+      "Project": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Envelope"
+                },
+                {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Project"
+                    }
+                  },
+                  "type": "object"
+                }
+              ]
+            }
+          }
+        },
+        "description": "成功，返回项目对象"
+      },
+      "ProjectDict": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Envelope"
+                },
+                {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/ProjectDictItem"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "type": "object"
+                }
+              ]
+            }
+          }
+        },
+        "description": "成功，`data` 是项目数组"
+      },
+      "ProjectRecords": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Envelope"
+                },
+                {
+                  "properties": {
+                    "data": {
+                      "properties": {
+                        "records": {
+                          "items": {
+                            "$ref": "#/components/schemas/Project"
+                          },
+                          "type": "array"
+                        },
+                        "total": {
+                          "type": "integer"
+                        }
+                      },
+                      "required": ["records", "total"],
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                }
+              ]
+            }
+          }
+        },
+        "description": "成功，列表键 `records`"
+      },
+      "Prompt": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Envelope"
+                },
+                {
+                  "properties": {
+                    "data": {
+                      "properties": {
+                        "prompt": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                }
+              ]
+            }
+          }
+        },
+        "description": "成功，返回一段 Prompt"
+      },
+      "PromptBusy": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Envelope"
+                },
+                {
+                  "properties": {
+                    "data": {
+                      "properties": {
+                        "retryAfterSec": {
+                          "type": "integer"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                }
+              ]
+            }
+          }
+        },
+        "description": "请求过于频繁；`data.retryAfterSec` 与 `Retry-After` 头给出等待秒数",
+        "headers": {
+          "Retry-After": {
+            "description": "需要等待的秒数（与 `data.retryAfterSec` 相同，至少 1）",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        }
+      },
+      "PromptConfig": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Envelope"
+                },
+                {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/PromptConfig"
+                    }
+                  },
+                  "type": "object"
+                }
+              ]
+            }
+          }
+        },
+        "description": "成功，返回 Prompt 配置"
+      },
+      "PromptConflict": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Envelope"
+                },
+                {
+                  "properties": {
+                    "data": {
+                      "properties": {
+                        "currentVersionId": {
+                          "type": "integer"
+                        },
+                        "currentVersionNo": {
+                          "type": "integer"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                }
+              ]
+            }
+          }
+        },
+        "description": "提示词已被他人更新。`data.currentVersionId` 是当前生效版本的全局编号，\n`currentVersionNo` 是同一槽位显示用的序号；客户端据此刷新后再保存。\n两个字段始终存在；当前槽位已被还原成默认时值为 0（合法值），不能据此判断“字段缺失”。"
+      },
+      "PromptDetail": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Envelope"
+                },
+                {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/PromptDetail"
+                    }
+                  },
+                  "type": "object"
+                }
+              ]
+            }
+          }
+        },
+        "description": "成功，返回注册项、默认值与生效值"
+      },
+      "PromptGenerate": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Envelope"
+                },
+                {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/PromptGenerateData"
+                    }
+                  },
+                  "type": "object"
+                }
+              ]
+            }
+          }
+        },
+        "description": "成功，返回改写结果与校验"
+      },
+      "PromptInvalid": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Envelope"
+                },
+                {
+                  "properties": {
+                    "data": {
+                      "properties": {
+                        "errors": {
+                          "items": {
+                            "$ref": "#/components/schemas/PromptIssue"
+                          },
+                          "type": "array"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                }
+              ]
+            }
+          }
+        },
+        "description": "提示词没有通过校验；`data.errors` 是逐条问题，message 面向用户"
+      },
+      "PromptList": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Envelope"
+                },
+                {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/PromptCatalog"
+                    }
+                  },
+                  "type": "object"
+                }
+              ]
+            }
+          }
+        },
+        "description": "成功，返回提示词清单"
+      },
+      "PromptReset": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Envelope"
+                },
+                {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/PromptResetData"
+                    }
+                  },
+                  "type": "object"
+                }
+              ]
+            }
+          }
+        },
+        "description": "成功，返回实际被还原的槽位"
+      },
+      "PromptSave": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Envelope"
+                },
+                {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/PromptSaveData"
+                    }
+                  },
+                  "type": "object"
+                }
+              ]
+            }
+          }
+        },
+        "description": "成功，返回新版本与该槽位生效值"
+      },
+      "PromptTest": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Envelope"
+                },
+                {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/PromptTestData"
+                    }
+                  },
+                  "type": "object"
+                }
+              ]
+            }
+          }
+        },
+        "description": "成功，返回每次试跑的结果"
+      },
+      "PromptValidation": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Envelope"
+                },
+                {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/PromptValidation"
+                    }
+                  },
+                  "type": "object"
+                }
+              ]
+            }
+          }
+        },
+        "description": "成功，返回校验结果"
+      },
+      "PromptVersionNotFound": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorEnvelope"
+            }
+          }
+        },
+        "description": "提示词或历史版本不存在。`restoreFromVersionId` 不属于该项目的该槽位时\n数据面返回 `unknown_version`，控制面同样按不存在处理，不泄露它是否存在。"
+      },
+      "PromptVersions": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Envelope"
+                },
+                {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/PromptVersionsData"
+                    }
+                  },
+                  "type": "object"
+                }
+              ]
+            }
+          }
+        },
+        "description": "成功，返回版本历史"
+      },
+      "QuotaSummary": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Envelope"
+                },
+                {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/QuotaSummary"
+                    }
+                  },
+                  "type": "object"
+                }
+              ]
+            }
+          }
+        },
+        "description": "成功，返回额度对象"
+      },
+      "StringData": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Envelope"
+                },
+                {
+                  "properties": {
+                    "data": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              ]
+            }
+          }
+        },
+        "description": "成功，`data` 是字符串"
+      },
+      "SubscriptionDetails": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Envelope"
+                },
+                {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/SubscriptionDetails"
+                    }
+                  },
+                  "type": "object"
+                }
+              ]
+            }
+          }
+        },
+        "description": "成功，返回订阅周期"
+      },
+      "UntypedRecords": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Envelope"
+                },
+                {
+                  "properties": {
+                    "data": {
+                      "properties": {
+                        "records": {
+                          "items": {
+                            "additionalProperties": true,
+                            "type": "object"
+                          },
+                          "type": "array"
+                        },
+                        "total": {
+                          "type": "integer"
+                        }
+                      },
+                      "required": ["records", "total"],
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                }
+              ]
+            }
+          }
+        },
+        "description": "成功，列表键 `records`"
+      },
+      "UsageQuery": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Envelope"
+                },
+                {
+                  "properties": {
+                    "data": {
+                      "properties": {
+                        "dailyStats": {
+                          "items": {
+                            "$ref": "#/components/schemas/UsageDailyStat"
+                          },
+                          "type": "array"
+                        }
+                      },
+                      "required": ["dailyStats"],
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                }
+              ]
+            }
+          }
+        },
+        "description": "成功，返回按天聚合的用量"
+      }
+    },
+    "schemas": {
+      "ApiKey": {
+        "properties": {
+          "apiKey": {
+            "description": "完整密钥，列表里也下发，前端自己截断展示",
+            "type": "string"
+          },
+          "createTime": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "keyName": {
+            "type": "string"
+          }
+        },
+        "required": ["id", "keyName", "apiKey", "createTime"],
+        "type": "object"
+      },
+      "DocumentStatus": {
+        "enum": ["waiting", "uploading", "processing", "available", "deleting", "failed", "processFailed"],
+        "type": "string"
+      },
+      "Envelope": {
+        "properties": {
+          "code": {
+            "description": "0 表示成功；非 0 时前端按错误处理并弹出 message",
+            "type": "integer"
+          },
+          "data": {},
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": ["code", "message"],
+        "type": "object"
+      },
+      "ErrorEnvelope": {
+        "description": "错误信封。HTTP 状态码与 `code` 一起判断；`data` 按场景可能带 `errors`、`currentVersionId`、`retryAfterSec`。",
+        "properties": {
+          "code": {
+            "description": "非 0 即失败（40000 参数、40100 未登录、40300 无权限、40001 不存在、40900 冲突、41300 超限、42900 限流、50200/50143/50300 上游与模型侧、50400 超时）",
+            "type": "integer"
+          },
+          "data": {
+            "description": "失败时通常为 null；冲突、限流与校验失败带场景字段",
+            "nullable": true
+          },
+          "message": {
+            "description": "面向用户，只写发生了什么和怎么改",
+            "type": "string"
+          }
+        },
+        "required": ["code", "message"],
+        "type": "object"
+      },
+      "EventType": {
+        "description": "调用事件类型。前 10 个出现在列表页的筛选下拉里，后 4 个只出现在详情页的字段表里。",
+        "enum": [
+          "addMessage",
+          "searchMemory",
+          "getMemory",
+          "deleteMemory",
+          "addFeedback",
+          "manualAddMemory",
+          "updateMemory",
+          "bindProfileTemplate",
+          "editProfile",
+          "deleteProfile",
+          "getMessage",
+          "chat",
+          "extractMemory",
+          "rerank"
+        ],
+        "type": "string"
+      },
+      "ExtractResult": {
+        "properties": {
+          "content": {
+            "type": "string"
+          },
+          "type": {
+            "$ref": "#/components/schemas/MemoryDetailType"
+          }
+        },
+        "type": "object"
+      },
+      "GraphLink": {
+        "properties": {
+          "kind": {
+            "description": "边类型，小写",
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
+          },
+          "target": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "GraphNode": {
+        "properties": {
+          "clusterId": {
+            "description": "固定为 `session:\u003csessionId\u003e`",
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "labelTruncated": {
+            "type": "boolean"
+          },
+          "memoryType": {
+            "type": "string"
+          },
+          "sessionId": {
+            "type": "string"
+          },
+          "sourceIds": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "userId": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "GraphPageBody": {
+        "properties": {
+          "links": {
+            "items": {
+              "$ref": "#/components/schemas/GraphLink"
+            },
+            "type": "array"
+          },
+          "nodes": {
+            "items": {
+              "$ref": "#/components/schemas/GraphNode"
+            },
+            "type": "array"
+          },
+          "stats": {
+            "$ref": "#/components/schemas/GraphStats"
+          },
+          "tenant": {
+            "type": "string"
+          }
+        },
+        "required": ["tenant", "nodes", "links", "stats"],
+        "type": "object"
+      },
+      "GraphStats": {
+        "properties": {
+          "clusters": {
+            "type": "integer"
+          },
+          "links": {
+            "type": "integer"
+          },
+          "nodes": {
+            "type": "integer"
+          },
+          "orphans": {
+            "description": "没有任何边相连的节点数",
+            "type": "integer"
+          },
+          "sessions": {
+            "type": "integer"
+          },
+          "truncated": {
+            "description": "节点数触及 limit 上限时为 true",
+            "type": "boolean"
+          },
+          "types": {
+            "items": {
+              "properties": {
+                "count": {
+                  "type": "integer"
+                },
+                "name": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "HealthCheck": {
+        "properties": {
+          "detail": {
+            "description": "失败时的机器可读短码，文案由页面按语言翻译",
+            "type": "string"
+          },
+          "latencyMs": {
+            "type": "integer"
+          },
+          "ok": {
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
+      "KnowledgeBase": {
+        "properties": {
+          "kbId": {
+            "type": "string"
+          },
+          "knowledgebaseDescription": {
+            "type": "string"
+          },
+          "knowledgebaseName": {
+            "type": "string"
+          },
+          "projectIds": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": ["kbId", "knowledgebaseName"],
+        "type": "object"
+      },
+      "KnowledgeFile": {
+        "properties": {
+          "createTime": {
+            "type": "string"
+          },
+          "fileId": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "knowledgebaseId": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "size": {
+            "type": "integer"
+          },
+          "sizeMB": {
+            "type": "number"
+          },
+          "status": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "KnowledgeFileInput": {
+        "properties": {
+          "content": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          }
+        },
+        "required": ["name", "content"],
+        "type": "object"
+      },
+      "LogDetail": {
+        "properties": {
+          "agentId": {
+            "type": "string"
+          },
+          "createTime": {
+            "type": "string"
+          },
+          "duration": {
+            "type": "number"
+          },
+          "eventType": {
+            "$ref": "#/components/schemas/EventType"
+          },
+          "id": {
+            "type": "string"
+          },
+          "requestBody": {
+            "description": "JSON 字符串，前端二次 parse",
+            "type": "string"
+          },
+          "requestCode": {
+            "type": "integer"
+          },
+          "requestTokens": {
+            "type": "integer"
+          },
+          "responseBody": {
+            "description": "JSON 字符串，前端二次 parse",
+            "type": "string"
+          },
+          "responseCode": {
+            "type": "integer"
+          },
+          "responseTokens": {
+            "type": "integer"
+          },
+          "status": {
+            "$ref": "#/components/schemas/LogStatus"
+          },
+          "traceId": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
+          }
+        },
+        "required": ["id", "createTime", "eventType", "status"],
+        "type": "object"
+      },
+      "LogStatus": {
+        "description": "`SUCCESS` 与 `success` 都判为成功，其余判为失败",
+        "type": "string"
+      },
+      "Memory": {
+        "properties": {
+          "createTime": {
+            "type": "string"
+          },
+          "externalUserId": {
+            "type": "string"
+          },
+          "history": {
+            "items": {
+              "$ref": "#/components/schemas/MemoryVersion"
+            },
+            "type": "array"
+          },
+          "memoryContent": {
+            "type": "string"
+          },
+          "memoryId": {
+            "type": "string"
+          },
+          "memoryKey": {
+            "type": "string"
+          },
+          "memoryType": {
+            "type": "string"
+          },
+          "profileInstanceId": {
+            "description": "`profile_mem` 专有",
+            "type": "string"
+          },
+          "profileTemplateId": {
+            "description": "`profile_mem` 专有",
+            "type": "string"
+          },
+          "relativity": {
+            "description": "该次检索的实际相关度；画像或旧快照缺失时省略",
+            "type": "number"
+          },
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/MemorySource"
+            },
+            "type": "array"
+          },
+          "status": {
+            "type": "string"
+          },
+          "subjectType": {
+            "$ref": "#/components/schemas/MemorySubjectType"
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "updateTime": {
+            "type": "string"
+          },
+          "version": {
+            "description": "上游当前版本号",
+            "type": "integer"
+          }
+        },
+        "required": ["memoryId", "memoryContent", "createTime"],
+        "type": "object"
+      },
+      "MemoryActivity": {
+        "properties": {
+          "callId": {
+            "type": "string"
+          },
+          "completedAt": {
+            "type": "string"
+          },
+          "memories": {
+            "items": {
+              "$ref": "#/components/schemas/Memory"
+            },
+            "type": "array"
+          },
+          "status": {
+            "enum": ["pending", "succeeded", "failed", "unavailable", "not_found"],
+            "type": "string"
+          },
+          "total": {
+            "type": "integer"
+          },
+          "truncated": {
+            "type": "boolean"
+          }
+        },
+        "required": ["callId", "status", "memories", "total", "truncated"],
+        "type": "object"
+      },
+      "MemoryDetailType": {
+        "description": "记忆类型。`text_mem` 事实记忆、`pref_mem` 偏好记忆、`event_mem` 事件记忆、`profile_mem` 属性树记忆、`tool_mem` 工具记忆。",
+        "enum": ["text_mem", "pref_mem", "event_mem", "profile_mem", "tool_mem"],
+        "type": "string"
+      },
+      "MemoryEvent": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/MemoryActivity"
+          },
+          {
+            "properties": {
+              "before": {
+                "items": {
+                  "$ref": "#/components/schemas/Memory"
+                },
+                "type": "array"
+              },
+              "eventId": {
+                "type": "string"
+              },
+              "kind": {
+                "enum": ["recall", "add", "update", "delete"],
+                "type": "string"
+              },
+              "memoryIds": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "sequence": {
+                "pattern": "^[0-9]+$",
+                "type": "string"
+              },
+              "sessionId": {
+                "type": "string"
+              }
+            },
+            "required": ["eventId", "sequence", "kind", "sessionId", "before", "memoryIds"],
+            "type": "object"
+          }
+        ]
+      },
+      "MemorySource": {
+        "properties": {
+          "content": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string"
+          },
+          "time": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "MemorySubjectType": {
+        "enum": ["user", "agent", "public"],
+        "type": "string"
+      },
+      "MemoryVersion": {
+        "properties": {
+          "content": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "updateType": {
+            "type": "string"
+          },
+          "validFrom": {
+            "type": "string"
+          },
+          "validTo": {
+            "type": "string"
+          },
+          "version": {
+            "type": "integer"
+          }
+        },
+        "required": ["version", "content", "createdAt"],
+        "type": "object"
+      },
+      "Meta": {
+        "properties": {
+          "health": {
+            "nullable": true,
+            "type": "object"
+          },
+          "keyPrefix": {
+            "description": "新建密钥的展示与校验用它",
+            "type": "string"
+          },
+          "mode": {
+            "description": "`sample` 示例后端，`live` 真实后端",
+            "enum": ["sample", "live"],
+            "type": "string"
+          },
+          "service": {
+            "type": "string"
+          },
+          "tools": {
+            "items": {
+              "$ref": "#/components/schemas/ToolInfo"
+            },
+            "type": "array"
+          }
+        },
+        "required": ["mode", "keyPrefix", "tools"],
+        "type": "object"
+      },
+      "ModelEntry": {
+        "properties": {
+          "group": {
+            "type": "string"
+          },
+          "model": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
+          },
+          "spec": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ProfileTemplate": {
+        "additionalProperties": {
+          "$ref": "#/components/schemas/ProfileTemplateGroup"
+        },
+        "description": "模板对象。除下列元信息外，其余键都当作分组数据，形状是「分组 → 字段 → `{ value, algorithm_updatable }`」。",
+        "properties": {
+          "bindingCount": {
+            "type": "integer"
+          },
+          "projectId": {
+            "type": "string"
+          },
+          "templateId": {
+            "type": "string"
+          },
+          "templateName": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ProfileTemplateField": {
+        "properties": {
+          "algorithm_updatable": {
+            "description": "该字段是否允许算法自动更新",
+            "type": "boolean"
+          },
+          "value": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ProfileTemplateGroup": {
+        "additionalProperties": {
+          "$ref": "#/components/schemas/ProfileTemplateField"
+        },
+        "description": "分组 → 字段 → `{ value, algorithm_updatable }`",
+        "type": "object"
+      },
+      "Project": {
+        "properties": {
+          "createTime": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "isMultiView": {
+            "enum": [0, 1],
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "status": {
+            "description": "`ENABLED` 的那条是当前项目",
+            "enum": ["ENABLED", "DISABLED"],
+            "type": "string"
+          }
+        },
+        "required": ["id", "name"],
+        "type": "object"
+      },
+      "ProjectDictItem": {
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "status": {
+            "enum": ["ENABLED", "DISABLED"],
+            "type": "string"
+          }
+        },
+        "required": ["id", "name"],
+        "type": "object"
+      },
+      "ProjectScopedRequest": {
+        "properties": {
+          "projectId": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "PromptCatalog": {
+        "properties": {
+          "prompts": {
+            "items": {
+              "$ref": "#/components/schemas/PromptItem"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "PromptConfig": {
+        "properties": {
+          "projectId": {
+            "type": "string"
+          },
+          "prompt": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "PromptContractCheck": {
+        "properties": {
+          "missing": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
+      "PromptDetail": {
+        "properties": {
+          "defaults": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "语言 → 内置默认全文，原样透传",
+            "type": "object"
+          },
+          "editable": {
+            "type": "boolean"
+          },
+          "effective": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/PromptEffective"
+            },
+            "description": "语言 → 当前生效值，原样透传",
+            "type": "object"
+          },
+          "group": {
+            "type": "string"
+          },
+          "inputKind": {
+            "type": "string"
+          },
+          "inputSchema": {
+            "additionalProperties": true,
+            "description": "原样透传",
+            "type": "object"
+          },
+          "key": {
+            "type": "string"
+          },
+          "languages": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "lockedSuffix": {
+            "description": "代码在用户提示词之后自动追加的文本，只读",
+            "nullable": true,
+            "type": "string"
+          },
+          "outputContract": {
+            "$ref": "#/components/schemas/PromptOutputContract"
+          },
+          "placeholders": {
+            "items": {
+              "$ref": "#/components/schemas/PromptPlaceholder"
+            },
+            "type": "array"
+          },
+          "sampleInputs": {
+            "items": {
+              "$ref": "#/components/schemas/PromptSample"
+            },
+            "type": "array"
+          },
+          "summary": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "syntax": {
+            "description": "占位符替换方式，由记忆服务的注册表决定（如 `dollar`、`format`、`brace`）",
+            "type": "string"
+          },
+          "title": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      },
+      "PromptEffective": {
+        "properties": {
+          "author": {
+            "description": "默认槽位为 null",
+            "nullable": true,
+            "type": "string"
+          },
+          "body": {
+            "type": "string"
+          },
+          "source": {
+            "enum": ["default", "project"],
+            "type": "string"
+          },
+          "updatedAt": {
+            "description": "默认槽位为 null",
+            "nullable": true,
+            "type": "string"
+          },
+          "versionId": {
+            "type": "integer"
+          },
+          "versionNo": {
+            "description": "该槽位从 1 开始的序号",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "PromptGenerateData": {
+        "properties": {
+          "body": {
+            "type": "string"
+          },
+          "validation": {
+            "$ref": "#/components/schemas/PromptValidation"
+          }
+        },
+        "type": "object"
+      },
+      "PromptGenerateRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/PromptLangRequest"
+          },
+          {
+            "properties": {
+              "baseBody": {
+                "type": "string"
+              },
+              "instruction": {
+                "type": "string"
+              }
+            },
+            "required": ["instruction"],
+            "type": "object"
+          }
+        ]
+      },
+      "PromptIssue": {
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "message": {
+            "description": "面向用户，只说发生了什么和怎么改",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "PromptItem": {
+        "properties": {
+          "editable": {
+            "type": "boolean"
+          },
+          "group": {
+            "enum": ["extract", "process", "dream"],
+            "type": "string"
+          },
+          "key": {
+            "type": "string"
+          },
+          "languages": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "state": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/PromptState"
+            },
+            "description": "语言 → 槽位状态",
+            "type": "object"
+          },
+          "summary": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "语言 → 一句话说明",
+            "type": "object"
+          },
+          "title": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "语言 → 标题",
+            "type": "object"
+          }
+        },
+        "type": "object"
+      },
+      "PromptKeyRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ProjectScopedRequest"
+          },
+          {
+            "properties": {
+              "key": {
+                "type": "string"
+              }
+            },
+            "required": ["key"],
+            "type": "object"
+          }
+        ]
+      },
+      "PromptLangRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/PromptKeyRequest"
+          },
+          {
+            "properties": {
+              "lang": {
+                "type": "string"
+              }
+            },
+            "required": ["lang"],
+            "type": "object"
+          }
+        ]
+      },
+      "PromptOutputContract": {
+        "properties": {
+          "description": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "format": {
+            "type": "string"
+          },
+          "itemKeys": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "requiredKeys": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "PromptPlaceholder": {
+        "properties": {
+          "description": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "name": {
+            "type": "string"
+          },
+          "required": {
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
+      "PromptResetData": {
+        "description": "实际被还原的槽位；全部已是默认时为空数组。",
+        "properties": {
+          "reset": {
+            "items": {
+              "$ref": "#/components/schemas/PromptResetItem"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "PromptResetItem": {
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "lang": {
+            "type": "string"
+          },
+          "versionId": {
+            "type": "integer"
+          },
+          "versionNo": {
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "PromptResetRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ProjectScopedRequest"
+          },
+          {
+            "properties": {
+              "key": {
+                "description": "省略表示整个项目",
+                "type": "string"
+              },
+              "lang": {
+                "description": "省略表示该条的全部语言",
+                "type": "string"
+              }
+            },
+            "type": "object"
+          }
+        ]
+      },
+      "PromptRunError": {
+        "properties": {
+          "code": {
+            "enum": ["llm_error", "llm_timeout"],
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "PromptSample": {
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "input": {
+            "additionalProperties": true,
+            "description": "原样透传，形状由 `inputSchema` 描述",
+            "type": "object"
+          },
+          "lang": {
+            "description": "样例输入本身的语种，前端按当前所选语言过滤",
+            "type": "string"
+          },
+          "title": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      },
+      "PromptSaveData": {
+        "properties": {
+          "createdAt": {
+            "type": "string"
+          },
+          "effective": {
+            "$ref": "#/components/schemas/PromptEffective"
+          },
+          "versionId": {
+            "type": "integer"
+          },
+          "versionNo": {
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "PromptSaveRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/PromptLangRequest"
+          },
+          {
+            "properties": {
+              "baseVersionId": {
+                "description": "客户端看到的当前版本，默认 0",
+                "type": "integer"
+              },
+              "body": {
+                "description": "与 `restoreFromVersionId` 二选一",
+                "type": "string"
+              },
+              "note": {
+                "description": "最长 200 字符",
+                "type": "string"
+              },
+              "restoreFromVersionId": {
+                "type": "integer"
+              }
+            },
+            "type": "object"
+          }
+        ]
+      },
+      "PromptSlotRef": {
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "lang": {
+            "type": "string"
+          },
+          "source": {
+            "enum": ["draft", "project", "default"],
+            "type": "string"
+          },
+          "versionId": {
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "PromptState": {
+        "description": "一个语言槽位的状态。`source=default` 时 `versionId` 为 0。",
+        "properties": {
+          "author": {
+            "description": "默认槽位为 null",
+            "nullable": true,
+            "type": "string"
+          },
+          "source": {
+            "enum": ["default", "project"],
+            "type": "string"
+          },
+          "updatedAt": {
+            "description": "默认槽位为 null",
+            "nullable": true,
+            "type": "string"
+          },
+          "versionId": {
+            "description": "全局自增编号，只用于接口调用与并发判断",
+            "type": "integer"
+          },
+          "versionNo": {
+            "description": "该槽位从 1 开始的序号，界面显示用；默认时为 0",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "PromptTestData": {
+        "properties": {
+          "runs": {
+            "items": {
+              "$ref": "#/components/schemas/PromptTestRun"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "PromptTestRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/PromptLangRequest"
+          },
+          {
+            "properties": {
+              "body": {
+                "description": "草稿；缺省用当前生效值",
+                "type": "string"
+              },
+              "compareDefault": {
+                "type": "boolean"
+              },
+              "input": {
+                "additionalProperties": true,
+                "description": "形状由对应注册项的 `inputSchema` 决定",
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        ]
+      },
+      "PromptTestRun": {
+        "properties": {
+          "contract": {
+            "$ref": "#/components/schemas/PromptContractCheck"
+          },
+          "error": {
+            "$ref": "#/components/schemas/PromptRunError"
+          },
+          "fallbackTriggered": {
+            "description": "为真表示真实抽取在这种输出下会把原文整段存成 UserMemory",
+            "type": "boolean"
+          },
+          "label": {
+            "enum": ["draft", "default"],
+            "type": "string"
+          },
+          "latencyMs": {
+            "type": "integer"
+          },
+          "model": {
+            "type": "string"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "output": {
+            "additionalProperties": true,
+            "description": "原样透传，不转换键名",
+            "type": "object"
+          },
+          "parseOk": {
+            "type": "boolean"
+          },
+          "rawOutput": {
+            "type": "string"
+          },
+          "truncated": {
+            "type": "boolean"
+          },
+          "usage": {
+            "additionalProperties": true,
+            "description": "开放映射，snake_case 的键转成 camelCase（如 promptTokens、completionTokens、calls）",
+            "type": "object"
+          },
+          "usedSlots": {
+            "description": "本次运行实际取用的模板槽位",
+            "items": {
+              "$ref": "#/components/schemas/PromptSlotRef"
+            },
+            "type": "array"
+          },
+          "warnings": {
+            "description": "不阻止运行、但用户要知道的情况（例如草稿没有被取用）",
+            "items": {
+              "$ref": "#/components/schemas/PromptIssue"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "PromptValidateRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/PromptLangRequest"
+          },
+          {
+            "properties": {
+              "body": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          }
+        ]
+      },
+      "PromptValidation": {
+        "properties": {
+          "errors": {
+            "items": {
+              "$ref": "#/components/schemas/PromptIssue"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "warnings": {
+            "items": {
+              "$ref": "#/components/schemas/PromptIssue"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "PromptVersion": {
+        "properties": {
+          "author": {
+            "type": "string"
+          },
+          "body": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "kind": {
+            "enum": ["save", "reset", "rollback", "migrated"],
+            "type": "string"
+          },
+          "lang": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string"
+          },
+          "parentVersionId": {
+            "nullable": true,
+            "type": "integer"
+          },
+          "versionId": {
+            "type": "integer"
+          },
+          "versionNo": {
+            "description": "该槽位从 1 开始的序号（含 save/rollback/reset/migrated）",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "PromptVersionsData": {
+        "properties": {
+          "hasMore": {
+            "type": "boolean"
+          },
+          "versions": {
+            "items": {
+              "$ref": "#/components/schemas/PromptVersion"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "PromptVersionsRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/PromptKeyRequest"
+          },
+          {
+            "properties": {
+              "beforeVersionId": {
+                "type": "integer"
+              },
+              "lang": {
+                "type": "string"
+              },
+              "limit": {
+                "description": "默认 20，上限 100",
+                "type": "integer"
+              }
+            },
+            "type": "object"
+          }
+        ]
+      },
+      "QuotaSummary": {
+        "properties": {
+          "allowedKnowledgebaseCount": {
+            "type": "integer"
+          },
+          "knowledgebaseCapacity": {
+            "type": "integer"
+          },
+          "knowledgebaseCount": {
+            "type": "integer"
+          },
+          "memoryCount": {
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "RequestLog": {
+        "properties": {
+          "agentIds": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "createTime": {
+            "type": "string"
+          },
+          "duration": {
+            "description": "毫秒数，前端拼 `ms` 展示",
+            "type": "number"
+          },
+          "eventType": {
+            "$ref": "#/components/schemas/EventType"
+          },
+          "id": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/LogStatus"
+          },
+          "userIds": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": ["id", "createTime", "eventType", "status"],
+        "type": "object"
+      },
+      "SubscriptionDetails": {
+        "properties": {
+          "currentCycle": {
+            "properties": {
+              "id": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "cycles": {
+            "items": {
+              "properties": {
+                "cycleEndTime": {
+                  "type": "string"
+                },
+                "cycleStartTime": {
+                  "type": "string"
+                },
+                "id": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "ToolInfo": {
+        "description": "服务暴露的一个 MCP 工具，接入说明与示例命令据此生成",
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "UsageCalls": {
+        "properties": {
+          "calls": {
+            "type": "integer"
+          },
+          "totalTokens": {
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "UsageDailyStat": {
+        "properties": {
+          "addMessage": {
+            "$ref": "#/components/schemas/UsageCalls"
+          },
+          "chat": {
+            "$ref": "#/components/schemas/UsageTokens"
+          },
+          "date": {
+            "format": "date",
+            "type": "string"
+          },
+          "extractMemory": {
+            "$ref": "#/components/schemas/UsageTokens"
+          },
+          "rerank": {
+            "$ref": "#/components/schemas/UsageCalls"
+          },
+          "searchMemory": {
+            "$ref": "#/components/schemas/UsageCalls"
+          }
+        },
+        "required": ["date"],
+        "type": "object"
+      },
+      "UsageTokens": {
+        "properties": {
+          "requestTokens": {
+            "type": "integer"
+          },
+          "responseTokens": {
+            "type": "integer"
+          },
+          "totalTokens": {
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "description": "控制台前端依赖的后端接口定义。\n\n## 通用约定\n\n**统一返回格式。** 所有接口返回 `{ code, data, message }`。`code === 0` 表示成功，前端解包后只拿 `data`；非 0 时前端按错误处理，把 `message` 弹成提示。HTTP 状态码不参与判断，200 + 非 0 code 也算失败。\n\n**请求体。** 除少数 GET 外，参数一律放 body，不放 query。字段值为空串或 null 时前端会**删掉该字段**再发出去，后端要按「字段不存在」处理，不要依赖空串。\n\n**分页。** 参数名固定 `pageNum` / `pageSize`，从 1 开始。\n\n**列表响应的键不统一。** 同一个前端里四种写法并存，这是最容易被忽略的地方：\n\n| 接口 | 列表键 | 分页字段 |\n|---|---|---|\n| `project/list`、`keys/list`、`knowledgebase/list`、`knowledgebase/memory/list` | `records` | `total` |\n| `log/list` | `logs` | `total` |\n| `project/memory/list` | `memListItemResponseList` | `total`、`current` |\n| `profileTemplate/list` | `list` | `total`、`current`、`size`、`pages` |\n\n**时间字段。** 一律叫 `createTime`（不是 `createdAt`），值是可被 `dayjs` 直接解析的字符串。\n\n## 错误码\n\n| code | 含义 |\n|---|---|\n| 0 | 成功 |\n| 40000 | 参数错误 |\n| 40001 | 资源不存在 |\n| 40002 | 请求过于频繁 |\n| 40003 | 无权限 |\n| 40100 | 未登录 |\n| 40104 | 未授权 |\n| 50106 | 知识库数量超限 |\n| 50107 | 文档删除中 |\n| 41300 | 请求体或正文超过上限 |\n| 50200 | 模型调用失败，稍后重试 |\n| 50400 | 模型响应超时，稍后重试 |\n| 60004 | 容量超限 |\n\n## 模型列表不走接口\n\n「模型列表」页的数据来自静态 JSON（形状 `{ records: [...] }`），由前端从配置目录取，后端不需要实现。\n\n## 鉴权\n\n**控制台目前不发任何鉴权头**，请求里只有 `Content-Type`。所以本接口定义按「无鉴权」描述（根级 `security: []`）。\n\n真实后端要不要加鉴权、加在哪一层需要单独决定：控制台没有登录页，后端若要求 token，前端也要相应改动。",
+    "title": "Memory Console Dashboard API",
+    "version": "0.1.0"
+  },
+  "openapi": "3.0.3",
+  "paths": {
+    "/api/dashboard/graph/memories": {
+      "get": {
+        "parameters": [
+          {
+            "description": "项目 id",
+            "in": "query",
+            "name": "tenant",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "节点上限，超过服务端配置的上限时按上限截断",
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "逗号分隔的记忆类型过滤",
+            "in": "query",
+            "name": "types",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/GraphPage"
+          }
+        },
+        "summary": "记忆图谱的节点与边",
+        "tags": ["图谱"]
+      }
+    },
+    "/api/dashboard/graph/memory": {
+      "get": {
+        "parameters": [
+          {
+            "in": "query",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "tenant",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Envelope"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "properties": {
+                            "id": {
+                              "type": "string"
+                            },
+                            "memory": {
+                              "type": "string"
+                            }
+                          },
+                          "type": "object"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  ]
+                }
+              }
+            },
+            "description": "成功"
+          }
+        },
+        "summary": "单个节点的正文",
+        "tags": ["图谱"]
+      }
+    },
+    "/api/dashboard/keys/copy": {
+      "post": {
+        "description": "`data` 是密钥字符串本身，不是对象。",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "apiKeyId": {
+                    "type": "string"
+                  }
+                },
+                "required": ["apiKeyId"],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/StringData"
+          }
+        },
+        "summary": "取完整密钥",
+        "tags": ["接口密钥"]
+      }
+    },
+    "/api/dashboard/keys/create": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "keyName": {
+                    "type": "string"
+                  },
+                  "projectId": {
+                    "type": "string"
+                  }
+                },
+                "required": ["projectId", "keyName"],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/ApiKey"
+          }
+        },
+        "summary": "新建密钥",
+        "tags": ["接口密钥"]
+      }
+    },
+    "/api/dashboard/keys/list": {
+      "post": {
+        "description": "列表里下发的 `apiKey` 就是**完整密钥**，没有掩码字段，前端自己截断成 `${key.slice(0,7)}*******${key.slice(-8)}` 展示。",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "pageNum": {
+                    "default": 1,
+                    "type": "integer"
+                  },
+                  "pageSize": {
+                    "default": 10,
+                    "type": "integer"
+                  },
+                  "projectId": {
+                    "type": "string"
+                  }
+                },
+                "required": ["projectId"],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/ApiKeyRecords"
+          }
+        },
+        "summary": "密钥分页列表",
+        "tags": ["接口密钥"]
+      }
+    },
+    "/api/dashboard/keys/rename/{apiKeyId}": {
+      "post": {
+        "description": "只改展示名，明文与哈希不变，改名后 Key 仍然可用。",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "apiKeyId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "keyName": {
+                    "maxLength": 64,
+                    "type": "string"
+                  }
+                },
+                "required": ["keyName"],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/ApiKey"
+          }
+        },
+        "summary": "修改 Key 的名称",
+        "tags": ["接口密钥"]
+      }
+    },
+    "/api/dashboard/keys/revoke/{apiKeyId}": {
+      "post": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "apiKeyId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Ok"
+          }
+        },
+        "summary": "吊销密钥",
+        "tags": ["接口密钥"]
+      }
+    },
+    "/api/dashboard/knowledgebase/create": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "knowledgebaseDescription": {
+                    "type": "string"
+                  },
+                  "knowledgebaseName": {
+                    "type": "string"
+                  },
+                  "projectIds": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": ["knowledgebaseName"],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/KnowledgeBase"
+          }
+        },
+        "summary": "新建知识库",
+        "tags": ["知识库"]
+      }
+    },
+    "/api/dashboard/knowledgebase/delete": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "knowledgeBaseId": {
+                    "type": "string"
+                  },
+                  "projectId": {
+                    "type": "string"
+                  }
+                },
+                "required": ["knowledgeBaseId"],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Envelope"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "properties": {
+                            "id": {
+                              "type": "string"
+                            },
+                            "ok": {
+                              "type": "boolean"
+                            }
+                          },
+                          "type": "object"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  ]
+                }
+              }
+            },
+            "description": "成功"
+          }
+        },
+        "summary": "删除知识库",
+        "tags": ["知识库"]
+      }
+    },
+    "/api/dashboard/knowledgebase/detail": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "knowledgeBaseId": {
+                    "type": "string"
+                  }
+                },
+                "required": ["knowledgeBaseId"],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/KnowledgeBase"
+          }
+        },
+        "summary": "知识库详情",
+        "tags": ["知识库"]
+      }
+    },
+    "/api/dashboard/knowledgebase/file/add": {
+      "post": {
+        "description": "`file` 与 `files` 二选一；每个文件必须带 `name` 与 `content`。",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "file": {
+                    "$ref": "#/components/schemas/KnowledgeFileInput"
+                  },
+                  "files": {
+                    "items": {
+                      "$ref": "#/components/schemas/KnowledgeFileInput"
+                    },
+                    "type": "array"
+                  },
+                  "knowledgeBaseId": {
+                    "type": "string"
+                  },
+                  "projectId": {
+                    "type": "string"
+                  },
+                  "type": {
+                    "type": "string"
+                  }
+                },
+                "required": ["knowledgeBaseId"],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/KnowledgeFileRecords"
+          }
+        },
+        "summary": "新增知识库文件",
+        "tags": ["知识库"]
+      }
+    },
+    "/api/dashboard/knowledgebase/file/delete": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "fileIds": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "projectId": {
+                    "type": "string"
+                  }
+                },
+                "required": ["fileIds"],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Envelope"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "properties": {
+                            "deleted": {
+                              "type": "integer"
+                            },
+                            "ok": {
+                              "type": "boolean"
+                            }
+                          },
+                          "type": "object"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  ]
+                }
+              }
+            },
+            "description": "成功，返回删除条数"
+          }
+        },
+        "summary": "删除知识库文件",
+        "tags": ["知识库"]
+      }
+    },
+    "/api/dashboard/knowledgebase/file/download": {
+      "get": {
+        "description": "唯一不套 JSON 信封的接口：直接把上游文件字节以附件形式返回。",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "fileId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "format": "binary",
+                  "type": "string"
+                }
+              }
+            },
+            "description": "文件字节"
+          }
+        },
+        "summary": "下载知识库文件",
+        "tags": ["知识库"]
+      }
+    },
+    "/api/dashboard/knowledgebase/file/list": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "endTime": {
+                    "type": "string"
+                  },
+                  "fileName": {
+                    "type": "string"
+                  },
+                  "knowledgeBaseId": {
+                    "type": "string"
+                  },
+                  "pageNum": {
+                    "default": 1,
+                    "type": "integer"
+                  },
+                  "pageSize": {
+                    "default": 10,
+                    "type": "integer"
+                  },
+                  "startTime": {
+                    "type": "string"
+                  },
+                  "status": {
+                    "$ref": "#/components/schemas/DocumentStatus"
+                  },
+                  "type": {
+                    "type": "string"
+                  }
+                },
+                "required": ["knowledgeBaseId"],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/UntypedRecords"
+          }
+        },
+        "summary": "知识库文档列表",
+        "tags": ["知识库"]
+      }
+    },
+    "/api/dashboard/knowledgebase/list": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "pageNum": {
+                    "default": 1,
+                    "type": "integer"
+                  },
+                  "pageSize": {
+                    "default": 10,
+                    "type": "integer"
+                  },
+                  "projectId": {
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/KnowledgeBaseRecords"
+          }
+        },
+        "summary": "知识库分页列表",
+        "tags": ["知识库"]
+      }
+    },
+    "/api/dashboard/knowledgebase/memory/list": {
+      "post": {
+        "description": "比其它列表多一个 `size` 字段。",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "endTime": {
+                    "type": "string"
+                  },
+                  "knowledgeBaseId": {
+                    "type": "string"
+                  },
+                  "pageNum": {
+                    "default": 1,
+                    "type": "integer"
+                  },
+                  "pageSize": {
+                    "default": 10,
+                    "type": "integer"
+                  },
+                  "query": {
+                    "type": "string"
+                  },
+                  "startTime": {
+                    "type": "string"
+                  },
+                  "triggerType": {
+                    "type": "string"
+                  },
+                  "userId": {
+                    "type": "string"
+                  }
+                },
+                "required": ["knowledgeBaseId"],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/MemoryRecords"
+          }
+        },
+        "summary": "知识库的记忆列表",
+        "tags": ["知识库"]
+      }
+    },
+    "/api/dashboard/knowledgebase/project/associate": {
+      "post": {
+        "description": "传的是该项目的**全量**知识库 id 列表，不在列表里的会被解除关联。",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "knowledgeBaseIds": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "projectId": {
+                    "type": "string"
+                  }
+                },
+                "required": ["projectId", "knowledgeBaseIds"],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Ok"
+          }
+        },
+        "summary": "把知识库关联到项目",
+        "tags": ["知识库"]
+      }
+    },
+    "/api/dashboard/knowledgebase/project/remove": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "deleteAll": {
+                    "description": "为真时连同知识库本身一起删除",
+                    "type": "boolean"
+                  },
+                  "knowledgeBaseId": {
+                    "type": "string"
+                  },
+                  "projectId": {
+                    "type": "string"
+                  }
+                },
+                "required": ["projectId", "knowledgeBaseId"],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Ok"
+          }
+        },
+        "summary": "解除知识库与项目的关联",
+        "tags": ["知识库"]
+      }
+    },
+    "/api/dashboard/knowledgebase/update": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "knowledgebaseDescription": {
+                    "type": "string"
+                  },
+                  "knowledgebaseName": {
+                    "type": "string"
+                  },
+                  "projectIds": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": ["id"],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/KnowledgeBase"
+          }
+        },
+        "summary": "更新知识库",
+        "tags": ["知识库"]
+      }
+    },
+    "/api/dashboard/local-sync/devices": {
+      "get": {
+        "description": "能力未开启时返回 503，不是空列表。`projectId` 走查询串。",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Ok"
+          }
+        },
+        "summary": "已授权的本地设备与配额",
+        "tags": ["本地同步"]
+      }
+    },
+    "/api/dashboard/local-sync/devices/{id}": {
+      "delete": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Ok"
+          }
+        },
+        "summary": "吊销设备",
+        "tags": ["本地同步"]
+      }
+    },
+    "/api/dashboard/local-sync/memories": {
+      "get": {
+        "parameters": [
+          {
+            "in": "query",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "layer",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "deviceId",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "q",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "startTime",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "endTime",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "default": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "pageSize",
+            "schema": {
+              "default": 20,
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/UntypedRecords"
+          }
+        },
+        "summary": "本地记忆镜像分页列表",
+        "tags": ["本地同步"]
+      }
+    },
+    "/api/dashboard/local-sync/memories/promote": {
+      "post": {
+        "parameters": [
+          {
+            "in": "query",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "ids": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": ["ids"],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Ok"
+          }
+        },
+        "summary": "批量转存到上游记忆",
+        "tags": ["本地同步"]
+      }
+    },
+    "/api/dashboard/local-sync/memories/{id}": {
+      "delete": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Ok"
+          }
+        },
+        "summary": "删除镜像（只置 deleted_at，不影响本地）",
+        "tags": ["本地同步"]
+      },
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Ok"
+          }
+        },
+        "summary": "镜像详情（含 payload）",
+        "tags": ["本地同步"]
+      }
+    },
+    "/api/dashboard/local-sync/summary": {
+      "get": {
+        "parameters": [
+          {
+            "in": "query",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Ok"
+          }
+        },
+        "summary": "治理摘要（按层计数与配额）",
+        "tags": ["本地同步"]
+      }
+    },
+    "/api/dashboard/log/detail": {
+      "post": {
+        "description": "`requestBody` 与 `responseBody` 是 **JSON 字符串**，不是对象，前端要二次 `JSON.parse`。\n\n`eventType === \"chat\"` 时 `responseBody` 再解析一次：解析结果带 `code` 与 `data` 就直接用，否则包成 `{ code: responseCode, data: \u003c解析结果\u003e }`。\n\n### 详情抽屉按 eventType 取哪些字段\n\n通用字段（每条日志都有）：`status`、`duration`、`traceId`、`userId`、`agentId`、`createTime`、`requestTokens`、`responseTokens`、`requestCode`、`responseCode`、`eventType`。\n\n各类型额外读取的路径（点号分隔，`requestBody` / `responseBody` 解析后的字段）：\n\n| eventType | 请求 | 响应 |\n|---|---|---|\n| `addMessage` | `async_mode` `conversation_id` `allow_memory_view` `messages` `info` | `code` `data.memory_views` `message` |\n| `addFeedback` | `feedback_target` `profile_id` `attr_id` `feedback_content` `feedback_time` | `code` `data.memory_views` `message` |\n| `searchMemory` | `conversation_id` `conversationId` `query` `include_memory_view` `memory_limit_number` `includePreference` `preferenceLimitNumber` `includeToolMemory` `toolMemoryLimitNumber` `knowledgebase_ids` `filter` | `code` `data` `message` |\n| `getMessage` | `message_limit_number` | `code` `data.message_detail_list` `message` |\n| `getMemory` | `page` `size` `filter` `include_memory_view` | `code` `data` `message` |\n| `deleteMemory` | `memory_ids` `message_id` | `code` `data` `message` |\n| `manualAddMemory` | `memory_view` `add_time` `algorithm_updatable` `content` | `code` `data` `message` |\n| `updateMemory` | `memory_id` `title` `algorithm_updatable` `content` | `code` `data` `message` |\n| `bindProfileTemplate` | `bind_list` | `code` `message` |\n| `editProfile` | `profile_template_id` `metadata` `remove_fields` | `code` `message` |\n| `deleteProfile` | `profile_template_id` | `code` `message` |\n| `chat` | `conversation_id` `knowledgebase_ids` `query` `filter` `base_prompt` `model_name` `include_preference` `add_message_on_answer` | `code` `data.response` `message` |\n| `extractMemory` | `messages` `extraction_types` | `code` `message`、`data.choices.0.message.content` |\n| `rerank` | `model` `query` `documents` `top_n` | `code` `data.results` `message` |\n\n请求体里的键名风格不统一，既有下划线（`conversation_id`）也有驼峰（`conversationId`），`searchMemory` 两种都会去取。",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "logId": {
+                    "type": "string"
+                  }
+                },
+                "required": ["logId"],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/LogDetail"
+          }
+        },
+        "summary": "调用日志详情",
+        "tags": ["调用日志"]
+      }
+    },
+    "/api/dashboard/log/list": {
+      "post": {
+        "description": "`pageSize` 默认 50，前端只渲染返回结果的前 100 条。\n\n`subjectType` 取 `all` / `user` / `agent`；`subjectId` 为空时 `subjectType` 会被强制清空。",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "endTime": {
+                    "type": "string"
+                  },
+                  "eventType": {
+                    "$ref": "#/components/schemas/EventType"
+                  },
+                  "pageNum": {
+                    "default": 1,
+                    "type": "integer"
+                  },
+                  "pageSize": {
+                    "default": 50,
+                    "type": "integer"
+                  },
+                  "projectId": {
+                    "type": "string"
+                  },
+                  "query": {
+                    "type": "string"
+                  },
+                  "startTime": {
+                    "type": "string"
+                  },
+                  "status": {
+                    "type": "string"
+                  },
+                  "subjectId": {
+                    "type": "string"
+                  },
+                  "subjectType": {
+                    "enum": ["all", "user", "agent"],
+                    "type": "string"
+                  }
+                },
+                "required": ["projectId"],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/LogList"
+          }
+        },
+        "summary": "调用日志分页列表",
+        "tags": ["调用日志"]
+      }
+    },
+    "/api/dashboard/models": {
+      "get": {
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/ModelsRecords"
+          }
+        },
+        "summary": "上游当前启用的模型清单",
+        "tags": ["运行信息"]
+      }
+    },
+    "/api/dashboard/profileTemplate/create": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProfileTemplate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Ok"
+          }
+        },
+        "summary": "新建属性树模板",
+        "tags": ["属性树模板"]
+      }
+    },
+    "/api/dashboard/profileTemplate/delete": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "projectId": {
+                    "type": "string"
+                  },
+                  "templateId": {
+                    "type": "string"
+                  }
+                },
+                "required": ["projectId", "templateId"],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Ok"
+          }
+        },
+        "summary": "删除属性树模板",
+        "tags": ["属性树模板"]
+      }
+    },
+    "/api/dashboard/profileTemplate/detail": {
+      "get": {
+        "description": "少数 GET 之一，参数走 query。",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "templateId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/ProfileTemplate"
+          }
+        },
+        "summary": "属性树模板详情",
+        "tags": ["属性树模板"]
+      }
+    },
+    "/api/dashboard/profileTemplate/list": {
+      "post": {
+        "description": "列表键是 `list`，不是 `records`，且多一个 `pages`。空态是 `{ current: 1, size, total: 0, pages: 0, list: [] }`。",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "pageNum": {
+                    "default": 1,
+                    "type": "integer"
+                  },
+                  "pageSize": {
+                    "default": 10,
+                    "type": "integer"
+                  },
+                  "projectId": {
+                    "type": "string"
+                  }
+                },
+                "required": ["projectId"],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/ProfileTemplateList"
+          }
+        },
+        "summary": "属性树模板分页列表",
+        "tags": ["属性树模板"]
+      }
+    },
+    "/api/dashboard/profileTemplate/update": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProfileTemplate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Ok"
+          }
+        },
+        "summary": "更新属性树模板",
+        "tags": ["属性树模板"]
+      }
+    },
+    "/api/dashboard/project/create": {
+      "post": {
+        "description": "返回新建的项目对象，前端拿它的 `id` 立刻切过去。",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "description": {
+                    "type": "string"
+                  },
+                  "isMultiView": {
+                    "enum": [0, 1],
+                    "type": "integer"
+                  },
+                  "name": {
+                    "type": "string"
+                  }
+                },
+                "required": ["name", "description"],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Project"
+          }
+        },
+        "summary": "新建项目",
+        "tags": ["项目"]
+      }
+    },
+    "/api/dashboard/project/delete/{id}": {
+      "post": {
+        "description": "成员、邀请与 API Key 全部保留，之后可用 `project/restore/{id}` 原样恢复。个人项目不能归档。",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Envelope"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "properties": {
+                            "archived": {
+                              "type": "boolean"
+                            },
+                            "id": {
+                              "type": "string"
+                            },
+                            "ok": {
+                              "type": "boolean"
+                            }
+                          },
+                          "type": "object"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  ]
+                }
+              }
+            },
+            "description": "成功，项目已归档"
+          }
+        },
+        "summary": "归档项目（软删除）",
+        "tags": ["项目"]
+      }
+    },
+    "/api/dashboard/project/dict": {
+      "get": {
+        "description": "返回**数组**，不是分页对象。`status === \"ENABLED\"` 的那条是当前项目。",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "language",
+            "schema": {
+              "example": "zh-CN",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/ProjectDict"
+          }
+        },
+        "summary": "项目下拉字典",
+        "tags": ["项目"]
+      }
+    },
+    "/api/dashboard/project/list": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "pageNum": {
+                    "default": 1,
+                    "type": "integer"
+                  },
+                  "pageSize": {
+                    "default": 10,
+                    "type": "integer"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/ProjectRecords"
+          }
+        },
+        "summary": "项目分页列表",
+        "tags": ["项目"]
+      }
+    },
+    "/api/dashboard/project/memory/activity": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "after": {
+                    "description": "不传 callIds 时增量读取最近完成记录的时间游标",
+                    "type": "string"
+                  },
+                  "callIds": {
+                    "items": {
+                      "maxLength": 128,
+                      "type": "string"
+                    },
+                    "maxItems": 20,
+                    "type": "array"
+                  },
+                  "projectId": {
+                    "type": "string"
+                  }
+                },
+                "required": ["projectId"],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Envelope"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "properties": {
+                            "cursor": {
+                              "type": "string"
+                            },
+                            "records": {
+                              "items": {
+                                "$ref": "#/components/schemas/MemoryActivity"
+                              },
+                              "type": "array"
+                            },
+                            "total": {
+                              "type": "integer"
+                            }
+                          },
+                          "type": "object"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  ]
+                }
+              }
+            },
+            "description": "按项目返回真实写入结果，旧记录未保留结果时为 unavailable"
+          }
+        },
+        "summary": "查询写入后的真实记忆结果",
+        "tags": ["记忆"]
+      }
+    },
+    "/api/dashboard/project/memory/delete": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "memType": {
+                    "$ref": "#/components/schemas/MemoryDetailType"
+                  },
+                  "memory_ids": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": ["memory_ids"],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/DeleteResult"
+          }
+        },
+        "summary": "批量删除记忆",
+        "tags": ["记忆"]
+      }
+    },
+    "/api/dashboard/project/memory/detail": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "memType": {
+                    "$ref": "#/components/schemas/MemoryDetailType"
+                  },
+                  "memoryId": {
+                    "type": "string"
+                  },
+                  "projectId": {
+                    "type": "string"
+                  }
+                },
+                "required": ["projectId", "memoryId", "memType"],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Memory"
+          }
+        },
+        "summary": "记忆详情",
+        "tags": ["记忆"]
+      }
+    },
+    "/api/dashboard/project/memory/events": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "after": {
+                    "description": "当前项目的opaque游标，省略时返回最近50条",
+                    "maxLength": 512,
+                    "type": "string"
+                  },
+                  "callIds": {
+                    "description": "按真实调用标识读取历史快照，与after互斥，不移动feed游标",
+                    "items": {
+                      "maxLength": 256,
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "maxItems": 20,
+                    "type": "array"
+                  },
+                  "projectId": {
+                    "type": "string"
+                  }
+                },
+                "required": ["projectId"],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Envelope"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "properties": {
+                            "cursor": {
+                              "type": "string"
+                            },
+                            "hasMore": {
+                              "type": "boolean"
+                            },
+                            "records": {
+                              "items": {
+                                "$ref": "#/components/schemas/MemoryEvent"
+                              },
+                              "type": "array"
+                            },
+                            "total": {
+                              "type": "integer"
+                            }
+                          },
+                          "required": ["records", "cursor", "hasMore", "total"],
+                          "type": "object"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  ]
+                }
+              }
+            },
+            "description": "按项目返回真实召回、新增、更新和删除快照"
+          }
+        },
+        "summary": "查询不可变的记忆操作事件",
+        "tags": ["记忆"]
+      }
+    },
+    "/api/dashboard/project/memory/list": {
+      "post": {
+        "description": "列表键是 `memListItemResponseList`，不是 `records`。\n\n`memoryDetailType` 决定返回哪一类记忆，取值见 `MemoryDetailType`。",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "endTime": {
+                    "type": "string"
+                  },
+                  "externalUserId": {
+                    "type": "string"
+                  },
+                  "knowledgeBaseId": {
+                    "type": "string"
+                  },
+                  "memSearchContent": {
+                    "type": "string"
+                  },
+                  "memoryDetailType": {
+                    "$ref": "#/components/schemas/MemoryDetailType"
+                  },
+                  "pageNum": {
+                    "default": 1,
+                    "type": "integer"
+                  },
+                  "pageSize": {
+                    "default": 50,
+                    "type": "integer"
+                  },
+                  "projectId": {
+                    "type": "string"
+                  },
+                  "startTime": {
+                    "type": "string"
+                  },
+                  "subjectType": {
+                    "$ref": "#/components/schemas/MemorySubjectType"
+                  }
+                },
+                "required": ["projectId", "memoryDetailType"],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/MemoryList"
+          }
+        },
+        "summary": "记忆分页列表",
+        "tags": ["记忆"]
+      }
+    },
+    "/api/dashboard/project/restore/{id}": {
+      "post": {
+        "description": "只有项目所有者或平台管理员可以恢复。恢复后成员与 API Key 立即恢复可用。",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Project"
+          }
+        },
+        "summary": "恢复归档项目",
+        "tags": ["项目"]
+      }
+    },
+    "/api/dashboard/project/revoke/{id}": {
+      "post": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Ok"
+          }
+        },
+        "summary": "删除项目",
+        "tags": ["项目"]
+      }
+    },
+    "/api/dashboard/project/update": {
+      "post": {
+        "description": "切换当前项目就是传 `{ id, status: \"ENABLED\" }`，后端要把其它项目置回 `DISABLED`。",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/Project"
+                  },
+                  {
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "status": {
+                        "enum": ["ENABLED", "DISABLED"],
+                        "type": "string"
+                      }
+                    },
+                    "required": ["id"],
+                    "type": "object"
+                  }
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Project"
+          }
+        },
+        "summary": "更新项目 / 切换当前项目",
+        "tags": ["项目"]
+      }
+    },
+    "/api/dashboard/prompt-config/debug/extract": {
+      "post": {
+        "deprecated": true,
+        "description": "已由 /api/dashboard/prompts/* 取代，保留可用；新代码不要再用。\n\n`messages` 是标准的 chat 消息数组，前端传一条 `user` 消息。",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/ProjectScopedRequest"
+                  },
+                  {
+                    "properties": {
+                      "extractionTypes": {
+                        "items": {
+                          "$ref": "#/components/schemas/MemoryDetailType"
+                        },
+                        "type": "array"
+                      },
+                      "messages": {
+                        "items": {
+                          "properties": {
+                            "content": {
+                              "type": "string"
+                            },
+                            "role": {
+                              "enum": ["system", "user", "assistant"],
+                              "type": "string"
+                            }
+                          },
+                          "required": ["role", "content"],
+                          "type": "object"
+                        },
+                        "type": "array"
+                      }
+                    },
+                    "required": ["messages"],
+                    "type": "object"
+                  }
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/ExtractDebug"
+          }
+        },
+        "summary": "快速调试：对一段文本跑抽取",
+        "tags": ["自定义抽取"]
+      }
+    },
+    "/api/dashboard/prompt-config/detail": {
+      "post": {
+        "deprecated": true,
+        "description": "已由 /api/dashboard/prompts/* 取代，保留可用；新代码不要再用。",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProjectScopedRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/PromptConfig"
+          }
+        },
+        "summary": "读取抽取 Prompt",
+        "tags": ["自定义抽取"]
+      }
+    },
+    "/api/dashboard/prompt-config/generate": {
+      "post": {
+        "deprecated": true,
+        "description": "已由 /api/dashboard/prompts/* 取代，保留可用；新代码不要再用。",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/ProjectScopedRequest"
+                  },
+                  {
+                    "properties": {
+                      "description": {
+                        "type": "string"
+                      }
+                    },
+                    "required": ["description"],
+                    "type": "object"
+                  }
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Prompt"
+          }
+        },
+        "summary": "按一句话描述生成 Prompt",
+        "tags": ["自定义抽取"]
+      }
+    },
+    "/api/dashboard/prompt-config/reset-default": {
+      "post": {
+        "deprecated": true,
+        "description": "已由 /api/dashboard/prompts/* 取代，保留可用；新代码不要再用。",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProjectScopedRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Prompt"
+          }
+        },
+        "summary": "恢复默认 Prompt",
+        "tags": ["自定义抽取"]
+      }
+    },
+    "/api/dashboard/prompt-config/save": {
+      "post": {
+        "deprecated": true,
+        "description": "已由 /api/dashboard/prompts/* 取代，保留可用；新代码不要再用。",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/ProjectScopedRequest"
+                  },
+                  {
+                    "properties": {
+                      "prompt": {
+                        "type": "string"
+                      }
+                    },
+                    "required": ["prompt"],
+                    "type": "object"
+                  }
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Ok"
+          }
+        },
+        "summary": "保存抽取 Prompt",
+        "tags": ["自定义抽取"]
+      }
+    },
+    "/api/dashboard/prompts/detail": {
+      "post": {
+        "description": "返回注册项全文（`inputSchema`、`sampleInputs[].input` 原样透传）、各语言内置默认与当前生效值。",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PromptKeyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/PromptDetail"
+          },
+          "400": {
+            "$ref": "#/components/responses/PromptInvalid"
+          },
+          "401": {
+            "$ref": "#/components/responses/ErrorUnauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/ErrorForbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/ErrorNotFound"
+          },
+          "502": {
+            "$ref": "#/components/responses/ErrorBadGateway"
+          },
+          "503": {
+            "$ref": "#/components/responses/ErrorUnavailable"
+          }
+        },
+        "summary": "单条提示词详情",
+        "tags": ["提示词工作台"]
+      }
+    },
+    "/api/dashboard/prompts/generate": {
+      "post": {
+        "description": "按一句话指令改写指定提示词，不保存；`validation` 是改写结果的静态校验。",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PromptGenerateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/PromptGenerate"
+          },
+          "400": {
+            "$ref": "#/components/responses/PromptInvalid"
+          },
+          "401": {
+            "$ref": "#/components/responses/ErrorUnauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/ErrorForbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/ErrorNotFound"
+          },
+          "413": {
+            "$ref": "#/components/responses/ErrorPayloadTooLarge"
+          },
+          "429": {
+            "$ref": "#/components/responses/PromptBusy"
+          },
+          "502": {
+            "$ref": "#/components/responses/ErrorBadGateway"
+          },
+          "504": {
+            "$ref": "#/components/responses/ErrorGatewayTimeout"
+          }
+        },
+        "summary": "AI 改写",
+        "tags": ["提示词工作台"]
+      }
+    },
+    "/api/dashboard/prompts/list": {
+      "post": {
+        "description": "只返回注册项摘要与各语言槽位状态，不含正文。`state` 以语言为键。",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProjectScopedRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/PromptList"
+          },
+          "400": {
+            "$ref": "#/components/responses/PromptInvalid"
+          },
+          "401": {
+            "$ref": "#/components/responses/ErrorUnauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/ErrorForbidden"
+          },
+          "502": {
+            "$ref": "#/components/responses/ErrorBadGateway"
+          },
+          "503": {
+            "$ref": "#/components/responses/ErrorUnavailable"
+          }
+        },
+        "summary": "提示词清单",
+        "tags": ["提示词工作台"]
+      }
+    },
+    "/api/dashboard/prompts/reset": {
+      "post": {
+        "description": "省略 `lang` 还原该条的全部语言，省略 `key` 还原整个项目；返回实际被还原的槽位。",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PromptResetRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/PromptReset"
+          },
+          "400": {
+            "$ref": "#/components/responses/PromptInvalid"
+          },
+          "401": {
+            "$ref": "#/components/responses/ErrorUnauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/ErrorForbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/ErrorNotFound"
+          },
+          "502": {
+            "$ref": "#/components/responses/ErrorBadGateway"
+          },
+          "503": {
+            "$ref": "#/components/responses/ErrorUnavailable"
+          }
+        },
+        "summary": "还原默认",
+        "tags": ["提示词工作台"]
+      }
+    },
+    "/api/dashboard/prompts/save": {
+      "post": {
+        "description": "`body` 与 `restoreFromVersionId` 二选一。`baseVersionId` 是客户端看到的当前版本（默认 0）；\n不一致时返回 409，`data.currentVersionId` 是当前生效版本。`author` 由服务端按登录账号填写。",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PromptSaveRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/PromptSave"
+          },
+          "400": {
+            "$ref": "#/components/responses/PromptInvalid"
+          },
+          "401": {
+            "$ref": "#/components/responses/ErrorUnauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/ErrorForbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/PromptVersionNotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/PromptConflict"
+          },
+          "413": {
+            "$ref": "#/components/responses/ErrorPayloadTooLarge"
+          },
+          "502": {
+            "$ref": "#/components/responses/ErrorBadGateway"
+          },
+          "503": {
+            "$ref": "#/components/responses/ErrorUnavailable"
+          }
+        },
+        "summary": "保存新版本",
+        "tags": ["提示词工作台"]
+      }
+    },
+    "/api/dashboard/prompts/test": {
+      "post": {
+        "description": "走真实抽取或 Dream 的同一条代码路径，只换模板，不写任何存储。`body` 缺省用当前生效值；\n`compareDefault` 为真时同时用内置默认再跑一次。模型调用失败不改变请求状态：\n`runs[].ok=false` 并带 `error`。",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PromptTestRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/PromptTest"
+          },
+          "400": {
+            "$ref": "#/components/responses/PromptInvalid"
+          },
+          "401": {
+            "$ref": "#/components/responses/ErrorUnauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/ErrorForbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/ErrorNotFound"
+          },
+          "413": {
+            "$ref": "#/components/responses/ErrorPayloadTooLarge"
+          },
+          "429": {
+            "$ref": "#/components/responses/PromptBusy"
+          },
+          "502": {
+            "$ref": "#/components/responses/ErrorBadGateway"
+          },
+          "503": {
+            "$ref": "#/components/responses/ErrorUnavailable"
+          }
+        },
+        "summary": "试跑草稿",
+        "tags": ["提示词工作台"]
+      }
+    },
+    "/api/dashboard/prompts/validate": {
+      "post": {
+        "description": "始终 HTTP 200；`errors` 阻止保存，`warnings` 只提示。校验规则与默认模板都在记忆服务，控制面不复制。",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PromptValidateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/PromptValidation"
+          },
+          "400": {
+            "$ref": "#/components/responses/PromptInvalid"
+          },
+          "401": {
+            "$ref": "#/components/responses/ErrorUnauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/ErrorForbidden"
+          },
+          "413": {
+            "$ref": "#/components/responses/ErrorPayloadTooLarge"
+          },
+          "502": {
+            "$ref": "#/components/responses/ErrorBadGateway"
+          },
+          "503": {
+            "$ref": "#/components/responses/ErrorUnavailable"
+          }
+        },
+        "summary": "静态校验草稿",
+        "tags": ["提示词工作台"]
+      }
+    },
+    "/api/dashboard/prompts/versions": {
+      "post": {
+        "description": "新到旧；`limit` 默认 20、上限 100，`beforeVersionId` 用于翻页。",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PromptVersionsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/PromptVersions"
+          },
+          "400": {
+            "$ref": "#/components/responses/PromptInvalid"
+          },
+          "401": {
+            "$ref": "#/components/responses/ErrorUnauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/ErrorForbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/ErrorNotFound"
+          },
+          "502": {
+            "$ref": "#/components/responses/ErrorBadGateway"
+          },
+          "503": {
+            "$ref": "#/components/responses/ErrorUnavailable"
+          }
+        },
+        "summary": "版本历史",
+        "tags": ["提示词工作台"]
+      }
+    },
+    "/api/dashboard/usage/query": {
+      "post": {
+        "description": "`projectId` 传 `\"all\"` 时会被改写成空串再发出。`startDate` / `endDate` 格式 `YYYY-MM-DD`，默认当月 1 号到今天。\n\n`dailyStats` 的每项里，`extractMemory` 与 `rerank` 可能缺失，前端用可选链读。响应里除 `dailyStats` 外的字段前端没有读取。",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "apiKeyId": {
+                    "type": "string"
+                  },
+                  "endDate": {
+                    "format": "date",
+                    "type": "string"
+                  },
+                  "includeDailyDetails": {
+                    "default": true,
+                    "type": "boolean"
+                  },
+                  "projectId": {
+                    "description": "传 \"all\" 表示全部",
+                    "type": "string"
+                  },
+                  "startDate": {
+                    "format": "date",
+                    "type": "string"
+                  }
+                },
+                "required": ["projectId"],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/UsageQuery"
+          }
+        },
+        "summary": "按天聚合的用量",
+        "tags": ["用量"]
+      }
+    },
+    "/api/health": {
+      "get": {
+        "description": "文档页状态灯每 30 秒轮询一次；只做探测，不读库。",
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Health"
+          }
+        },
+        "summary": "控制台与上游的健康探测",
+        "tags": ["运行信息"]
+      }
+    },
+    "/api/meta": {
+      "get": {
+        "description": "控制台自有的扩展接口，用于在界面上标注当前数据来源、密钥前缀与可用工具。",
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Meta"
+          }
+        },
+        "summary": "控制台运行信息",
+        "tags": ["运行信息"]
+      }
+    },
+    "/api/user/quota/summary": {
+      "get": {
+        "parameters": [
+          {
+            "in": "query",
+            "name": "knowledgebaseId",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/QuotaSummary"
+          }
+        },
+        "summary": "额度概览",
+        "tags": ["账号"]
+      }
+    },
+    "/api/user/subscription/details": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "cycleId": {
+                    "type": "string"
+                  },
+                  "includeAllCycles": {
+                    "type": "boolean"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/SubscriptionDetails"
+          }
+        },
+        "summary": "订阅周期",
+        "tags": ["账号"]
+      }
+    }
+  },
+  "servers": [
+    {
+      "description": "控制台进程（与对外 /memory/* 同一个二进制，5280 端口）",
+      "url": "http://localhost:5280"
+    }
+  ],
+  "tags": [
+    {
+      "description": "工作区。几乎所有业务接口都要它的 id。",
+      "name": "项目"
+    },
+    {
+      "description": "密钥的增删查与复制。",
+      "name": "接口密钥"
+    },
+    {
+      "description": "调用流水与单条详情。",
+      "name": "调用日志"
+    },
+    {
+      "description": "记忆的列表、详情与删除。",
+      "name": "记忆"
+    },
+    {
+      "description": "知识库及其文档、记忆。",
+      "name": "知识库"
+    },
+    {
+      "description": "属性树模板的增删改查。",
+      "name": "属性树模板"
+    },
+    {
+      "description": "抽取 Prompt 的读写与调试。",
+      "name": "自定义抽取"
+    },
+    {
+      "description": "项目级提示词的清单、版本、校验与试跑；控制面只代理，不保存正文。",
+      "name": "提示词工作台"
+    },
+    {
+      "description": "按天聚合的调用用量。",
+      "name": "用量"
+    },
+    {
+      "description": "额度与订阅。",
+      "name": "账号"
+    },
+    {
+      "description": "记忆图谱：按项目取节点、边与统计。",
+      "name": "图谱"
+    },
+    {
+      "description": "控制台自身的运行状态。",
+      "name": "运行信息"
+    }
+  ]
+}

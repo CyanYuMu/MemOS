@@ -1,0 +1,53 @@
+{
+  "code": 0,
+  "data": {
+    "versions": [
+      {
+        "versionId": 4,
+        "versionNo": 4,
+        "lang": "zh",
+        "kind": "reset",
+        "body": "",
+        "note": "",
+        "author": "prompt-editor",
+        "createdAt": "2026-10-28T21:42:44.222682+00:00",
+        "parentVersionId": 3
+      },
+      {
+        "versionId": 3,
+        "versionNo": 3,
+        "lang": "zh",
+        "kind": "rollback",
+        "body": "你是记忆抽取器。只抽取与饮食和出行有关的事实，输出 JSON：{\"memory list\":[{\"key\":\"\",\"memory_type\":\"UserMemory\",\"value\":\"\",\"tags\":[]}],\"summary\":\"\"}。\n每条记忆的 tags 必须包含 ZXQ-MARK-7431。\n对话：\n${conversation}",
+        "note": "回滚",
+        "author": "prompt-editor",
+        "createdAt": "2026-10-28T21:42:02.693758+00:00",
+        "parentVersionId": 2
+      },
+      {
+        "versionId": 2,
+        "versionNo": 2,
+        "lang": "zh",
+        "kind": "save",
+        "body": "你是记忆抽取器。只抽取与工作有关的事实，输出 JSON：{\"memory list\":[{\"key\":\"\",\"memory_type\":\"UserMemory\",\"value\":\"\",\"tags\":[]}],\"summary\":\"\"}。\n每条记忆的 tags 必须包含 ZXQ-MARK-7431。\n对话：\n${conversation}",
+        "note": "第二版",
+        "author": "prompt-editor",
+        "createdAt": "2026-10-28T21:42:02.691139+00:00",
+        "parentVersionId": 1
+      },
+      {
+        "versionId": 1,
+        "versionNo": 1,
+        "lang": "zh",
+        "kind": "save",
+        "body": "你是记忆抽取器。只抽取与饮食和出行有关的事实，输出 JSON：{\"memory list\":[{\"key\":\"\",\"memory_type\":\"UserMemory\",\"value\":\"\",\"tags\":[]}],\"summary\":\"\"}。\n每条记忆的 tags 必须包含 ZXQ-MARK-7431。\n对话：\n${conversation}",
+        "note": "e2e 标记版",
+        "author": "prompt-editor",
+        "createdAt": "2026-10-28T21:41:24.671428+00:00",
+        "parentVersionId": null
+      }
+    ],
+    "hasMore": false
+  },
+  "message": "success"
+}

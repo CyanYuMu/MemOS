@@ -1,0 +1,8 @@
+# 这份 spec 是给控制台后端实现者看的契约，不用于生成客户端，
+# 所以关掉两条与代码生成相关的建议规则。
+extends:
+  - recommended
+
+rules:
+  operation-operationId: off
+  operation-4xx-response: off

@@ -1,0 +1,30 @@
+{
+  "code": 0,
+  "data": {
+    "runs": [
+      {
+        "label": "draft",
+        "ok": true,
+        "parseOk": false,
+        "fallbackTriggered": true,
+        "contract": { "ok": false, "missing": ["context_summary"] },
+        "output": [
+          {
+            "context_summary": "用户请求帮忙订机票，并表示自己更喜欢靠窗的座位；助手回复已选靠窗。",
+            "reasoning": "用户明确使用“更喜欢”表达对靠窗座位的偏好，属于可复用于后续订票或选座的稳定选择。",
+            "topic": "机票预订",
+            "preference": "用户偏好于靠窗的座位"
+          }
+        ],
+        "rawOutput": "```json\n[\n  {\n    \"explicit_preference\": \"用户偏好于靠窗的座位\",\n    \"context_summary\": \"用户请求帮忙订机票，并表示自己更喜欢靠窗的座位；助手回复已选靠窗。\",\n    \"reasoning\": \"用户明确使用“更喜欢”表达对靠窗座位的偏好，属于可复用于后续订票或选座的稳定选择。\",\n    \"topic\": \"机票预订\"\n  }\n]\n```",
+        "truncated": false,
+        "latencyMs": 1917,
+        "model": "DeepSeek-V4.1-Flash",
+        "usage": { "calls": 1, "completionTokens": 97, "promptTokens": 597, "totalTokens": 694 },
+        "usedSlots": [{ "key": "extract.preference_explicit", "lang": "zh", "source": "draft", "versionId": 0 }],
+        "warnings": []
+      }
+    ]
+  },
+  "message": "success"
+}
