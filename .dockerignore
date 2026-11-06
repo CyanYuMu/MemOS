@@ -1,0 +1,9 @@
+*
+!bin/memosd-linux-amd64
+# 聊天页 agent runtime 与 HTTPS 根证书。
+!bin/pi-linux-amd64
+!bin/ca-certificates.crt
+# 前端产物（Dockerfile COPY web/ /app/web/）：必须重新包含，否则 COPY 失败。
+!web
+# hermes 插件发布包（Dockerfile COPY plugins/ /app/plugins/）。
+!plugins

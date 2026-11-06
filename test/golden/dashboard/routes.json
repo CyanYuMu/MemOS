@@ -1,0 +1,1124 @@
+{
+ "DELETE /api/dashboard/local-sync/devices/ldev-1": {
+  "body": {
+   "code": "number",
+   "data": {
+    "ok": "bool"
+   },
+   "message": "string"
+  },
+  "status": 200
+ },
+ "DELETE /api/dashboard/local-sync/memories/lmem-1": {
+  "body": {
+   "code": "number",
+   "data": {
+    "ok": "bool"
+   },
+   "message": "string"
+  },
+  "status": 200
+ },
+ "GET /api/dashboard/graph/memories": {
+  "body": {
+   "code": "number",
+   "data": {
+    "links": "empty_array",
+    "nodes": {
+     "array_of": {
+      "clusterId": "string",
+      "createdAt": "string",
+      "id": "string",
+      "label": "string",
+      "labelTruncated": "bool",
+      "memoryType": "string",
+      "sessionId": "string",
+      "sourceIds": "null",
+      "userId": "string"
+     }
+    },
+    "stats": {
+     "clusters": "number",
+     "links": "number",
+     "nodes": "number",
+     "orphans": "number",
+     "sessions": "number",
+     "truncated": "bool",
+     "types": {
+      "array_of": {
+       "count": "number",
+       "name": "string"
+      }
+     }
+    },
+    "tenant": "string"
+   },
+   "message": "string"
+  },
+  "status": 200
+ },
+ "GET /api/dashboard/graph/memory": {
+  "body": {
+   "code": "number",
+   "data": {
+    "id": "string",
+    "memory": "string"
+   },
+   "message": "string"
+  },
+  "status": 200
+ },
+ "GET /api/dashboard/local-sync/devices": {
+  "body": {
+   "code": "number",
+   "data": {
+    "devices": {
+     "array_of": {
+      "accountId": "string",
+      "agentKind": "string",
+      "createdAt": "string",
+      "deviceId": "string",
+      "id": "string",
+      "label": "string",
+      "lastSeenAt": "string",
+      "revokedAt": "string",
+      "status": "string"
+     }
+    },
+    "quota": {
+     "limitBytes": "number",
+     "limitRows": "number",
+     "pendingBytes": "number",
+     "pendingRows": "number",
+     "usedBytes": "number",
+     "usedRows": "number"
+    },
+    "total": "number"
+   },
+   "message": "string"
+  },
+  "status": 200
+ },
+ "GET /api/dashboard/local-sync/memories": {
+  "body": {
+   "code": "number",
+   "data": {
+    "pageNum": "number",
+    "pageSize": "number",
+    "records": {
+     "array_of": {
+      "contentHash": "string",
+      "deviceId": "string",
+      "deviceLabel": "string",
+      "id": "string",
+      "layer": "string",
+      "promoteError": "string",
+      "promoteStatus": "string",
+      "promoted": "bool",
+      "promotedMemoryId": "string",
+      "sourceId": "string",
+      "sourceUpdatedAt": "string",
+      "summary": "string",
+      "syncedAt": "string",
+      "title": "string"
+     }
+    },
+    "total": "number"
+   },
+   "message": "string"
+  },
+  "status": 200
+ },
+ "GET /api/dashboard/local-sync/memories/lmem-1": {
+  "body": {
+   "code": "number",
+   "data": {
+    "contentHash": "string",
+    "deviceId": "string",
+    "deviceLabel": "string",
+    "id": "string",
+    "layer": "string",
+    "payload": {
+     "summary": "string",
+     "tags": {
+      "array_of": "string"
+     }
+    },
+    "promoteError": "string",
+    "promoteStatus": "string",
+    "promoted": "bool",
+    "promotedMemoryId": "string",
+    "sourceId": "string",
+    "sourceUpdatedAt": "string",
+    "summary": "string",
+    "syncedAt": "string",
+    "title": "string"
+   },
+   "message": "string"
+  },
+  "status": 200
+ },
+ "GET /api/dashboard/local-sync/summary": {
+  "body": {
+   "code": "number",
+   "data": {
+    "deleted": "number",
+    "layers": {
+     "trace": "number"
+    },
+    "newestSyncedAt": "string",
+    "oldestSyncedAt": "string",
+    "promoteFailed": "number",
+    "promotePending": "number",
+    "promoted": "number",
+    "quota": {
+     "limitBytes": "number",
+     "limitRows": "number",
+     "pendingBytes": "number",
+     "pendingRows": "number",
+     "usedBytes": "number",
+     "usedRows": "number"
+    },
+    "total": "number"
+   },
+   "message": "string"
+  },
+  "status": 200
+ },
+ "GET /api/dashboard/models": {
+  "body": {
+   "code": "number",
+   "data": {
+    "records": {
+     "array_of": {
+      "group": "string",
+      "model": "string",
+      "role": "string",
+      "source": "string",
+      "spec": "string"
+     }
+    },
+    "total": "number"
+   },
+   "message": "string"
+  },
+  "status": 200
+ },
+ "GET /api/dashboard/profileTemplate/detail": {
+  "body": {
+   "code": "number",
+   "data": {
+    "bindingCount": "number",
+    "projectId": "string",
+    "templateId": "string",
+    "templateName": "string",
+    "updatedAt": "string",
+    "基础": {
+     "年龄": "string"
+    }
+   },
+   "message": "string"
+  },
+  "status": 200
+ },
+ "GET /api/dashboard/project/dict": {
+  "body": {
+   "code": "number",
+   "data": {
+    "array_of": {
+     "id": "string",
+     "kind": "string",
+     "member": "bool",
+     "name": "string",
+     "role": "string",
+     "status": "string"
+    }
+   },
+   "message": "string"
+  },
+  "status": 200
+ },
+ "GET /api/health": {
+  "body": {
+   "code": "number",
+   "data": {
+    "checkedAt": "string",
+    "gateway": {
+     "latencyMs": "number",
+     "ok": "bool"
+    },
+    "status": "string",
+    "upstream": {
+     "latencyMs": "number",
+     "ok": "bool"
+    }
+   },
+   "message": "string"
+  },
+  "status": 200
+ },
+ "GET /api/meta": {
+  "body": {
+   "code": "number",
+   "data": {
+    "authEnabled": "bool",
+    "authMode": "string",
+    "health": {
+     "service": "string",
+     "status": "string"
+    },
+    "keyPrefix": "string",
+    "mode": "string",
+    "service": "string",
+    "sources": {
+     "callLog": "string",
+     "graph": "string",
+     "keys": "string",
+     "upstream": "string"
+    },
+    "tools": {
+     "array_of": "string"
+    }
+   },
+   "message": "string"
+  },
+  "status": 200
+ },
+ "GET /api/user/quota/summary": {
+  "body": {
+   "code": "number",
+   "data": {
+    "allowedKnowledgebaseCount": "number",
+    "enabled": "bool",
+    "knowledgebaseCapacity": "number",
+    "knowledgebaseCount": "number",
+    "memoryCount": "number"
+   },
+   "message": "string"
+  },
+  "status": 200
+ },
+ "POST /api/dashboard/keys/copy": {
+  "body": {
+   "code": "number",
+   "data": "null",
+   "message": "string"
+  },
+  "status": 404
+ },
+ "POST /api/dashboard/keys/create": {
+  "body": {
+   "code": "number",
+   "data": {
+    "apiKey": "string",
+    "canCopy": "bool",
+    "createTime": "string",
+    "expireTime": "string",
+    "id": "string",
+    "keyName": "string"
+   },
+   "message": "string"
+  },
+  "status": 200
+ },
+ "POST /api/dashboard/keys/list": {
+  "body": {
+   "code": "number",
+   "data": {
+    "records": "empty_array",
+    "total": "number"
+   },
+   "message": "string"
+  },
+  "status": 200
+ },
+ "POST /api/dashboard/keys/revoke/nope": {
+  "body": {
+   "code": "number",
+   "data": "null",
+   "message": "string"
+  },
+  "status": 404
+ },
+ "POST /api/dashboard/knowledgebase/create": {
+  "body": {
+   "code": "number",
+   "data": {
+    "createTime": "string",
+    "fileCount": "number",
+    "kbId": "string",
+    "knowledgebaseDescription": "string",
+    "knowledgebaseId": "string",
+    "knowledgebaseName": "string",
+    "projectId": "string",
+    "totalSize": "number",
+    "updateTime": "string"
+   },
+   "message": "string"
+  },
+  "status": 200
+ },
+ "POST /api/dashboard/knowledgebase/delete": {
+  "body": {
+   "code": "number",
+   "data": {
+    "id": "string",
+    "ok": "bool"
+   },
+   "message": "string"
+  },
+  "status": 200
+ },
+ "POST /api/dashboard/knowledgebase/detail": {
+  "body": {
+   "code": "number",
+   "data": {
+    "createTime": "string",
+    "fileCount": "number",
+    "kbId": "string",
+    "knowledgebaseDescription": "string",
+    "knowledgebaseId": "string",
+    "knowledgebaseName": "string",
+    "projectId": "string",
+    "totalSize": "number",
+    "updateTime": "string"
+   },
+   "message": "string"
+  },
+  "status": 200
+ },
+ "POST /api/dashboard/knowledgebase/file/add": {
+  "body": {
+   "code": "number",
+   "data": {
+    "records": {
+     "array_of": {
+      "createTime": "string",
+      "fileId": "string",
+      "id": "string",
+      "knowledgebaseId": "string",
+      "name": "string",
+      "size": "number",
+      "sizeMB": "number",
+      "status": "string",
+      "type": "string"
+     }
+    },
+    "total": "number"
+   },
+   "message": "string"
+  },
+  "status": 200
+ },
+ "POST /api/dashboard/knowledgebase/file/delete": {
+  "body": {
+   "code": "number",
+   "data": {
+    "deleted": "number",
+    "ok": "bool"
+   },
+   "message": "string"
+  },
+  "status": 200
+ },
+ "POST /api/dashboard/knowledgebase/file/list": {
+  "body": {
+   "code": "number",
+   "data": {
+    "current": "number",
+    "records": {
+     "array_of": {
+      "createTime": "string",
+      "fileId": "string",
+      "id": "string",
+      "knowledgebaseId": "string",
+      "name": "string",
+      "size": "number",
+      "sizeMB": "number",
+      "status": "string",
+      "type": "string"
+     }
+    },
+    "size": "number",
+    "total": "number"
+   },
+   "message": "string"
+  },
+  "status": 200
+ },
+ "POST /api/dashboard/knowledgebase/list": {
+  "body": {
+   "code": "number",
+   "data": {
+    "current": "number",
+    "records": {
+     "array_of": {
+      "createTime": "string",
+      "fileCount": "number",
+      "kbId": "string",
+      "knowledgebaseDescription": "string",
+      "knowledgebaseId": "string",
+      "knowledgebaseName": "string",
+      "projectId": "string",
+      "totalSize": "number",
+      "updateTime": "string"
+     }
+    },
+    "size": "number",
+    "total": "number"
+   },
+   "message": "string"
+  },
+  "status": 200
+ },
+ "POST /api/dashboard/knowledgebase/memory/list": {
+  "body": {
+   "code": "number",
+   "data": "null",
+   "message": "string"
+  },
+  "status": 503
+ },
+ "POST /api/dashboard/knowledgebase/project/associate": {
+  "body": {
+   "code": "number",
+   "data": "null",
+   "message": "string"
+  },
+  "status": 409
+ },
+ "POST /api/dashboard/knowledgebase/project/remove": {
+  "body": {
+   "code": "number",
+   "data": "null",
+   "message": "string"
+  },
+  "status": 409
+ },
+ "POST /api/dashboard/knowledgebase/update": {
+  "body": {
+   "code": "number",
+   "data": {
+    "createTime": "string",
+    "fileCount": "number",
+    "kbId": "string",
+    "knowledgebaseDescription": "string",
+    "knowledgebaseId": "string",
+    "knowledgebaseName": "string",
+    "projectId": "string",
+    "totalSize": "number",
+    "updateTime": "string"
+   },
+   "message": "string"
+  },
+  "status": 200
+ },
+ "POST /api/dashboard/local-sync/memories/promote": {
+  "body": {
+   "code": "number",
+   "data": {
+    "failed": "null",
+    "queued": {
+     "array_of": "string"
+    }
+   },
+   "message": "string"
+  },
+  "status": 200
+ },
+ "POST /api/dashboard/profileTemplate/create": {
+  "body": {
+   "code": "number",
+   "data": {
+    "profile_template_id": "string"
+   },
+   "message": "string"
+  },
+  "status": 200
+ },
+ "POST /api/dashboard/profileTemplate/delete": {
+  "body": {
+   "code": "number",
+   "data": {
+    "success": "bool"
+   },
+   "message": "string"
+  },
+  "status": 200
+ },
+ "POST /api/dashboard/profileTemplate/list": {
+  "body": {
+   "code": "number",
+   "data": {
+    "current": "number",
+    "list": {
+     "array_of": {
+      "bindingCount": "number",
+      "projectId": "string",
+      "templateId": "string",
+      "templateName": "string",
+      "updatedAt": "string",
+      "基础": {
+       "年龄": "string"
+      }
+     }
+    },
+    "pages": "number",
+    "size": "number",
+    "total": "number"
+   },
+   "message": "string"
+  },
+  "status": 200
+ },
+ "POST /api/dashboard/profileTemplate/update": {
+  "body": {
+   "code": "number",
+   "data": {
+    "profile_template_id": "string"
+   },
+   "message": "string"
+  },
+  "status": 200
+ },
+ "POST /api/dashboard/project/create": {
+  "body": {
+   "code": "number",
+   "data": {
+    "archived": "bool",
+    "createTime": "string",
+    "description": "string",
+    "id": "string",
+    "isMultiView": "number",
+    "kind": "string",
+    "member": "bool",
+    "name": "string",
+    "role": "string",
+    "status": "string"
+   },
+   "message": "string"
+  },
+  "status": 200
+ },
+ "POST /api/dashboard/project/list": {
+  "body": {
+   "code": "number",
+   "data": {
+    "records": {
+     "array_of": {
+      "archived": "bool",
+      "createTime": "string",
+      "description": "string",
+      "disabled": "bool",
+      "id": "string",
+      "isMultiView": "number",
+      "kind": "string",
+      "member": "bool",
+      "name": "string",
+      "role": "string",
+      "status": "string"
+     }
+    },
+    "total": "number"
+   },
+   "message": "string"
+  },
+  "status": 200
+ },
+ "POST /api/dashboard/project/memory/delete": {
+  "body": {
+   "code": "number",
+   "data": {
+    "deleted": "number"
+   },
+   "message": "string"
+  },
+  "status": 200
+ },
+ "POST /api/dashboard/project/memory/detail": {
+  "body": {
+   "code": "number",
+   "data": {
+    "createTime": "string",
+    "externalUserId": "string",
+    "memoryContent": "string",
+    "memoryId": "string",
+    "memoryKey": "string",
+    "memoryType": "string",
+    "status": "string",
+    "subjectType": "string",
+    "tags": "empty_array",
+    "updateTime": "string"
+   },
+   "message": "string"
+  },
+  "status": 200
+ },
+ "POST /api/dashboard/project/memory/list": {
+  "body": {
+   "code": "number",
+   "data": {
+    "current": "number",
+    "memListItemResponseList": {
+     "array_of": {
+      "createTime": "string",
+      "externalUserId": "string",
+      "memoryContent": "string",
+      "memoryId": "string",
+      "memoryType": "string",
+      "subjectType": "string"
+     }
+    },
+    "total": "number"
+   },
+   "message": "string"
+  },
+  "status": 200
+ },
+ "POST /api/dashboard/project/restore/cube-a": {
+  "body": {
+   "code": "number",
+   "data": "null",
+   "message": "string"
+  },
+  "status": 409
+ },
+ "POST /api/dashboard/project/revoke/cube-golden": {
+  "body": {
+   "code": "number",
+   "data": {
+    "ok": "bool"
+   },
+   "message": "string"
+  },
+  "status": 200
+ },
+ "POST /api/dashboard/project/update": {
+  "body": {
+   "code": "number",
+   "data": {
+    "archived": "bool",
+    "createTime": "string",
+    "description": "string",
+    "disabled": "bool",
+    "id": "string",
+    "isMultiView": "number",
+    "kind": "string",
+    "member": "bool",
+    "name": "string",
+    "role": "string",
+    "status": "string"
+   },
+   "message": "string"
+  },
+  "status": 200
+ },
+ "POST /api/dashboard/prompt-config/debug/extract": {
+  "body": {
+   "code": "number",
+   "data": {
+    "extractionTypes": {
+     "array_of": "string"
+    },
+    "results": {
+     "array_of": {
+      "content": "string",
+      "type": "string"
+     }
+    }
+   },
+   "message": "string"
+  },
+  "status": 200
+ },
+ "POST /api/dashboard/prompt-config/detail": {
+  "body": {
+   "code": "number",
+   "data": {
+    "extractionTypes": {
+     "array_of": "string"
+    },
+    "isDefault": "bool",
+    "projectId": "string",
+    "prompt": "string",
+    "source": "string",
+    "updatedAt": "string"
+   },
+   "message": "string"
+  },
+  "status": 200
+ },
+ "POST /api/dashboard/prompt-config/generate": {
+  "body": {
+   "code": "number",
+   "data": {
+    "prompt": "string"
+   },
+   "message": "string"
+  },
+  "status": 200
+ },
+ "POST /api/dashboard/prompt-config/reset-default": {
+  "body": {
+   "code": "number",
+   "data": {
+    "prompt": "string"
+   },
+   "message": "string"
+  },
+  "status": 200
+ },
+ "POST /api/dashboard/prompt-config/save": {
+  "body": {
+   "code": "number",
+   "data": {
+    "ok": "bool"
+   },
+   "message": "string"
+  },
+  "status": 200
+ },
+ "POST /api/dashboard/prompts/detail": {
+  "body": {
+   "code": "number",
+   "data": {
+    "defaults": {
+     "en": "string",
+     "zh": "string"
+    },
+    "editable": "bool",
+    "effective": {
+     "en": {
+      "author": "null",
+      "body": "string",
+      "source": "string",
+      "updatedAt": "null",
+      "versionId": "number",
+      "versionNo": "number"
+     },
+     "zh": {
+      "author": "string",
+      "body": "string",
+      "source": "string",
+      "updatedAt": "string",
+      "versionId": "number",
+      "versionNo": "number"
+     }
+    },
+    "group": "string",
+    "inputKind": "string",
+    "inputSchema": {
+     "properties": {
+      "messages": {
+       "type": "string"
+      }
+     },
+     "type": "string"
+    },
+    "key": "string",
+    "languages": {
+     "array_of": "string"
+    },
+    "lockedSuffix": "string",
+    "outputContract": {
+     "description": {
+      "zh": "string"
+     },
+     "format": "string",
+     "itemKeys": {
+      "array_of": "string"
+     },
+     "requiredKeys": {
+      "array_of": "string"
+     }
+    },
+    "placeholders": {
+     "array_of": {
+      "description": {
+       "zh": "string"
+      },
+      "name": "string",
+      "required": "bool"
+     }
+    },
+    "sampleInputs": {
+     "array_of": {
+      "id": "string",
+      "input": {
+       "messages": {
+        "array_of": {
+         "content": "string",
+         "role": "string"
+        }
+       }
+      },
+      "lang": "string",
+      "title": {
+       "zh": "string"
+      }
+     }
+    },
+    "summary": {
+     "zh": "string"
+    },
+    "syntax": "string",
+    "title": {
+     "zh": "string"
+    }
+   },
+   "message": "string"
+  },
+  "status": 200
+ },
+ "POST /api/dashboard/prompts/detail [404]": {
+  "body": {
+   "code": "number",
+   "data": "null",
+   "message": "string"
+  },
+  "status": 404
+ },
+ "POST /api/dashboard/prompts/generate": {
+  "body": {
+   "code": "number",
+   "data": {
+    "body": "string",
+    "validation": {
+     "errors": "empty_array",
+     "ok": "bool",
+     "warnings": "empty_array"
+    }
+   },
+   "message": "string"
+  },
+  "status": 200
+ },
+ "POST /api/dashboard/prompts/generate [413]": {
+  "body": {
+   "code": "number",
+   "data": "null",
+   "message": "string"
+  },
+  "status": 413
+ },
+ "POST /api/dashboard/prompts/list": {
+  "body": {
+   "code": "number",
+   "data": {
+    "prompts": {
+     "array_of": {
+      "editable": "bool",
+      "group": "string",
+      "key": "string",
+      "languages": {
+       "array_of": "string"
+      },
+      "state": {
+       "en": {
+        "author": "null",
+        "source": "string",
+        "updatedAt": "null",
+        "versionId": "number",
+        "versionNo": "number"
+       },
+       "zh": {
+        "author": "string",
+        "source": "string",
+        "updatedAt": "string",
+        "versionId": "number",
+        "versionNo": "number"
+       }
+      },
+      "summary": {
+       "zh": "string"
+      },
+      "title": {
+       "en": "string",
+       "zh": "string"
+      }
+     }
+    }
+   },
+   "message": "string"
+  },
+  "status": 200
+ },
+ "POST /api/dashboard/prompts/reset": {
+  "body": {
+   "code": "number",
+   "data": {
+    "reset": {
+     "array_of": {
+      "key": "string",
+      "lang": "string",
+      "versionId": "number",
+      "versionNo": "number"
+     }
+    }
+   },
+   "message": "string"
+  },
+  "status": 200
+ },
+ "POST /api/dashboard/prompts/save": {
+  "body": {
+   "code": "number",
+   "data": {
+    "createdAt": "string",
+    "effective": {
+     "author": "string",
+     "body": "string",
+     "source": "string",
+     "updatedAt": "string",
+     "versionId": "number",
+     "versionNo": "number"
+    },
+    "versionId": "number",
+    "versionNo": "number"
+   },
+   "message": "string"
+  },
+  "status": 200
+ },
+ "POST /api/dashboard/prompts/save [400]": {
+  "body": {
+   "code": "number",
+   "data": {
+    "errors": {
+     "array_of": {
+      "code": "string",
+      "message": "string"
+     }
+    }
+   },
+   "message": "string"
+  },
+  "status": 400
+ },
+ "POST /api/dashboard/prompts/save [409]": {
+  "body": {
+   "code": "number",
+   "data": {
+    "currentVersionId": "number",
+    "currentVersionNo": "number"
+   },
+   "message": "string"
+  },
+  "status": 409
+ },
+ "POST /api/dashboard/prompts/test": {
+  "body": {
+   "code": "number",
+   "data": {
+    "runs": {
+     "array_of": {
+      "contract": {
+       "missing": "empty_array",
+       "ok": "bool"
+      },
+      "fallbackTriggered": "bool",
+      "label": "string",
+      "latencyMs": "number",
+      "model": "string",
+      "ok": "bool",
+      "output": {
+       "memory list": {
+        "array_of": {
+         "key": "string",
+         "memory_type": "string"
+        }
+       },
+       "summary": "string"
+      },
+      "parseOk": "bool",
+      "rawOutput": "string",
+      "truncated": "bool",
+      "usage": {
+       "calls": "number",
+       "completionTokens": "number",
+       "promptTokens": "number"
+      },
+      "usedSlots": {
+       "array_of": {
+        "key": "string",
+        "lang": "string",
+        "source": "string",
+        "versionId": "number"
+       }
+      },
+      "warnings": {
+       "array_of": {
+        "code": "string",
+        "message": "string"
+       }
+      }
+     }
+    }
+   },
+   "message": "string"
+  },
+  "status": 200
+ },
+ "POST /api/dashboard/prompts/test [429]": {
+  "body": {
+   "code": "number",
+   "data": {
+    "retryAfterSec": "number"
+   },
+   "message": "string"
+  },
+  "status": 429
+ },
+ "POST /api/dashboard/prompts/validate": {
+  "body": {
+   "code": "number",
+   "data": {
+    "errors": "empty_array",
+    "ok": "bool",
+    "warnings": {
+     "array_of": {
+      "code": "string",
+      "message": "string"
+     }
+    }
+   },
+   "message": "string"
+  },
+  "status": 200
+ },
+ "POST /api/dashboard/prompts/versions": {
+  "body": {
+   "code": "number",
+   "data": {
+    "hasMore": "bool",
+    "versions": {
+     "array_of": {
+      "author": "string",
+      "body": "string",
+      "createdAt": "string",
+      "kind": "string",
+      "lang": "string",
+      "note": "string",
+      "parentVersionId": "number",
+      "versionId": "number",
+      "versionNo": "number"
+     }
+    }
+   },
+   "message": "string"
+  },
+  "status": 200
+ },
+ "POST /api/user/subscription/details": {
+  "body": {
+   "code": "number",
+   "data": {
+    "currentCycle": "null",
+    "cycles": "empty_array",
+    "enabled": "bool"
+   },
+   "message": "string"
+  },
+  "status": 200
+ }
+}

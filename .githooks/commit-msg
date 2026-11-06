@@ -1,0 +1,14 @@
+#!/bin/sh
+# 约定式提交：type(scope)!: subject，type 见下方列表。不引 Node 依赖。
+set -e
+msg=$(head -n1 "$1")
+types='feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert'
+if ! printf '%s' "$msg" | grep -Eq "^($types)(\([a-z0-9._/-]+\))?!?: .+"; then
+  echo "commit-msg: 首行需为 '<type>(<scope>): <subject>'，type 属于 feat/fix/docs/style/refactor/perf/test/build/ci/chore/revert" >&2
+  echo "实际: $msg" >&2
+  exit 1
+fi
+if [ "${#msg}" -gt 100 ]; then
+  echo "commit-msg: 首行最多 100 字符，实际 ${#msg}" >&2
+  exit 1
+fi

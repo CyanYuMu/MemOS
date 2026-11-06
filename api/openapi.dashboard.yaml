@@ -1,0 +1,3458 @@
+openapi: 3.0.3
+info:
+  title: Memory Console Dashboard API
+  version: 0.1.0
+  description: |-
+    控制台前端依赖的后端接口定义。
+
+    ## 通用约定
+
+    **统一返回格式。** 所有接口返回 `{ code, data, message }`。`code === 0` 表示成功，前端解包后只拿 `data`；非 0 时前端按错误处理，把 `message` 弹成提示。HTTP 状态码不参与判断，200 + 非 0 code 也算失败。
+
+    **请求体。** 除少数 GET 外，参数一律放 body，不放 query。字段值为空串或 null 时前端会**删掉该字段**再发出去，后端要按「字段不存在」处理，不要依赖空串。
+
+    **分页。** 参数名固定 `pageNum` / `pageSize`，从 1 开始。
+
+    **列表响应的键不统一。** 同一个前端里四种写法并存，这是最容易被忽略的地方：
+
+    | 接口 | 列表键 | 分页字段 |
+    |---|---|---|
+    | `project/list`、`keys/list`、`knowledgebase/list`、`knowledgebase/memory/list` | `records` | `total` |
+    | `log/list` | `logs` | `total` |
+    | `project/memory/list` | `memListItemResponseList` | `total`、`current` |
+    | `profileTemplate/list` | `list` | `total`、`current`、`size`、`pages` |
+
+    **时间字段。** 一律叫 `createTime`（不是 `createdAt`），值是可被 `dayjs` 直接解析的字符串。
+
+    ## 错误码
+
+    | code | 含义 |
+    |---|---|
+    | 0 | 成功 |
+    | 40000 | 参数错误 |
+    | 40001 | 资源不存在 |
+    | 40002 | 请求过于频繁 |
+    | 40003 | 无权限 |
+    | 40100 | 未登录 |
+    | 40104 | 未授权 |
+    | 50106 | 知识库数量超限 |
+    | 50107 | 文档删除中 |
+    | 41300 | 请求体或正文超过上限 |
+    | 50200 | 模型调用失败，稍后重试 |
+    | 50400 | 模型响应超时，稍后重试 |
+    | 60004 | 容量超限 |
+
+    ## 模型列表不走接口
+
+    「模型列表」页的数据来自静态 JSON（形状 `{ records: [...] }`），由前端从配置目录取，后端不需要实现。
+
+    ## 鉴权
+
+    **控制台目前不发任何鉴权头**，请求里只有 `Content-Type`。所以本接口定义按「无鉴权」描述（根级 `security: []`）。
+
+    真实后端要不要加鉴权、加在哪一层需要单独决定：控制台没有登录页，后端若要求 token，前端也要相应改动。
+security: []
+servers:
+  - url: http://localhost:5280
+    description: 控制台进程（与对外 /memory/* 同一个二进制，5280 端口）
+tags:
+  - name: 项目
+    description: 工作区。几乎所有业务接口都要它的 id。
+  - name: 接口密钥
+    description: 密钥的增删查与复制。
+  - name: 调用日志
+    description: 调用流水与单条详情。
+  - name: 记忆
+    description: 记忆的列表、详情与删除。
+  - name: 知识库
+    description: 知识库及其文档、记忆。
+  - name: 属性树模板
+    description: 属性树模板的增删改查。
+  - name: 自定义抽取
+    description: 抽取 Prompt 的读写与调试。
+  - name: 提示词工作台
+    description: 项目级提示词的清单、版本、校验与试跑；控制面只代理，不保存正文。
+  - name: 用量
+    description: 按天聚合的调用用量。
+  - name: 账号
+    description: 额度与订阅。
+  - name: 图谱
+    description: 记忆图谱：按项目取节点、边与统计。
+  - name: 运行信息
+    description: 控制台自身的运行状态。
+paths:
+
+  /api/dashboard/project/dict:
+    get:
+      tags:
+        - 项目
+      summary: 项目下拉字典
+      description: 返回**数组**，不是分页对象。`status === "ENABLED"` 的那条是当前项目。
+      parameters:
+        - name: language
+          in: query
+          required: false
+          schema:
+            type: string
+            example: zh-CN
+      responses:
+        '200':
+          $ref: '#/components/responses/ProjectDict'
+  /api/dashboard/project/list:
+    post:
+      tags:
+        - 项目
+      summary: 项目分页列表
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                pageNum:
+                  type: integer
+                  default: 1
+                pageSize:
+                  type: integer
+                  default: 10
+      responses:
+        '200':
+          $ref: '#/components/responses/ProjectRecords'
+  /api/dashboard/project/create:
+    post:
+      tags:
+        - 项目
+      summary: 新建项目
+      description: 返回新建的项目对象，前端拿它的 `id` 立刻切过去。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - description
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                isMultiView:
+                  type: integer
+                  enum:
+                    - 0
+                    - 1
+      responses:
+        '200':
+          $ref: '#/components/responses/Project'
+  /api/dashboard/project/update:
+    post:
+      tags:
+        - 项目
+      summary: 更新项目 / 切换当前项目
+      description: '切换当前项目就是传 `{ id, status: "ENABLED" }`，后端要把其它项目置回 `DISABLED`。'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/Project'
+                - type: object
+                  properties:
+                    id:
+                      type: string
+                    status:
+                      type: string
+                      enum:
+                        - ENABLED
+                        - DISABLED
+                  required:
+                    - id
+      responses:
+        '200':
+          $ref: '#/components/responses/Project'
+  /api/dashboard/project/revoke/{id}:
+    post:
+      tags:
+        - 项目
+      summary: 删除项目
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          $ref: '#/components/responses/Ok'
+  /api/dashboard/project/delete/{id}:
+    post:
+      tags:
+        - 项目
+      summary: 归档项目（软删除）
+      description: 成员、邀请与 API Key 全部保留，之后可用 `project/restore/{id}` 原样恢复。个人项目不能归档。
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 成功，项目已归档
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          ok:
+                            type: boolean
+                          id:
+                            type: string
+                          archived:
+                            type: boolean
+  /api/dashboard/project/restore/{id}:
+    post:
+      tags:
+        - 项目
+      summary: 恢复归档项目
+      description: 只有项目所有者或平台管理员可以恢复。恢复后成员与 API Key 立即恢复可用。
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          $ref: '#/components/responses/Project'
+  /api/dashboard/keys/list:
+    post:
+      tags:
+        - 接口密钥
+      summary: 密钥分页列表
+      description: 列表里下发的 `apiKey` 就是**完整密钥**，没有掩码字段，前端自己截断成 `${key.slice(0,7)}*******${key.slice(-8)}` 展示。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - projectId
+              properties:
+                projectId:
+                  type: string
+                pageNum:
+                  type: integer
+                  default: 1
+                pageSize:
+                  type: integer
+                  default: 10
+      responses:
+        '200':
+          $ref: '#/components/responses/ApiKeyRecords'
+  /api/dashboard/keys/create:
+    post:
+      tags:
+        - 接口密钥
+      summary: 新建密钥
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - projectId
+                - keyName
+              properties:
+                projectId:
+                  type: string
+                keyName:
+                  type: string
+      responses:
+        '200':
+          $ref: '#/components/responses/ApiKey'
+  /api/dashboard/keys/revoke/{apiKeyId}:
+    post:
+      tags:
+        - 接口密钥
+      summary: 吊销密钥
+      parameters:
+        - name: apiKeyId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          $ref: '#/components/responses/Ok'
+  /api/dashboard/keys/rename/{apiKeyId}:
+    post:
+      tags:
+        - 接口密钥
+      summary: 修改 Key 的名称
+      description: 只改展示名，明文与哈希不变，改名后 Key 仍然可用。
+      parameters:
+        - name: apiKeyId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - keyName
+              properties:
+                keyName:
+                  type: string
+                  maxLength: 64
+      responses:
+        '200':
+          $ref: '#/components/responses/ApiKey'
+  /api/dashboard/keys/copy:
+    post:
+      tags:
+        - 接口密钥
+      summary: 取完整密钥
+      description: '`data` 是密钥字符串本身，不是对象。'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - apiKeyId
+              properties:
+                apiKeyId:
+                  type: string
+      responses:
+        '200':
+          $ref: '#/components/responses/StringData'
+  /api/dashboard/log/list:
+    post:
+      tags:
+        - 调用日志
+      summary: 调用日志分页列表
+      description: |-
+        `pageSize` 默认 50，前端只渲染返回结果的前 100 条。
+
+        `subjectType` 取 `all` / `user` / `agent`；`subjectId` 为空时 `subjectType` 会被强制清空。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - projectId
+              properties:
+                projectId:
+                  type: string
+                pageNum:
+                  type: integer
+                  default: 1
+                pageSize:
+                  type: integer
+                  default: 50
+                subjectId:
+                  type: string
+                subjectType:
+                  type: string
+                  enum:
+                    - all
+                    - user
+                    - agent
+                eventType:
+                  $ref: '#/components/schemas/EventType'
+                query:
+                  type: string
+                status:
+                  type: string
+                startTime:
+                  type: string
+                endTime:
+                  type: string
+      responses:
+        '200':
+          $ref: '#/components/responses/LogList'
+  /api/dashboard/log/detail:
+    post:
+      tags:
+        - 调用日志
+      summary: 调用日志详情
+      description: |-
+        `requestBody` 与 `responseBody` 是 **JSON 字符串**，不是对象，前端要二次 `JSON.parse`。
+
+        `eventType === "chat"` 时 `responseBody` 再解析一次：解析结果带 `code` 与 `data` 就直接用，否则包成 `{ code: responseCode, data: <解析结果> }`。
+
+        ### 详情抽屉按 eventType 取哪些字段
+
+        通用字段（每条日志都有）：`status`、`duration`、`traceId`、`userId`、`agentId`、`createTime`、`requestTokens`、`responseTokens`、`requestCode`、`responseCode`、`eventType`。
+
+        各类型额外读取的路径（点号分隔，`requestBody` / `responseBody` 解析后的字段）：
+
+        | eventType | 请求 | 响应 |
+        |---|---|---|
+        | `addMessage` | `async_mode` `conversation_id` `allow_memory_view` `messages` `info` | `code` `data.memory_views` `message` |
+        | `addFeedback` | `feedback_target` `profile_id` `attr_id` `feedback_content` `feedback_time` | `code` `data.memory_views` `message` |
+        | `searchMemory` | `conversation_id` `conversationId` `query` `include_memory_view` `memory_limit_number` `includePreference` `preferenceLimitNumber` `includeToolMemory` `toolMemoryLimitNumber` `knowledgebase_ids` `filter` | `code` `data` `message` |
+        | `getMessage` | `message_limit_number` | `code` `data.message_detail_list` `message` |
+        | `getMemory` | `page` `size` `filter` `include_memory_view` | `code` `data` `message` |
+        | `deleteMemory` | `memory_ids` `message_id` | `code` `data` `message` |
+        | `manualAddMemory` | `memory_view` `add_time` `algorithm_updatable` `content` | `code` `data` `message` |
+        | `updateMemory` | `memory_id` `title` `algorithm_updatable` `content` | `code` `data` `message` |
+        | `bindProfileTemplate` | `bind_list` | `code` `message` |
+        | `editProfile` | `profile_template_id` `metadata` `remove_fields` | `code` `message` |
+        | `deleteProfile` | `profile_template_id` | `code` `message` |
+        | `chat` | `conversation_id` `knowledgebase_ids` `query` `filter` `base_prompt` `model_name` `include_preference` `add_message_on_answer` | `code` `data.response` `message` |
+        | `extractMemory` | `messages` `extraction_types` | `code` `message`、`data.choices.0.message.content` |
+        | `rerank` | `model` `query` `documents` `top_n` | `code` `data.results` `message` |
+
+        请求体里的键名风格不统一，既有下划线（`conversation_id`）也有驼峰（`conversationId`），`searchMemory` 两种都会去取。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - logId
+              properties:
+                logId:
+                  type: string
+      responses:
+        '200':
+          $ref: '#/components/responses/LogDetail'
+  /api/dashboard/project/memory/list:
+    post:
+      tags:
+        - 记忆
+      summary: 记忆分页列表
+      description: |-
+        列表键是 `memListItemResponseList`，不是 `records`。
+
+        `memoryDetailType` 决定返回哪一类记忆，取值见 `MemoryDetailType`。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - projectId
+                - memoryDetailType
+              properties:
+                projectId:
+                  type: string
+                memoryDetailType:
+                  $ref: '#/components/schemas/MemoryDetailType'
+                pageNum:
+                  type: integer
+                  default: 1
+                pageSize:
+                  type: integer
+                  default: 50
+                knowledgeBaseId:
+                  type: string
+                startTime:
+                  type: string
+                endTime:
+                  type: string
+                externalUserId:
+                  type: string
+                subjectType:
+                  $ref: '#/components/schemas/MemorySubjectType'
+                memSearchContent:
+                  type: string
+      responses:
+        '200':
+          $ref: '#/components/responses/MemoryList'
+  /api/dashboard/project/memory/detail:
+    post:
+      tags:
+        - 记忆
+      summary: 记忆详情
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - projectId
+                - memoryId
+                - memType
+              properties:
+                projectId:
+                  type: string
+                memoryId:
+                  type: string
+                memType:
+                  $ref: '#/components/schemas/MemoryDetailType'
+      responses:
+        '200':
+          $ref: '#/components/responses/Memory'
+  /api/dashboard/project/memory/events:
+    post:
+      tags: [记忆]
+      summary: 查询不可变的记忆操作事件
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [projectId]
+              properties:
+                projectId:
+                  type: string
+                after:
+                  type: string
+                  maxLength: 512
+                  description: 当前项目的opaque游标，省略时返回最近50条
+                callIds:
+                  type: array
+                  maxItems: 20
+                  description: 按真实调用标识读取历史快照，与after互斥，不移动feed游标
+                  items:
+                    type: string
+                    minLength: 1
+                    maxLength: 256
+      responses:
+        '200':
+          description: 按项目返回真实召回、新增、更新和删除快照
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        required: [records, cursor, hasMore, total]
+                        properties:
+                          records:
+                            type: array
+                            items:
+                              $ref: '#/components/schemas/MemoryEvent'
+                          cursor:
+                            type: string
+                          hasMore:
+                            type: boolean
+                          total:
+                            type: integer
+  /api/dashboard/project/memory/activity:
+    post:
+      tags: [记忆]
+      summary: 查询写入后的真实记忆结果
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [projectId]
+              properties:
+                projectId:
+                  type: string
+                callIds:
+                  type: array
+                  maxItems: 20
+                  items:
+                    type: string
+                    maxLength: 128
+                after:
+                  type: string
+                  description: 不传 callIds 时增量读取最近完成记录的时间游标
+      responses:
+        '200':
+          description: 按项目返回真实写入结果，旧记录未保留结果时为 unavailable
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          records:
+                            type: array
+                            items:
+                              $ref: '#/components/schemas/MemoryActivity'
+                          total:
+                            type: integer
+                          cursor:
+                            type: string
+  /api/dashboard/project/memory/delete:
+    post:
+      tags:
+        - 记忆
+      summary: 批量删除记忆
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - memory_ids
+              properties:
+                memory_ids:
+                  type: array
+                  items:
+                    type: string
+                memType:
+                  $ref: '#/components/schemas/MemoryDetailType'
+      responses:
+        '200':
+          $ref: '#/components/responses/DeleteResult'
+  /api/dashboard/graph/memories:
+    get:
+      tags:
+        - 图谱
+      summary: 记忆图谱的节点与边
+      parameters:
+        - name: tenant
+          in: query
+          required: true
+          schema:
+            type: string
+          description: 项目 id
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+          description: 节点上限，超过服务端配置的上限时按上限截断
+        - name: types
+          in: query
+          required: false
+          schema:
+            type: string
+          description: 逗号分隔的记忆类型过滤
+      responses:
+        '200':
+          $ref: '#/components/responses/GraphPage'
+  /api/dashboard/graph/memory:
+    get:
+      tags:
+        - 图谱
+      summary: 单个节点的正文
+      parameters:
+        - name: id
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: tenant
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                          memory:
+                            type: string
+  /api/dashboard/knowledgebase/list:
+    post:
+      tags:
+        - 知识库
+      summary: 知识库分页列表
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                pageNum:
+                  type: integer
+                  default: 1
+                pageSize:
+                  type: integer
+                  default: 10
+                name:
+                  type: string
+                projectId:
+                  type: string
+      responses:
+        '200':
+          $ref: '#/components/responses/KnowledgeBaseRecords'
+  /api/dashboard/knowledgebase/create:
+    post:
+      tags:
+        - 知识库
+      summary: 新建知识库
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - knowledgebaseName
+              properties:
+                knowledgebaseName:
+                  type: string
+                knowledgebaseDescription:
+                  type: string
+                projectIds:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '200':
+          $ref: '#/components/responses/KnowledgeBase'
+  /api/dashboard/knowledgebase/update:
+    post:
+      tags:
+        - 知识库
+      summary: 更新知识库
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - id
+              properties:
+                id:
+                  type: string
+                knowledgebaseName:
+                  type: string
+                knowledgebaseDescription:
+                  type: string
+                projectIds:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '200':
+          $ref: '#/components/responses/KnowledgeBase'
+  /api/dashboard/knowledgebase/delete:
+    post:
+      tags:
+        - 知识库
+      summary: 删除知识库
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - knowledgeBaseId
+              properties:
+                projectId:
+                  type: string
+                knowledgeBaseId:
+                  type: string
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          ok:
+                            type: boolean
+                          id:
+                            type: string
+  /api/dashboard/knowledgebase/detail:
+    post:
+      tags:
+        - 知识库
+      summary: 知识库详情
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - knowledgeBaseId
+              properties:
+                knowledgeBaseId:
+                  type: string
+      responses:
+        '200':
+          $ref: '#/components/responses/KnowledgeBase'
+  /api/dashboard/knowledgebase/file/list:
+    post:
+      tags:
+        - 知识库
+      summary: 知识库文档列表
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - knowledgeBaseId
+              properties:
+                knowledgeBaseId:
+                  type: string
+                pageNum:
+                  type: integer
+                  default: 1
+                pageSize:
+                  type: integer
+                  default: 10
+                fileName:
+                  type: string
+                type:
+                  type: string
+                status:
+                  $ref: '#/components/schemas/DocumentStatus'
+                startTime:
+                  type: string
+                endTime:
+                  type: string
+      responses:
+        '200':
+          $ref: '#/components/responses/UntypedRecords'
+  /api/dashboard/knowledgebase/file/add:
+    post:
+      tags:
+        - 知识库
+      summary: 新增知识库文件
+      description: '`file` 与 `files` 二选一；每个文件必须带 `name` 与 `content`。'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - knowledgeBaseId
+              properties:
+                projectId:
+                  type: string
+                knowledgeBaseId:
+                  type: string
+                type:
+                  type: string
+                file:
+                  $ref: '#/components/schemas/KnowledgeFileInput'
+                files:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/KnowledgeFileInput'
+      responses:
+        '200':
+          $ref: '#/components/responses/KnowledgeFileRecords'
+  /api/dashboard/knowledgebase/file/delete:
+    post:
+      tags:
+        - 知识库
+      summary: 删除知识库文件
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - fileIds
+              properties:
+                projectId:
+                  type: string
+                fileIds:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '200':
+          description: 成功，返回删除条数
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          ok:
+                            type: boolean
+                          deleted:
+                            type: integer
+  /api/dashboard/knowledgebase/file/download:
+    get:
+      tags:
+        - 知识库
+      summary: 下载知识库文件
+      description: 唯一不套 JSON 信封的接口：直接把上游文件字节以附件形式返回。
+      parameters:
+        - name: projectId
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: fileId
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 文件字节
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+  /api/dashboard/knowledgebase/memory/list:
+    post:
+      tags:
+        - 知识库
+      summary: 知识库的记忆列表
+      description: 比其它列表多一个 `size` 字段。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - knowledgeBaseId
+              properties:
+                knowledgeBaseId:
+                  type: string
+                pageNum:
+                  type: integer
+                  default: 1
+                pageSize:
+                  type: integer
+                  default: 10
+                query:
+                  type: string
+                userId:
+                  type: string
+                triggerType:
+                  type: string
+                startTime:
+                  type: string
+                endTime:
+                  type: string
+      responses:
+        '200':
+          $ref: '#/components/responses/MemoryRecords'
+  /api/dashboard/knowledgebase/project/associate:
+    post:
+      tags:
+        - 知识库
+      summary: 把知识库关联到项目
+      description: 传的是该项目的**全量**知识库 id 列表，不在列表里的会被解除关联。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - projectId
+                - knowledgeBaseIds
+              properties:
+                projectId:
+                  type: string
+                knowledgeBaseIds:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '200':
+          $ref: '#/components/responses/Ok'
+  /api/dashboard/knowledgebase/project/remove:
+    post:
+      tags:
+        - 知识库
+      summary: 解除知识库与项目的关联
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - projectId
+                - knowledgeBaseId
+              properties:
+                projectId:
+                  type: string
+                knowledgeBaseId:
+                  type: string
+                deleteAll:
+                  type: boolean
+                  description: 为真时连同知识库本身一起删除
+      responses:
+        '200':
+          $ref: '#/components/responses/Ok'
+  /api/dashboard/profileTemplate/list:
+    post:
+      tags:
+        - 属性树模板
+      summary: 属性树模板分页列表
+      description: '列表键是 `list`，不是 `records`，且多一个 `pages`。空态是 `{ current: 1, size, total: 0, pages: 0, list: [] }`。'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - projectId
+              properties:
+                projectId:
+                  type: string
+                pageNum:
+                  type: integer
+                  default: 1
+                pageSize:
+                  type: integer
+                  default: 10
+      responses:
+        '200':
+          $ref: '#/components/responses/ProfileTemplateList'
+  /api/dashboard/profileTemplate/detail:
+    get:
+      tags:
+        - 属性树模板
+      summary: 属性树模板详情
+      description: 少数 GET 之一，参数走 query。
+      parameters:
+        - name: templateId
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: projectId
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          $ref: '#/components/responses/ProfileTemplate'
+  /api/dashboard/profileTemplate/create:
+    post:
+      tags:
+        - 属性树模板
+      summary: 新建属性树模板
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfileTemplate'
+      responses:
+        '200':
+          $ref: '#/components/responses/Ok'
+  /api/dashboard/profileTemplate/update:
+    post:
+      tags:
+        - 属性树模板
+      summary: 更新属性树模板
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfileTemplate'
+      responses:
+        '200':
+          $ref: '#/components/responses/Ok'
+  /api/dashboard/profileTemplate/delete:
+    post:
+      tags:
+        - 属性树模板
+      summary: 删除属性树模板
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - projectId
+                - templateId
+              properties:
+                projectId:
+                  type: string
+                templateId:
+                  type: string
+      responses:
+        '200':
+          $ref: '#/components/responses/Ok'
+  /api/dashboard/prompt-config/detail:
+    post:
+      tags:
+        - 自定义抽取
+      summary: 读取抽取 Prompt
+      deprecated: true
+      description: 已由 /api/dashboard/prompts/* 取代，保留可用；新代码不要再用。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProjectScopedRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/PromptConfig'
+  /api/dashboard/prompt-config/save:
+    post:
+      tags:
+        - 自定义抽取
+      summary: 保存抽取 Prompt
+      deprecated: true
+      description: 已由 /api/dashboard/prompts/* 取代，保留可用；新代码不要再用。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/ProjectScopedRequest'
+                - type: object
+                  required:
+                    - prompt
+                  properties:
+                    prompt:
+                      type: string
+      responses:
+        '200':
+          $ref: '#/components/responses/Ok'
+  /api/dashboard/prompt-config/generate:
+    post:
+      tags:
+        - 自定义抽取
+      summary: 按一句话描述生成 Prompt
+      deprecated: true
+      description: 已由 /api/dashboard/prompts/* 取代，保留可用；新代码不要再用。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/ProjectScopedRequest'
+                - type: object
+                  required:
+                    - description
+                  properties:
+                    description:
+                      type: string
+      responses:
+        '200':
+          $ref: '#/components/responses/Prompt'
+  /api/dashboard/prompt-config/reset-default:
+    post:
+      tags:
+        - 自定义抽取
+      summary: 恢复默认 Prompt
+      deprecated: true
+      description: 已由 /api/dashboard/prompts/* 取代，保留可用；新代码不要再用。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProjectScopedRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/Prompt'
+  /api/dashboard/prompt-config/debug/extract:
+    post:
+      tags:
+        - 自定义抽取
+      summary: 快速调试：对一段文本跑抽取
+      deprecated: true
+      description: |-
+        已由 /api/dashboard/prompts/* 取代，保留可用；新代码不要再用。
+
+        `messages` 是标准的 chat 消息数组，前端传一条 `user` 消息。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/ProjectScopedRequest'
+                - type: object
+                  required:
+                    - messages
+                  properties:
+                    messages:
+                      type: array
+                      items:
+                        type: object
+                        required:
+                          - role
+                          - content
+                        properties:
+                          role:
+                            type: string
+                            enum:
+                              - system
+                              - user
+                              - assistant
+                          content:
+                            type: string
+                    extractionTypes:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/MemoryDetailType'
+      responses:
+        '200':
+          $ref: '#/components/responses/ExtractDebug'
+  /api/dashboard/prompts/list:
+    post:
+      tags:
+        - 提示词工作台
+      summary: 提示词清单
+      description: 只返回注册项摘要与各语言槽位状态，不含正文。`state` 以语言为键。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProjectScopedRequest'
+      responses:
+        '400':
+          $ref: '#/components/responses/PromptInvalid'
+        '401':
+          $ref: '#/components/responses/ErrorUnauthorized'
+        '403':
+          $ref: '#/components/responses/ErrorForbidden'
+        '502':
+          $ref: '#/components/responses/ErrorBadGateway'
+        '503':
+          $ref: '#/components/responses/ErrorUnavailable'
+        '200':
+          $ref: '#/components/responses/PromptList'
+  /api/dashboard/prompts/detail:
+    post:
+      tags:
+        - 提示词工作台
+      summary: 单条提示词详情
+      description: 返回注册项全文（`inputSchema`、`sampleInputs[].input` 原样透传）、各语言内置默认与当前生效值。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PromptKeyRequest'
+      responses:
+        '400':
+          $ref: '#/components/responses/PromptInvalid'
+        '401':
+          $ref: '#/components/responses/ErrorUnauthorized'
+        '403':
+          $ref: '#/components/responses/ErrorForbidden'
+        '404':
+          $ref: '#/components/responses/ErrorNotFound'
+        '502':
+          $ref: '#/components/responses/ErrorBadGateway'
+        '503':
+          $ref: '#/components/responses/ErrorUnavailable'
+        '200':
+          $ref: '#/components/responses/PromptDetail'
+  /api/dashboard/prompts/versions:
+    post:
+      tags:
+        - 提示词工作台
+      summary: 版本历史
+      description: 新到旧；`limit` 默认 20、上限 100，`beforeVersionId` 用于翻页。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PromptVersionsRequest'
+      responses:
+        '400':
+          $ref: '#/components/responses/PromptInvalid'
+        '401':
+          $ref: '#/components/responses/ErrorUnauthorized'
+        '403':
+          $ref: '#/components/responses/ErrorForbidden'
+        '404':
+          $ref: '#/components/responses/ErrorNotFound'
+        '502':
+          $ref: '#/components/responses/ErrorBadGateway'
+        '503':
+          $ref: '#/components/responses/ErrorUnavailable'
+        '200':
+          $ref: '#/components/responses/PromptVersions'
+  /api/dashboard/prompts/validate:
+    post:
+      tags:
+        - 提示词工作台
+      summary: 静态校验草稿
+      description: 始终 HTTP 200；`errors` 阻止保存，`warnings` 只提示。校验规则与默认模板都在记忆服务，控制面不复制。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PromptValidateRequest'
+      responses:
+        '400':
+          $ref: '#/components/responses/PromptInvalid'
+        '401':
+          $ref: '#/components/responses/ErrorUnauthorized'
+        '403':
+          $ref: '#/components/responses/ErrorForbidden'
+        '413':
+          $ref: '#/components/responses/ErrorPayloadTooLarge'
+        '502':
+          $ref: '#/components/responses/ErrorBadGateway'
+        '503':
+          $ref: '#/components/responses/ErrorUnavailable'
+        '200':
+          $ref: '#/components/responses/PromptValidation'
+  /api/dashboard/prompts/save:
+    post:
+      tags:
+        - 提示词工作台
+      summary: 保存新版本
+      description: |-
+        `body` 与 `restoreFromVersionId` 二选一。`baseVersionId` 是客户端看到的当前版本（默认 0）；
+        不一致时返回 409，`data.currentVersionId` 是当前生效版本。`author` 由服务端按登录账号填写。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PromptSaveRequest'
+      responses:
+        '401':
+          $ref: '#/components/responses/ErrorUnauthorized'
+        '403':
+          $ref: '#/components/responses/ErrorForbidden'
+        '404':
+          $ref: '#/components/responses/PromptVersionNotFound'
+        '413':
+          $ref: '#/components/responses/ErrorPayloadTooLarge'
+        '502':
+          $ref: '#/components/responses/ErrorBadGateway'
+        '503':
+          $ref: '#/components/responses/ErrorUnavailable'
+        '200':
+          $ref: '#/components/responses/PromptSave'
+        '400':
+          $ref: '#/components/responses/PromptInvalid'
+        '409':
+          $ref: '#/components/responses/PromptConflict'
+  /api/dashboard/prompts/reset:
+    post:
+      tags:
+        - 提示词工作台
+      summary: 还原默认
+      description: 省略 `lang` 还原该条的全部语言，省略 `key` 还原整个项目；返回实际被还原的槽位。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PromptResetRequest'
+      responses:
+        '400':
+          $ref: '#/components/responses/PromptInvalid'
+        '401':
+          $ref: '#/components/responses/ErrorUnauthorized'
+        '403':
+          $ref: '#/components/responses/ErrorForbidden'
+        '404':
+          $ref: '#/components/responses/ErrorNotFound'
+        '502':
+          $ref: '#/components/responses/ErrorBadGateway'
+        '503':
+          $ref: '#/components/responses/ErrorUnavailable'
+        '200':
+          $ref: '#/components/responses/PromptReset'
+  /api/dashboard/prompts/test:
+    post:
+      tags:
+        - 提示词工作台
+      summary: 试跑草稿
+      description: |-
+        走真实抽取或 Dream 的同一条代码路径，只换模板，不写任何存储。`body` 缺省用当前生效值；
+        `compareDefault` 为真时同时用内置默认再跑一次。模型调用失败不改变请求状态：
+        `runs[].ok=false` 并带 `error`。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PromptTestRequest'
+      responses:
+        '401':
+          $ref: '#/components/responses/ErrorUnauthorized'
+        '403':
+          $ref: '#/components/responses/ErrorForbidden'
+        '404':
+          $ref: '#/components/responses/ErrorNotFound'
+        '413':
+          $ref: '#/components/responses/ErrorPayloadTooLarge'
+        '502':
+          $ref: '#/components/responses/ErrorBadGateway'
+        '503':
+          $ref: '#/components/responses/ErrorUnavailable'
+        '200':
+          $ref: '#/components/responses/PromptTest'
+        '400':
+          $ref: '#/components/responses/PromptInvalid'
+        '429':
+          $ref: '#/components/responses/PromptBusy'
+  /api/dashboard/prompts/generate:
+    post:
+      tags:
+        - 提示词工作台
+      summary: AI 改写
+      description: 按一句话指令改写指定提示词，不保存；`validation` 是改写结果的静态校验。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PromptGenerateRequest'
+      responses:
+        '401':
+          $ref: '#/components/responses/ErrorUnauthorized'
+        '403':
+          $ref: '#/components/responses/ErrorForbidden'
+        '404':
+          $ref: '#/components/responses/ErrorNotFound'
+        '413':
+          $ref: '#/components/responses/ErrorPayloadTooLarge'
+        '502':
+          $ref: '#/components/responses/ErrorBadGateway'
+        '504':
+          $ref: '#/components/responses/ErrorGatewayTimeout'
+        '200':
+          $ref: '#/components/responses/PromptGenerate'
+        '400':
+          $ref: '#/components/responses/PromptInvalid'
+        '429':
+          $ref: '#/components/responses/PromptBusy'
+  /api/dashboard/usage/query:
+    post:
+      tags:
+        - 用量
+      summary: 按天聚合的用量
+      description: |-
+        `projectId` 传 `"all"` 时会被改写成空串再发出。`startDate` / `endDate` 格式 `YYYY-MM-DD`，默认当月 1 号到今天。
+
+        `dailyStats` 的每项里，`extractMemory` 与 `rerank` 可能缺失，前端用可选链读。响应里除 `dailyStats` 外的字段前端没有读取。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - projectId
+              properties:
+                projectId:
+                  type: string
+                  description: 传 "all" 表示全部
+                apiKeyId:
+                  type: string
+                startDate:
+                  type: string
+                  format: date
+                endDate:
+                  type: string
+                  format: date
+                includeDailyDetails:
+                  type: boolean
+                  default: true
+      responses:
+        '200':
+          $ref: '#/components/responses/UsageQuery'
+  /api/dashboard/models:
+    get:
+      tags:
+        - 运行信息
+      summary: 上游当前启用的模型清单
+      responses:
+        '200':
+          $ref: '#/components/responses/ModelsRecords'
+  /api/user/quota/summary:
+    get:
+      tags:
+        - 账号
+      summary: 额度概览
+      parameters:
+        - name: knowledgebaseId
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          $ref: '#/components/responses/QuotaSummary'
+  /api/user/subscription/details:
+    post:
+      tags:
+        - 账号
+      summary: 订阅周期
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                cycleId:
+                  type: string
+                includeAllCycles:
+                  type: boolean
+      responses:
+        '200':
+          $ref: '#/components/responses/SubscriptionDetails'
+  /api/meta:
+    get:
+      tags:
+        - 运行信息
+      summary: 控制台运行信息
+      description: 控制台自有的扩展接口，用于在界面上标注当前数据来源、密钥前缀与可用工具。
+      responses:
+        '200':
+          $ref: '#/components/responses/Meta'
+  /api/health:
+    get:
+      tags:
+        - 运行信息
+      summary: 控制台与上游的健康探测
+      description: 文档页状态灯每 30 秒轮询一次；只做探测，不读库。
+      responses:
+        '200':
+          $ref: '#/components/responses/Health'
+  /api/dashboard/local-sync/devices:
+    get:
+      tags:
+        - 本地同步
+      summary: 已授权的本地设备与配额
+      description: 能力未开启时返回 503，不是空列表。`projectId` 走查询串。
+      parameters:
+        - name: projectId
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          $ref: '#/components/responses/Ok'
+  /api/dashboard/local-sync/devices/{id}:
+    delete:
+      tags:
+        - 本地同步
+      summary: 吊销设备
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: projectId
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          $ref: '#/components/responses/Ok'
+  /api/dashboard/local-sync/memories:
+    get:
+      tags:
+        - 本地同步
+      summary: 本地记忆镜像分页列表
+      parameters:
+        - name: projectId
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: layer
+          in: query
+          schema:
+            type: string
+        - name: deviceId
+          in: query
+          schema:
+            type: string
+        - name: q
+          in: query
+          schema:
+            type: string
+        - name: startTime
+          in: query
+          schema:
+            type: string
+        - name: endTime
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: pageSize
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          $ref: '#/components/responses/UntypedRecords'
+  /api/dashboard/local-sync/memories/{id}:
+    get:
+      tags:
+        - 本地同步
+      summary: 镜像详情（含 payload）
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: projectId
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          $ref: '#/components/responses/Ok'
+    delete:
+      tags:
+        - 本地同步
+      summary: 删除镜像（只置 deleted_at，不影响本地）
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: projectId
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          $ref: '#/components/responses/Ok'
+  /api/dashboard/local-sync/memories/promote:
+    post:
+      tags:
+        - 本地同步
+      summary: 批量转存到上游记忆
+      parameters:
+        - name: projectId
+          in: query
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - ids
+              properties:
+                ids:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '200':
+          $ref: '#/components/responses/Ok'
+  /api/dashboard/local-sync/summary:
+    get:
+      tags:
+        - 本地同步
+      summary: 治理摘要（按层计数与配额）
+      parameters:
+        - name: projectId
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          $ref: '#/components/responses/Ok'
+components:
+  schemas:
+    ErrorEnvelope:
+      type: object
+      description: 错误信封。HTTP 状态码与 `code` 一起判断；`data` 按场景可能带 `errors`、`currentVersionId`、`retryAfterSec`。
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: integer
+          description: 非 0 即失败（40000 参数、40100 未登录、40300 无权限、40001 不存在、40900 冲突、41300 超限、42900 限流、50200/50143/50300 上游与模型侧、50400 超时）
+        data:
+          nullable: true
+          description: 失败时通常为 null；冲突、限流与校验失败带场景字段
+        message:
+          type: string
+          description: 面向用户，只写发生了什么和怎么改
+    PromptState:
+      type: object
+      description: 一个语言槽位的状态。`source=default` 时 `versionId` 为 0。
+      properties:
+        source:
+          type: string
+          enum:
+            - default
+            - project
+        versionId:
+          type: integer
+          description: 全局自增编号，只用于接口调用与并发判断
+        versionNo:
+          type: integer
+          description: 该槽位从 1 开始的序号，界面显示用；默认时为 0
+        updatedAt:
+          type: string
+          nullable: true
+          description: 默认槽位为 null
+        author:
+          type: string
+          nullable: true
+          description: 默认槽位为 null
+    PromptItem:
+      type: object
+      properties:
+        key:
+          type: string
+        group:
+          type: string
+          enum:
+            - extract
+            - process
+            - dream
+        title:
+          type: object
+          description: 语言 → 标题
+          additionalProperties:
+            type: string
+        summary:
+          type: object
+          description: 语言 → 一句话说明
+          additionalProperties:
+            type: string
+        languages:
+          type: array
+          items:
+            type: string
+        editable:
+          type: boolean
+        state:
+          type: object
+          description: 语言 → 槽位状态
+          additionalProperties:
+            $ref: '#/components/schemas/PromptState'
+    PromptCatalog:
+      type: object
+      properties:
+        prompts:
+          type: array
+          items:
+            $ref: '#/components/schemas/PromptItem'
+    PromptPlaceholder:
+      type: object
+      properties:
+        name:
+          type: string
+        required:
+          type: boolean
+        description:
+          type: object
+          additionalProperties:
+            type: string
+    PromptOutputContract:
+      type: object
+      properties:
+        format:
+          type: string
+        requiredKeys:
+          type: array
+          items:
+            type: string
+        itemKeys:
+          type: array
+          items:
+            type: string
+        description:
+          type: object
+          additionalProperties:
+            type: string
+    PromptSample:
+      type: object
+      properties:
+        id:
+          type: string
+        lang:
+          type: string
+          description: 样例输入本身的语种，前端按当前所选语言过滤
+        title:
+          type: object
+          additionalProperties:
+            type: string
+        input:
+          type: object
+          additionalProperties: true
+          description: 原样透传，形状由 `inputSchema` 描述
+    PromptEffective:
+      type: object
+      properties:
+        body:
+          type: string
+        source:
+          type: string
+          enum:
+            - default
+            - project
+        versionId:
+          type: integer
+        versionNo:
+          type: integer
+          description: 该槽位从 1 开始的序号
+        updatedAt:
+          type: string
+          nullable: true
+          description: 默认槽位为 null
+        author:
+          type: string
+          nullable: true
+          description: 默认槽位为 null
+    PromptDetail:
+      type: object
+      properties:
+        key:
+          type: string
+        group:
+          type: string
+        title:
+          type: object
+          additionalProperties:
+            type: string
+        summary:
+          type: object
+          additionalProperties:
+            type: string
+        languages:
+          type: array
+          items:
+            type: string
+        syntax:
+          type: string
+          description: 占位符替换方式，由记忆服务的注册表决定（如 `dollar`、`format`、`brace`）
+        placeholders:
+          type: array
+          items:
+            $ref: '#/components/schemas/PromptPlaceholder'
+        lockedSuffix:
+          type: string
+          nullable: true
+          description: 代码在用户提示词之后自动追加的文本，只读
+        inputKind:
+          type: string
+        inputSchema:
+          type: object
+          additionalProperties: true
+          description: 原样透传
+        outputContract:
+          $ref: '#/components/schemas/PromptOutputContract'
+        sampleInputs:
+          type: array
+          items:
+            $ref: '#/components/schemas/PromptSample'
+        editable:
+          type: boolean
+        defaults:
+          type: object
+          description: 语言 → 内置默认全文，原样透传
+          additionalProperties:
+            type: string
+        effective:
+          type: object
+          description: 语言 → 当前生效值，原样透传
+          additionalProperties:
+            $ref: '#/components/schemas/PromptEffective'
+    PromptVersion:
+      type: object
+      properties:
+        versionId:
+          type: integer
+        versionNo:
+          type: integer
+          description: 该槽位从 1 开始的序号（含 save/rollback/reset/migrated）
+        lang:
+          type: string
+        kind:
+          type: string
+          enum:
+            - save
+            - reset
+            - rollback
+            - migrated
+        body:
+          type: string
+        note:
+          type: string
+        author:
+          type: string
+        createdAt:
+          type: string
+        parentVersionId:
+          type: integer
+          nullable: true
+    PromptVersionsData:
+      type: object
+      properties:
+        versions:
+          type: array
+          items:
+            $ref: '#/components/schemas/PromptVersion'
+        hasMore:
+          type: boolean
+    PromptIssue:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+          description: 面向用户，只说发生了什么和怎么改
+    PromptValidation:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/PromptIssue'
+        warnings:
+          type: array
+          items:
+            $ref: '#/components/schemas/PromptIssue'
+    PromptSaveData:
+      type: object
+      properties:
+        versionId:
+          type: integer
+        versionNo:
+          type: integer
+        createdAt:
+          type: string
+        effective:
+          $ref: '#/components/schemas/PromptEffective'
+    PromptResetItem:
+      type: object
+      properties:
+        key:
+          type: string
+        lang:
+          type: string
+        versionId:
+          type: integer
+        versionNo:
+          type: integer
+    PromptResetData:
+      type: object
+      description: 实际被还原的槽位；全部已是默认时为空数组。
+      properties:
+        reset:
+          type: array
+          items:
+            $ref: '#/components/schemas/PromptResetItem'
+    PromptContractCheck:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        missing:
+          type: array
+          items:
+            type: string
+    PromptRunError:
+      type: object
+      properties:
+        code:
+          type: string
+          enum:
+            - llm_error
+            - llm_timeout
+        message:
+          type: string
+    PromptTestRun:
+      type: object
+      properties:
+        label:
+          type: string
+          enum:
+            - draft
+            - default
+        ok:
+          type: boolean
+        parseOk:
+          type: boolean
+        fallbackTriggered:
+          type: boolean
+          description: 为真表示真实抽取在这种输出下会把原文整段存成 UserMemory
+        contract:
+          $ref: '#/components/schemas/PromptContractCheck'
+        output:
+          type: object
+          additionalProperties: true
+          description: 原样透传，不转换键名
+        rawOutput:
+          type: string
+        truncated:
+          type: boolean
+        latencyMs:
+          type: integer
+        model:
+          type: string
+        usage:
+          type: object
+          additionalProperties: true
+          description: 开放映射，snake_case 的键转成 camelCase（如 promptTokens、completionTokens、calls）
+        usedSlots:
+          type: array
+          description: 本次运行实际取用的模板槽位
+          items:
+            $ref: '#/components/schemas/PromptSlotRef'
+        warnings:
+          type: array
+          description: 不阻止运行、但用户要知道的情况（例如草稿没有被取用）
+          items:
+            $ref: '#/components/schemas/PromptIssue'
+        error:
+          $ref: '#/components/schemas/PromptRunError'
+    PromptSlotRef:
+      type: object
+      properties:
+        key:
+          type: string
+        lang:
+          type: string
+        source:
+          type: string
+          enum:
+            - draft
+            - project
+            - default
+        versionId:
+          type: integer
+    PromptTestData:
+      type: object
+      properties:
+        runs:
+          type: array
+          items:
+            $ref: '#/components/schemas/PromptTestRun'
+    PromptGenerateData:
+      type: object
+      properties:
+        body:
+          type: string
+        validation:
+          $ref: '#/components/schemas/PromptValidation'
+    PromptKeyRequest:
+      allOf:
+        - $ref: '#/components/schemas/ProjectScopedRequest'
+        - type: object
+          required:
+            - key
+          properties:
+            key:
+              type: string
+    PromptLangRequest:
+      allOf:
+        - $ref: '#/components/schemas/PromptKeyRequest'
+        - type: object
+          required:
+            - lang
+          properties:
+            lang:
+              type: string
+    PromptVersionsRequest:
+      allOf:
+        - $ref: '#/components/schemas/PromptKeyRequest'
+        - type: object
+          properties:
+            lang:
+              type: string
+            limit:
+              type: integer
+              description: 默认 20，上限 100
+            beforeVersionId:
+              type: integer
+    PromptValidateRequest:
+      allOf:
+        - $ref: '#/components/schemas/PromptLangRequest'
+        - type: object
+          properties:
+            body:
+              type: string
+    PromptSaveRequest:
+      allOf:
+        - $ref: '#/components/schemas/PromptLangRequest'
+        - type: object
+          properties:
+            body:
+              type: string
+              description: 与 `restoreFromVersionId` 二选一
+            restoreFromVersionId:
+              type: integer
+            note:
+              type: string
+              description: 最长 200 字符
+            baseVersionId:
+              type: integer
+              description: 客户端看到的当前版本，默认 0
+    PromptResetRequest:
+      allOf:
+        - $ref: '#/components/schemas/ProjectScopedRequest'
+        - type: object
+          properties:
+            key:
+              type: string
+              description: 省略表示整个项目
+            lang:
+              type: string
+              description: 省略表示该条的全部语言
+    PromptTestRequest:
+      allOf:
+        - $ref: '#/components/schemas/PromptLangRequest'
+        - type: object
+          properties:
+            body:
+              type: string
+              description: 草稿；缺省用当前生效值
+            input:
+              type: object
+              additionalProperties: true
+              description: 形状由对应注册项的 `inputSchema` 决定
+            compareDefault:
+              type: boolean
+    PromptGenerateRequest:
+      allOf:
+        - $ref: '#/components/schemas/PromptLangRequest'
+        - type: object
+          required:
+            - instruction
+          properties:
+            instruction:
+              type: string
+            baseBody:
+              type: string
+    Envelope:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: integer
+          description: 0 表示成功；非 0 时前端按错误处理并弹出 message
+        message:
+          type: string
+        data: {}
+    Project:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum:
+            - ENABLED
+            - DISABLED
+          description: '`ENABLED` 的那条是当前项目'
+        createTime:
+          type: string
+        isMultiView:
+          type: integer
+          enum:
+            - 0
+            - 1
+    ProjectDictItem:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        status:
+          type: string
+          enum:
+            - ENABLED
+            - DISABLED
+    ApiKey:
+      type: object
+      required:
+        - id
+        - keyName
+        - apiKey
+        - createTime
+      properties:
+        id:
+          type: string
+        keyName:
+          type: string
+        apiKey:
+          type: string
+          description: 完整密钥，列表里也下发，前端自己截断展示
+        createTime:
+          type: string
+    EventType:
+      type: string
+      description: 调用事件类型。前 10 个出现在列表页的筛选下拉里，后 4 个只出现在详情页的字段表里。
+      enum:
+        - addMessage
+        - searchMemory
+        - getMemory
+        - deleteMemory
+        - addFeedback
+        - manualAddMemory
+        - updateMemory
+        - bindProfileTemplate
+        - editProfile
+        - deleteProfile
+        - getMessage
+        - chat
+        - extractMemory
+        - rerank
+    LogStatus:
+      type: string
+      description: '`SUCCESS` 与 `success` 都判为成功，其余判为失败'
+    RequestLog:
+      type: object
+      required:
+        - id
+        - createTime
+        - eventType
+        - status
+      properties:
+        id:
+          type: string
+        createTime:
+          type: string
+        eventType:
+          $ref: '#/components/schemas/EventType'
+        userIds:
+          type: array
+          items:
+            type: string
+        agentIds:
+          type: array
+          items:
+            type: string
+        status:
+          $ref: '#/components/schemas/LogStatus'
+        duration:
+          type: number
+          description: 毫秒数，前端拼 `ms` 展示
+    LogDetail:
+      type: object
+      required:
+        - id
+        - createTime
+        - eventType
+        - status
+      properties:
+        id:
+          type: string
+        createTime:
+          type: string
+        eventType:
+          $ref: '#/components/schemas/EventType'
+        status:
+          $ref: '#/components/schemas/LogStatus'
+        duration:
+          type: number
+        traceId:
+          type: string
+        userId:
+          type: string
+        agentId:
+          type: string
+        requestTokens:
+          type: integer
+        responseTokens:
+          type: integer
+        requestCode:
+          type: integer
+        responseCode:
+          type: integer
+        requestBody:
+          type: string
+          description: JSON 字符串，前端二次 parse
+        responseBody:
+          type: string
+          description: JSON 字符串，前端二次 parse
+    MemorySubjectType:
+      type: string
+      enum:
+        - user
+        - agent
+        - public
+    MemoryDetailType:
+      type: string
+      description: 记忆类型。`text_mem` 事实记忆、`pref_mem` 偏好记忆、`event_mem` 事件记忆、`profile_mem` 属性树记忆、`tool_mem` 工具记忆。
+      enum:
+        - text_mem
+        - pref_mem
+        - event_mem
+        - profile_mem
+        - tool_mem
+    MemoryVersion:
+      type: object
+      required: [version, content, createdAt]
+      properties:
+        version: {type: integer}
+        content: {type: string}
+        createdAt: {type: string}
+        updateType: {type: string}
+        validFrom: {type: string}
+        validTo: {type: string}
+    MemorySource:
+      type: object
+      properties:
+        type: {type: string}
+        role: {type: string}
+        content: {type: string}
+        time: {type: string}
+        url: {type: string}
+    Memory:
+      type: object
+      required:
+        - memoryId
+        - memoryContent
+        - createTime
+      properties:
+        relativity:
+          type: number
+          description: 该次检索的实际相关度；画像或旧快照缺失时省略
+        version: {type: integer, description: 上游当前版本号}
+        history:
+          type: array
+          items: {$ref: '#/components/schemas/MemoryVersion'}
+        sources:
+          type: array
+          items: {$ref: '#/components/schemas/MemorySource'}
+        memoryId:
+          type: string
+        memoryContent:
+          type: string
+        memoryKey:
+          type: string
+        memoryType:
+          type: string
+        status:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        updateTime:
+          type: string
+        subjectType:
+          $ref: '#/components/schemas/MemorySubjectType'
+        externalUserId:
+          type: string
+        createTime:
+          type: string
+        profileTemplateId:
+          type: string
+          description: '`profile_mem` 专有'
+        profileInstanceId:
+          type: string
+          description: '`profile_mem` 专有'
+    MemoryEvent:
+      allOf:
+        - $ref: '#/components/schemas/MemoryActivity'
+        - type: object
+          required: [eventId, sequence, kind, sessionId, before, memoryIds]
+          properties:
+            eventId:
+              type: string
+            sequence:
+              type: string
+              pattern: '^[0-9]+$'
+            kind:
+              type: string
+              enum: [recall, add, update, delete]
+            sessionId:
+              type: string
+            before:
+              type: array
+              items:
+                $ref: '#/components/schemas/Memory'
+            memoryIds:
+              type: array
+              items:
+                type: string
+    MemoryActivity:
+      type: object
+      required: [callId, status, memories, total, truncated]
+      properties:
+        callId:
+          type: string
+        status:
+          type: string
+          enum: [pending, succeeded, failed, unavailable, not_found]
+        completedAt:
+          type: string
+        memories:
+          type: array
+          items:
+            $ref: '#/components/schemas/Memory'
+        total:
+          type: integer
+        truncated:
+          type: boolean
+    KnowledgeBase:
+      type: object
+      required:
+        - kbId
+        - knowledgebaseName
+      properties:
+        kbId:
+          type: string
+        knowledgebaseName:
+          type: string
+        knowledgebaseDescription:
+          type: string
+        projectIds:
+          type: array
+          items:
+            type: string
+    DocumentStatus:
+      type: string
+      enum:
+        - waiting
+        - uploading
+        - processing
+        - available
+        - deleting
+        - failed
+        - processFailed
+    ProfileTemplateField:
+      type: object
+      properties:
+        value:
+          type: string
+        algorithm_updatable:
+          type: boolean
+          description: 该字段是否允许算法自动更新
+    ProfileTemplateGroup:
+      type: object
+      description: 分组 → 字段 → `{ value, algorithm_updatable }`
+      additionalProperties:
+        $ref: '#/components/schemas/ProfileTemplateField'
+    ProfileTemplate:
+      type: object
+      description: 模板对象。除下列元信息外，其余键都当作分组数据，形状是「分组 → 字段 → `{ value, algorithm_updatable }`」。
+      properties:
+        templateId:
+          type: string
+        templateName:
+          type: string
+        projectId:
+          type: string
+        bindingCount:
+          type: integer
+        updatedAt:
+          type: string
+      additionalProperties:
+        $ref: '#/components/schemas/ProfileTemplateGroup'
+    PromptConfig:
+      type: object
+      properties:
+        prompt:
+          type: string
+        projectId:
+          type: string
+        updatedAt:
+          type: string
+    ExtractResult:
+      type: object
+      properties:
+        type:
+          $ref: '#/components/schemas/MemoryDetailType'
+        content:
+          type: string
+    UsageDailyStat:
+      type: object
+      required:
+        - date
+      properties:
+        date:
+          type: string
+          format: date
+        addMessage:
+          $ref: '#/components/schemas/UsageCalls'
+        searchMemory:
+          $ref: '#/components/schemas/UsageCalls'
+        chat:
+          $ref: '#/components/schemas/UsageTokens'
+        extractMemory:
+          $ref: '#/components/schemas/UsageTokens'
+        rerank:
+          $ref: '#/components/schemas/UsageCalls'
+    UsageCalls:
+      type: object
+      properties:
+        calls:
+          type: integer
+        totalTokens:
+          type: integer
+    UsageTokens:
+      type: object
+      properties:
+        requestTokens:
+          type: integer
+        responseTokens:
+          type: integer
+        totalTokens:
+          type: integer
+    QuotaSummary:
+      type: object
+      properties:
+        memoryCount:
+          type: integer
+        knowledgebaseCount:
+          type: integer
+        knowledgebaseCapacity:
+          type: integer
+        allowedKnowledgebaseCount:
+          type: integer
+    SubscriptionDetails:
+      type: object
+      properties:
+        cycles:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              cycleStartTime:
+                type: string
+              cycleEndTime:
+                type: string
+        currentCycle:
+          type: object
+          properties:
+            id:
+              type: string
+    ToolInfo:
+      type: object
+      description: 服务暴露的一个 MCP 工具，接入说明与示例命令据此生成
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+    Meta:
+      type: object
+      required:
+        - mode
+        - keyPrefix
+        - tools
+      properties:
+        mode:
+          type: string
+          enum:
+            - sample
+            - live
+          description: '`sample` 示例后端，`live` 真实后端'
+        service:
+          type: string
+        health:
+          type: object
+          nullable: true
+        keyPrefix:
+          type: string
+          description: 新建密钥的展示与校验用它
+        tools:
+          type: array
+          items:
+            $ref: '#/components/schemas/ToolInfo'
+    ProjectScopedRequest:
+      type: object
+      properties:
+        projectId:
+          type: string
+    GraphNode:
+      type: object
+      properties:
+        id:
+          type: string
+        label:
+          type: string
+        labelTruncated:
+          type: boolean
+        memoryType:
+          type: string
+        createdAt:
+          type: string
+        sessionId:
+          type: string
+        clusterId:
+          type: string
+          description: 固定为 `session:<sessionId>`
+        userId:
+          type: string
+        sourceIds:
+          type: array
+          items:
+            type: string
+    GraphLink:
+      type: object
+      properties:
+        source:
+          type: string
+        target:
+          type: string
+        kind:
+          type: string
+          description: 边类型，小写
+    GraphStats:
+      type: object
+      properties:
+        nodes:
+          type: integer
+        links:
+          type: integer
+        sessions:
+          type: integer
+        clusters:
+          type: integer
+        orphans:
+          type: integer
+          description: 没有任何边相连的节点数
+        truncated:
+          type: boolean
+          description: 节点数触及 limit 上限时为 true
+        types:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              count:
+                type: integer
+    ModelEntry:
+      type: object
+      properties:
+        role:
+          type: string
+        model:
+          type: string
+        spec:
+          type: string
+        source:
+          type: string
+        group:
+          type: string
+    HealthCheck:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        latencyMs:
+          type: integer
+        detail:
+          type: string
+          description: 失败时的机器可读短码，文案由页面按语言翻译
+    KnowledgeFile:
+      type: object
+      properties:
+        id:
+          type: string
+        fileId:
+          type: string
+        knowledgebaseId:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+        status:
+          type: string
+        size:
+          type: integer
+        sizeMB:
+          type: number
+        createTime:
+          type: string
+    GraphPageBody:
+      type: object
+      properties:
+        tenant:
+          type: string
+        nodes:
+          type: array
+          items:
+            $ref: '#/components/schemas/GraphNode'
+        links:
+          type: array
+          items:
+            $ref: '#/components/schemas/GraphLink'
+        stats:
+          $ref: '#/components/schemas/GraphStats'
+      required:
+        - tenant
+        - nodes
+        - links
+        - stats
+    KnowledgeFileInput:
+      type: object
+      properties:
+        name:
+          type: string
+        content:
+          type: string
+        type:
+          type: string
+      required:
+        - name
+        - content
+  responses:
+    ErrorBadRequest:
+      description: 参数不合法
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    ErrorUnauthorized:
+      description: 未登录或登录已过期
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    ErrorForbidden:
+      description: 当前账号没有该项目的操作权限
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    ErrorNotFound:
+      description: 资源不存在（例如提示词 key 不存在）
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    PromptVersionNotFound:
+      description: |-
+        提示词或历史版本不存在。`restoreFromVersionId` 不属于该项目的该槽位时
+        数据面返回 `unknown_version`，控制面同样按不存在处理，不泄露它是否存在。
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    ErrorPayloadTooLarge:
+      description: 请求体或正文超过上限；`code` 为 41300
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    ErrorBadGateway:
+      description: 记忆服务拒绝了请求或模型调用失败；`code` 为 50143 或 50200
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    ErrorUnavailable:
+      description: 记忆服务暂时不可用；`code` 为 50300
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    ErrorGatewayTimeout:
+      description: 模型响应超时；`code` 为 50400
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    PromptList:
+      description: 成功，返回提示词清单
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/Envelope'
+              - type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/PromptCatalog'
+    PromptDetail:
+      description: 成功，返回注册项、默认值与生效值
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/Envelope'
+              - type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/PromptDetail'
+    PromptVersions:
+      description: 成功，返回版本历史
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/Envelope'
+              - type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/PromptVersionsData'
+    PromptValidation:
+      description: 成功，返回校验结果
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/Envelope'
+              - type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/PromptValidation'
+    PromptSave:
+      description: 成功，返回新版本与该槽位生效值
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/Envelope'
+              - type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/PromptSaveData'
+    PromptReset:
+      description: 成功，返回实际被还原的槽位
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/Envelope'
+              - type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/PromptResetData'
+    PromptTest:
+      description: 成功，返回每次试跑的结果
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/Envelope'
+              - type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/PromptTestData'
+    PromptGenerate:
+      description: 成功，返回改写结果与校验
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/Envelope'
+              - type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/PromptGenerateData'
+    PromptConflict:
+      description: |-
+        提示词已被他人更新。`data.currentVersionId` 是当前生效版本的全局编号，
+        `currentVersionNo` 是同一槽位显示用的序号；客户端据此刷新后再保存。
+        两个字段始终存在；当前槽位已被还原成默认时值为 0（合法值），不能据此判断“字段缺失”。
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/Envelope'
+              - type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      currentVersionId:
+                        type: integer
+                      currentVersionNo:
+                        type: integer
+    PromptInvalid:
+      description: 提示词没有通过校验；`data.errors` 是逐条问题，message 面向用户
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/Envelope'
+              - type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      errors:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/PromptIssue'
+    PromptBusy:
+      description: 请求过于频繁；`data.retryAfterSec` 与 `Retry-After` 头给出等待秒数
+      headers:
+        Retry-After:
+          description: 需要等待的秒数（与 `data.retryAfterSec` 相同，至少 1）
+          schema:
+            type: integer
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/Envelope'
+              - type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      retryAfterSec:
+                        type: integer
+    Ok:
+      description: 成功
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/Envelope'
+              - type: object
+                properties:
+                  data:
+                    type: object
+                    additionalProperties: true
+    StringData:
+      description: 成功，`data` 是字符串
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/Envelope'
+              - type: object
+                properties:
+                  data:
+                    type: string
+    DeleteResult:
+      description: 成功，返回删除条数
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/Envelope'
+              - type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      deleted:
+                        type: integer
+    Project:
+      description: 成功，返回项目对象
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/Envelope'
+              - type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Project'
+    ProjectDict:
+      description: 成功，`data` 是项目数组
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/Envelope'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ProjectDictItem'
+    ProjectRecords:
+      description: 成功，列表键 `records`
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/Envelope'
+              - type: object
+                properties:
+                  data:
+                    type: object
+                    required:
+                      - records
+                      - total
+                    properties:
+                      records:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Project'
+                      total:
+                        type: integer
+    ApiKey:
+      description: 成功，返回密钥对象
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/Envelope'
+              - type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ApiKey'
+    ApiKeyRecords:
+      description: 成功，列表键 `records`
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/Envelope'
+              - type: object
+                properties:
+                  data:
+                    type: object
+                    required:
+                      - records
+                      - total
+                    properties:
+                      records:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/ApiKey'
+                      total:
+                        type: integer
+    LogList:
+      description: 成功，列表键 `logs`
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/Envelope'
+              - type: object
+                properties:
+                  data:
+                    type: object
+                    required:
+                      - logs
+                      - total
+                    properties:
+                      logs:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/RequestLog'
+                      total:
+                        type: integer
+    LogDetail:
+      description: 成功，返回日志详情
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/Envelope'
+              - type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/LogDetail'
+    Memory:
+      description: 成功，返回记忆对象
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/Envelope'
+              - type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Memory'
+    MemoryList:
+      description: 成功，列表键 `memListItemResponseList`
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/Envelope'
+              - type: object
+                properties:
+                  data:
+                    type: object
+                    required:
+                      - memListItemResponseList
+                      - total
+                    properties:
+                      memListItemResponseList:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Memory'
+                      total:
+                        type: integer
+                      current:
+                        type: integer
+    MemoryRecords:
+      description: 成功，列表键 `records`，多一个 `size`
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/Envelope'
+              - type: object
+                properties:
+                  data:
+                    type: object
+                    required:
+                      - records
+                      - total
+                    properties:
+                      records:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Memory'
+                      total:
+                        type: integer
+                      size:
+                        type: integer
+    UntypedRecords:
+      description: 成功，列表键 `records`
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/Envelope'
+              - type: object
+                properties:
+                  data:
+                    type: object
+                    required:
+                      - records
+                      - total
+                    properties:
+                      records:
+                        type: array
+                        items:
+                          type: object
+                          additionalProperties: true
+                      total:
+                        type: integer
+    KnowledgeBase:
+      description: 成功，返回知识库对象
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/Envelope'
+              - type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/KnowledgeBase'
+    KnowledgeBaseRecords:
+      description: 成功，列表键 `records`
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/Envelope'
+              - type: object
+                properties:
+                  data:
+                    type: object
+                    required:
+                      - records
+                      - total
+                    properties:
+                      records:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/KnowledgeBase'
+                      total:
+                        type: integer
+    ProfileTemplate:
+      description: 成功，返回模板对象
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/Envelope'
+              - type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ProfileTemplate'
+    ProfileTemplateList:
+      description: 成功，列表键 `list`
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/Envelope'
+              - type: object
+                properties:
+                  data:
+                    type: object
+                    required:
+                      - list
+                      - total
+                    properties:
+                      list:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/ProfileTemplate'
+                      total:
+                        type: integer
+                      current:
+                        type: integer
+                      size:
+                        type: integer
+                      pages:
+                        type: integer
+    PromptConfig:
+      description: 成功，返回 Prompt 配置
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/Envelope'
+              - type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/PromptConfig'
+    Prompt:
+      description: 成功，返回一段 Prompt
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/Envelope'
+              - type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      prompt:
+                        type: string
+    ExtractDebug:
+      description: 成功，返回抽取结果
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/Envelope'
+              - type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      extractionTypes:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/MemoryDetailType'
+                      results:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/ExtractResult'
+    UsageQuery:
+      description: 成功，返回按天聚合的用量
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/Envelope'
+              - type: object
+                properties:
+                  data:
+                    type: object
+                    required:
+                      - dailyStats
+                    properties:
+                      dailyStats:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/UsageDailyStat'
+    QuotaSummary:
+      description: 成功，返回额度对象
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/Envelope'
+              - type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/QuotaSummary'
+    SubscriptionDetails:
+      description: 成功，返回订阅周期
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/Envelope'
+              - type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/SubscriptionDetails'
+    Meta:
+      description: 成功，返回运行信息
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/Envelope'
+              - type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Meta'
+    GraphPage:
+      description: 成功，返回图谱节点、边与统计
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/Envelope'
+              - type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/GraphPageBody'
+    ModelsRecords:
+      description: 成功，列表键 `records`
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/Envelope'
+              - type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      records:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/ModelEntry'
+                      total:
+                        type: integer
+                    required:
+                      - records
+                      - total
+    Health:
+      description: 成功，网关与上游的探测结果
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/Envelope'
+              - type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      status:
+                        type: string
+                        enum:
+                          - ok
+                          - degraded
+                          - down
+                      gateway:
+                        $ref: '#/components/schemas/HealthCheck'
+                      upstream:
+                        $ref: '#/components/schemas/HealthCheck'
+                      checkedAt:
+                        type: string
+                    required:
+                      - status
+                      - gateway
+                      - upstream
+                      - checkedAt
+    KnowledgeFileRecords:
+      description: 成功，列表键 `records`
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/Envelope'
+              - type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      records:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/KnowledgeFile'
+                      total:
+                        type: integer
+                    required:
+                      - records
+                      - total

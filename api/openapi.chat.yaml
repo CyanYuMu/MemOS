@@ -1,0 +1,153 @@
+openapi: 3.0.3
+info:
+  title: Graph Memory Chat API
+  version: 0.1.0
+  description: 登录账号按项目使用的聊天反馈接口；独立对话和反馈接口；会话消息与SSE的可选conversationId契约见docs/module/chat.md。
+paths:
+  /api/chat/stream:
+    get:
+      operationId: chatStream
+      summary: Subscribe to the current conversation
+      parameters:
+        - {name: projectId, in: query, required: true, schema: {type: string}}
+        - {name: conversationId, in: query, schema: {type: string}}
+      responses:
+        '200':
+          description: SSE data frames containing ChatStreamEvent; submissionId identifies the executing accepted message, not the last queued message.
+          content:
+            text/event-stream:
+              schema: {type: string}
+  /api/chat/conversations:
+    get:
+      operationId: listChatConversations
+      summary: 分页读取当前账号和项目的独立对话
+      parameters:
+        - {name: projectId, in: query, required: true, schema: {type: string}}
+        - {name: offset, in: query, schema: {type: integer, minimum: 0, default: 0}}
+      responses:
+        '200':
+          description: 每页20条，不包含旧固定会话；旧入口始终可用
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - {$ref: './openapi.dashboard.yaml#/components/schemas/Envelope'}
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        required: [records, total]
+                        properties:
+                          records: {type: array, items: {$ref: '#/components/schemas/ChatConversation'}}
+                          total: {type: integer}
+    post:
+      operationId: createChatConversation
+      summary: 新建独立对话，不启动模型或清空历史
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [projectId]
+              properties:
+                projectId: {type: string}
+                title: {type: string, maxLength: 80}
+      responses:
+        '201':
+          description: 新建成功；此ID仅当前账号在该项目内可用
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - {$ref: './openapi.dashboard.yaml#/components/schemas/Envelope'}
+                  - {type: object, properties: {data: {$ref: '#/components/schemas/ChatConversation'}}}
+  /api/chat/conversations/{conversationId}/archive:
+    put:
+      operationId: archiveChatConversation
+      summary: 归档或恢复当前账号在该项目的对话入口，不删除正文或启动模型
+      parameters:
+        - {name: conversationId, in: path, required: true, schema: {type: string}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [projectId, archived]
+              properties:
+                projectId: {type: string}
+                archived: {type: boolean}
+      responses:
+        '200': {description: 已归档或恢复}
+        '400': {description: 参数错误}
+        '403': {description: 无项目写权限}
+        '404': {description: 对话不存在或不属于当前账号}
+  /api/chat/feedback:
+    get:
+      operationId: getChatFeedback
+      summary: 读取当前账号对回答的评价
+      parameters:
+        - {name: projectId, in: query, required: true, schema: {type: string}}
+        - {name: responseId, in: query, required: true, schema: {type: string, pattern: '^[0-9a-f]{64}$'}}
+      responses:
+        '200':
+          description: 当前账号的评分，0表示尚未评价
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - {$ref: './openapi.dashboard.yaml#/components/schemas/Envelope'}
+                  - {type: object, properties: {data: {$ref: '#/components/schemas/ChatFeedback'}}}
+    put:
+      operationId: saveChatFeedback
+      summary: 评价回答或取消评价
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [projectId, responseId, vote]
+              properties:
+                projectId: {type: string}
+                responseId: {type: string, pattern: '^[0-9a-f]{64}$'}
+                vote: {type: integer, enum: [-1, 0, 1]}
+                comment: {type: string, maxLength: 2000}
+                conversationId: {type: string}
+                answerExcerpt: {type: string, maxLength: 2000}
+      responses:
+        '200':
+          description: 评分已保存，0表示取消
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - {$ref: './openapi.dashboard.yaml#/components/schemas/Envelope'}
+                  - {type: object, properties: {data: {$ref: '#/components/schemas/ChatFeedback'}}}
+components:
+  schemas:
+    ChatStreamEvent:
+      type: object
+      required: [seq, type, data]
+      properties:
+        seq: {type: integer, format: int64}
+        type: {type: string}
+        data: {}
+        submissionId: {type: string, description: Actual executing accepted message ID; omitted for control events.}
+    ChatConversation:
+      type: object
+      required: [id, title, createdAt]
+      properties:
+        id: {type: string}
+        title: {type: string}
+        createdAt: {type: string, format: date-time}
+    ChatFeedback:
+      type: object
+      required: [vote]
+      properties:
+        vote: {type: integer, enum: [-1, 0, 1]}
+        comment: {type: string}
+        conversationId: {type: string}
+        answerExcerpt: {type: string}
+        updatedAt: {type: string}

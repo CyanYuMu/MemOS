@@ -1,0 +1,548 @@
+openapi: 3.0.3
+info:
+  title: Memory Console REST API
+  version: 0.1.0
+  description: |
+    控制面在 MCP 端口上暴露的记忆 REST 入口，与 MCP 工具同源同语义。
+    所有端点只接受 POST，身份只来自 Bearer token。
+servers:
+  - url: /
+security:
+  - bearerAuth: []
+paths:
+  /memory/add:
+    post:
+      operationId: addMemory
+      summary: 写入一段对话
+      description: 同步写入；默认按归一后的请求内容自动去重，带 Idempotency-Key 时以它为准。
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
+            maxLength: 128
+          description: 可选；不传时按请求内容自动去重。也可在 body 里用 idempotency_key。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddRequest'
+      responses:
+        '200':
+          description: 写入成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AddResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '413':
+          $ref: '#/components/responses/TooLarge'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
+        '502':
+          $ref: '#/components/responses/UpstreamRejected'
+        '503':
+          $ref: '#/components/responses/UpstreamUnavailable'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /memory/search:
+    post:
+      operationId: searchMemory
+      summary: 检索记忆
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SearchRequest'
+      responses:
+        '200':
+          description: 检索结果
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '413':
+          $ref: '#/components/responses/TooLarge'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
+        '502':
+          $ref: '#/components/responses/UpstreamRejected'
+        '503':
+          $ref: '#/components/responses/UpstreamUnavailable'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /memory/update:
+    post:
+      operationId: updateMemory
+      summary: 修改一条现存记忆并保留旧版本
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [memory_id, content]
+              properties:
+                memory_id: {type: string}
+                content: {type: string, minLength: 1}
+                title: {type: string}
+      responses:
+        '200':
+          description: 已读回确认的实际记忆；相同内容不递增版本
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: {type: string, enum: [success]}
+                  changed: {type: boolean}
+                  version: {type: integer}
+                  memory_detail_list:
+                    type: array
+                    items: {type: object}
+        '404':
+          description: 记忆不存在或不在当前空间
+        '409':
+          description: 修改结果尚未确认
+  /memory/delete:
+    post:
+      operationId: deleteMemory
+      summary: 删除记忆
+      description: 任一 id 属于其他租户时整批拒绝并返回 403。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteRequest'
+      responses:
+        '200':
+          description: 删除结果
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '413':
+          $ref: '#/components/responses/TooLarge'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
+        '502':
+          $ref: '#/components/responses/UpstreamRejected'
+        '503':
+          $ref: '#/components/responses/UpstreamUnavailable'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /memory/feedback:
+    post:
+      operationId: addFeedback
+      summary: 提交纠错反馈
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FeedbackRequest'
+      responses:
+        '200':
+          description: 反馈结果
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeedbackResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '413':
+          $ref: '#/components/responses/TooLarge'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
+        '502':
+          $ref: '#/components/responses/UpstreamRejected'
+        '503':
+          $ref: '#/components/responses/UpstreamUnavailable'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /memory/profile:
+    post:
+      operationId: getUserProfile
+      summary: 查询用户画像
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfileRequest'
+      responses:
+        '200':
+          description: 画像结果
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfileResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '413':
+          $ref: '#/components/responses/TooLarge'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
+        '502':
+          $ref: '#/components/responses/UpstreamRejected'
+        '503':
+          $ref: '#/components/responses/UpstreamUnavailable'
+        '500':
+          $ref: '#/components/responses/InternalError'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+  responses:
+    BadRequest:
+      description: 参数错误
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Unauthorized:
+      description: 缺少或无效的 Bearer token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Forbidden:
+      description: 无权限或跨租户操作
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Conflict:
+      description: 显式键冲突或同一请求仍在处理中
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    TooLarge:
+      description: 请求体超过上限
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    UnsupportedMediaType:
+      description: Content-Type 不是 application/json
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    UpstreamRejected:
+      description: 上游拒绝请求
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    UpstreamUnavailable:
+      description: 上游不可用
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    InternalError:
+      description: 内部错误
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+  schemas:
+    SkillManifestEntry:
+      type: object
+      required:
+        - name
+        - version
+        - hash
+        - description
+      properties:
+        name:
+          type: string
+        version:
+          type: integer
+        hash:
+          type: string
+        description:
+          type: string
+        updatedAt:
+          type: string
+          format: date-time
+    ErrorResponse:
+      type: object
+      required: [status, message]
+      properties:
+        status:
+          type: string
+          enum: [error]
+        message:
+          type: string
+    AddRequest:
+      type: object
+      required: [messages]
+      properties:
+        conversation_first_message:
+          type: string
+        session_id:
+          type: string
+        messages:
+          description: 消息对象数组、对象数组的 JSON 字符串，或单个 JSON 字符串。
+          oneOf:
+            - type: string
+            - type: array
+              minItems: 1
+              items:
+                oneOf:
+                  - type: object
+                  - type: string
+        tags:
+          oneOf:
+            - type: string
+            - type: array
+              items:
+                type: string
+        idempotency_key:
+          type: string
+          maxLength: 128
+          description: 可选；不传时按请求内容自动去重。
+    AddResponse:
+      type: object
+      required: [status, message]
+      properties:
+        status:
+          type: string
+        message:
+          type: string
+        deferred:
+          type: boolean
+          description: true 表示只入队、抽取在后台继续；同步写入（未启用异步）不带此字段。
+        call_id:
+          type: string
+          description: 异步写入的任务 ID，可在控制台任务表/死信页找到这条写入；与 deferred 同时出现。
+    SearchRequest:
+      type: object
+      required: [query]
+      properties:
+        query:
+          type: string
+        filter:
+          type: object
+        top_k:
+          oneOf:
+            - type: integer
+            - type: string
+        conversation_first_message:
+          type: string
+        session_id:
+          type: string
+    MemoryItem:
+      type: object
+      required: [memory_id, relativity]
+      properties:
+        memory_id:
+          type: string
+        relativity:
+          type: number
+        create_time:
+          type: string
+          format: date-time
+        tags:
+          type: array
+          items:
+            type: string
+        memory_key:
+          type: string
+        memory_value:
+          type: string
+        preference:
+          type: string
+        preference_type:
+          type: string
+        tool_value:
+          type: string
+    SearchResponse:
+      type: object
+      required: [memory_detail_list, preference_detail_list, tool_memory_detail_list]
+      properties:
+        call_id:
+          type: string
+          description: 本次调用的关联标识，不作为权限依据
+        memory_detail_list:
+          type: array
+          items:
+            $ref: '#/components/schemas/MemoryItem'
+        preference_detail_list:
+          type: array
+          items:
+            $ref: '#/components/schemas/MemoryItem'
+        tool_memory_detail_list:
+          type: array
+          items:
+            $ref: '#/components/schemas/MemoryItem'
+        dream_memory_detail_list:
+          type: array
+          items:
+            $ref: '#/components/schemas/MemoryItem'
+    DeleteRequest:
+      type: object
+      required: [memory_ids]
+      properties:
+        memory_ids:
+          oneOf:
+            - type: string
+            - type: array
+              minItems: 1
+              items:
+                type: string
+    DeleteResponse:
+      type: object
+      required: [status, deleted_ids, message]
+      properties:
+        call_id:
+          type: string
+          description: 本次调用的关联标识，不作为权限依据
+        status:
+          type: string
+        deleted_ids:
+          type: array
+          items:
+            type: string
+        not_found_ids:
+          type: array
+          items:
+            type: string
+        message:
+          type: string
+    FeedbackRequest:
+      type: object
+      required: [feedback_content]
+      properties:
+        feedback_content:
+          type: string
+        conversation_first_message:
+          type: string
+        retrieved_memory_ids:
+          oneOf:
+            - type: string
+            - type: array
+              items:
+                type: string
+        session_id:
+          type: string
+    FeedbackChange:
+      type: object
+      required: [id]
+      properties:
+        id:
+          type: string
+        text:
+          type: string
+        archived_id:
+          type: string
+    FeedbackResponse:
+      type: object
+      required: [status, message, added, updated]
+      properties:
+        call_id:
+          type: string
+          description: 本次调用的关联标识，不作为权限依据
+        status:
+          type: string
+        message:
+          type: string
+        added:
+          type: array
+          items:
+            $ref: '#/components/schemas/FeedbackChange'
+        updated:
+          type: array
+          items:
+            $ref: '#/components/schemas/FeedbackChange'
+        truncated:
+          type: boolean
+    ProfileRequest:
+      type: object
+      properties:
+        include_preference:
+          oneOf:
+            - type: boolean
+            - type: string
+            - type: integer
+        include_tool_memory:
+          oneOf:
+            - type: boolean
+            - type: string
+            - type: integer
+        current:
+          oneOf:
+            - type: integer
+            - type: string
+        size:
+          oneOf:
+            - type: integer
+            - type: string
+    ProfileResponse:
+      type: object
+      required:
+        - memory_detail_list
+        - preference_detail_list
+        - tool_memory_detail_list
+        - current
+        - size
+        - total
+      properties:
+        call_id:
+          type: string
+          description: 本次调用的关联标识，不作为权限依据
+        memory_detail_list:
+          type: array
+          items:
+            $ref: '#/components/schemas/MemoryItem'
+        preference_detail_list:
+          type: array
+          items:
+            $ref: '#/components/schemas/MemoryItem'
+        tool_memory_detail_list:
+          type: array
+          items:
+            $ref: '#/components/schemas/MemoryItem'
+        current:
+          type: integer
+        size:
+          type: integer
+        total:
+          type: integer

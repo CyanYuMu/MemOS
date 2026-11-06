@@ -1,0 +1,65 @@
+openapi: 3.0.3
+info:
+  title: Platform onboarding
+  version: 1.0.0
+paths:
+  /api/auth/onboarding:
+    get:
+      summary: Read the current account and project guide progress
+      parameters:
+        - in: query
+          name: projectId
+          required: true
+          schema: { type: string, minLength: 1 }
+      responses:
+        '200': { $ref: '#/components/responses/Progress' }
+        '401': { description: Authentication required }
+        '403': { description: Project access denied }
+    put:
+      summary: Update guide progress without performing business operations
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [projectId, action, revision]
+              properties:
+                projectId: { type: string, minLength: 1 }
+                action: { type: string, enum: [start, advance, back, dismiss, replay, checkpoint] }
+                revision: { type: integer, minimum: 0 }
+                checkpoint: { $ref: '#/components/schemas/Checkpoint' }
+      responses:
+        '200': { $ref: '#/components/responses/Progress' }
+        '400': { description: Invalid action or input }
+        '401': { description: Authentication required }
+        '403': { description: Project access denied }
+        '409': { description: "Progress changed in another request, reload before retrying" }
+components:
+  schemas:
+    Checkpoint:
+      type: object
+      required: [stage, first]
+      properties:
+        stage: { type: string, enum: [first, logs, recall, finish] }
+        first: { type: string, minLength: 1, maxLength: 80 }
+        second: { type: string, maxLength: 80 }
+  responses:
+    Progress:
+      description: Account-scoped status and project-scoped checkpoint
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [code, data]
+            properties:
+              code: { type: integer, enum: [0] }
+              data:
+                type: object
+                required: [status, step, revision, version]
+                properties:
+                  status: { type: string, enum: [pending, active, dismissed, completed] }
+                  step: { type: integer, minimum: 0, maximum: 6 }
+                  revision: { type: integer, minimum: 0 }
+                  version: { type: integer, enum: [1] }
+                  chat: { $ref: '#/components/schemas/Checkpoint' }

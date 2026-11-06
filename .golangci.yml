@@ -1,0 +1,278 @@
+version: "2"
+
+run:
+  timeout: 5m
+  tests: true
+  modules-download-mode: readonly
+
+linters:
+  default: none
+  enable:
+    # 正确性
+    - errcheck
+    - govet
+    - staticcheck
+    - unused
+    - ineffassign
+    - errorlint
+    - nilerr
+    - nilnil
+    - contextcheck
+    - noctx
+    - bodyclose
+    - sqlclosecheck
+    - rowserrcheck
+    - exhaustive
+    - copyloopvar
+    - durationcheck
+    - makezero
+    - forcetypeassert
+    - containedctx
+    - modernize
+    # 安全
+    - gosec
+    # 风格与可维护性
+    - revive
+    - gocritic
+    - gocognit
+    - errname
+    - gochecknoinits
+    - misspell
+    - nolintlint
+    - perfsprint
+    - unconvert
+    - usestdlibvars
+    - intrange
+    - predeclared
+    - unparam
+    - dupl
+    - nestif
+    - funlen
+    # 日志、禁用项、分层
+    - sloglint
+    - forbidigo
+    - depguard
+
+  settings:
+    errcheck:
+      check-type-assertions: true
+
+    govet:
+      enable-all: true
+      disable:
+        - fieldalignment
+        - shadow
+
+    gocognit:
+      min-complexity: 20
+
+    funlen:
+      lines: 120
+      statements: 80
+
+    gocritic:
+      enabled-tags:
+        - diagnostic
+        - performance
+      disabled-checks:
+        - hugeParam
+
+    exhaustive:
+      default-signifies-exhaustive: true
+
+    nolintlint:
+      require-explanation: true
+      require-specific: true
+
+    revive:
+      rules:
+        - name: atomic
+        - name: blank-imports
+        - name: bool-literal-in-expr
+        - name: context-as-argument
+        - name: context-keys-type
+        - name: defer
+        - name: dot-imports
+        - name: early-return
+        - name: empty-block
+        - name: error-naming
+        - name: error-return
+        - name: error-strings
+        - name: errorf
+        - name: increment-decrement
+        - name: indent-error-flow
+        - name: range
+        - name: receiver-naming
+        - name: redefines-builtin-id
+        - name: superfluous-else
+        - name: time-naming
+        - name: unexported-return
+        - name: unreachable-code
+        - name: unused-parameter
+        - name: use-any
+        - name: var-declaration
+        - name: var-naming
+
+    sloglint:
+      no-mixed-args: true
+      attr-only: true
+      no-global: all
+      context: scope
+      static-msg: true
+      key-naming-case: snake
+      forbidden-keys:
+        - token
+        - api_key
+        - authorization
+        - password
+        - secret
+
+    forbidigo:
+      analyze-types: true
+      forbid:
+        - pattern: ^fmt\.Print(f|ln)?$
+          msg: 不要用 fmt 打印，日志用注入的 *slog.Logger
+        - pattern: ^print(ln)?$
+          msg: 不要用内置 print
+        - pattern: ^os\.(Getenv|LookupEnv|Environ)$
+          msg: 环境变量只能在 internal/config 里读取
+        - pattern: ^http\.(Get|Head|Post|PostForm|DefaultClient)$
+          msg: 默认 client 没有超时，使用注入的 *http.Client
+        - pattern: ^http\.(ListenAndServe|ListenAndServeTLS|Serve)$
+          msg: 使用显式配置了超时的 http.Server
+
+    depguard:
+      rules:
+        banned-everywhere:
+          files:
+            - $all
+          deny:
+            - pkg: log$
+              desc: 使用 log/slog
+            - pkg: io/ioutil
+              desc: 已废弃，用 io 或 os
+            - pkg: math/rand$
+              desc: 令牌与 ID 一律用 crypto/rand；重试抖动等非安全场景用 math/rand/v2，并带 nolint:gosec 写明理由
+            - pkg: github.com/pkg/errors
+              desc: 使用标准库 errors 与 fmt.Errorf("%w")
+
+        layer-cmd:
+          files:
+            - "**/cmd/**"
+          list-mode: strict
+          allow:
+            - $gostd
+            - github.com/hugegraph/MemOS/apps/memory-console-be/internal/app
+            - github.com/hugegraph/MemOS/apps/memory-console-be/internal/config
+            - github.com/hugegraph/MemOS/apps/memory-console-be/internal/platform/logging
+            - github.com/hugegraph/MemOS/apps/memory-console-be/internal/platform/version
+            - github.com/mark3labs/mcp-go
+
+        # 分层：domain ← service ← transport，adapter 实现 service 声明的端口，只有 app 能把它们接起来。
+        # 详见 docs/ARCHITECTURE.md。
+        layer-domain:
+          files:
+            - "**/internal/domain/**"
+          list-mode: strict
+          allow:
+            - $gostd
+            - github.com/hugegraph/MemOS/apps/memory-console-be/internal/domain
+        layer-service:
+          files:
+            - "**/internal/service/**"
+          deny:
+            - pkg: github.com/hugegraph/MemOS/apps/memory-console-be/internal/adapter
+              desc: service 只声明端口，由 adapter 实现，不能反向依赖
+            - pkg: github.com/hugegraph/MemOS/apps/memory-console-be/internal/transport
+              desc: service 不能依赖入站协议
+            - pkg: github.com/hugegraph/MemOS/apps/memory-console-be/internal/worker
+              desc: service 通过自己声明的端口入队，不直接依赖 worker
+            - pkg: github.com/hugegraph/MemOS/apps/memory-console-be/internal/app
+              desc: 只有 cmd 能依赖 app
+            - pkg: github.com/hugegraph/MemOS/apps/memory-console-be/internal/config
+              desc: 配置由 app 以值的形式注入
+        layer-transport:
+          files:
+            - "**/internal/transport/**"
+          deny:
+            - pkg: github.com/hugegraph/MemOS/apps/memory-console-be/internal/adapter
+              desc: transport 只调用 service，不直接碰外部系统
+            - pkg: github.com/hugegraph/MemOS/apps/memory-console-be/internal/worker
+              desc: transport 不直接依赖 worker
+            - pkg: github.com/hugegraph/MemOS/apps/memory-console-be/internal/app
+              desc: 只有 cmd 能依赖 app
+            - pkg: github.com/hugegraph/MemOS/apps/memory-console-be/internal/config
+              desc: 配置由 app 以值的形式注入
+        layer-adapter:
+          files:
+            - "**/internal/adapter/**"
+          deny:
+            - pkg: github.com/hugegraph/MemOS/apps/memory-console-be/internal/service
+              desc: adapter 只依赖 domain，端口由 service 单方面声明
+            - pkg: github.com/hugegraph/MemOS/apps/memory-console-be/internal/transport
+              desc: adapter 不能依赖入站协议
+            - pkg: github.com/hugegraph/MemOS/apps/memory-console-be/internal/worker
+              desc: adapter 不能依赖 worker
+            - pkg: github.com/hugegraph/MemOS/apps/memory-console-be/internal/app
+              desc: 只有 cmd 能依赖 app
+        layer-worker:
+          files:
+            - "**/internal/worker/**"
+          deny:
+            - pkg: github.com/hugegraph/MemOS/apps/memory-console-be/internal/adapter
+              desc: worker 通过 service 工作
+            - pkg: github.com/hugegraph/MemOS/apps/memory-console-be/internal/transport
+              desc: worker 不能依赖入站协议
+            - pkg: github.com/hugegraph/MemOS/apps/memory-console-be/internal/app
+              desc: 只有 cmd 能依赖 app
+        layer-leaf:
+          files:
+            - "**/internal/config/**"
+            - "**/internal/platform/**"
+          deny:
+            - pkg: github.com/hugegraph/MemOS/apps/memory-console-be/internal/service
+              desc: config 与 platform 是叶子包
+            - pkg: github.com/hugegraph/MemOS/apps/memory-console-be/internal/adapter
+              desc: config 与 platform 是叶子包
+            - pkg: github.com/hugegraph/MemOS/apps/memory-console-be/internal/transport
+              desc: config 与 platform 是叶子包
+            - pkg: github.com/hugegraph/MemOS/apps/memory-console-be/internal/worker
+              desc: config 与 platform 是叶子包
+            - pkg: github.com/hugegraph/MemOS/apps/memory-console-be/internal/app
+              desc: config 与 platform 是叶子包
+
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - std-error-handling
+      - common-false-positives
+    rules:
+      - path: _test\.go
+        linters:
+          - gosec
+          - gocognit
+          - forcetypeassert
+          - funlen
+      - path: internal/config/
+        linters:
+          - forbidigo
+        text: os\.
+
+formatters:
+  enable:
+    - gofumpt
+    - goimports
+  settings:
+    gofumpt:
+      module-path: github.com/hugegraph/MemOS/apps/memory-console-be
+      extra:
+        group-params: true
+        clothe-returns: true
+    goimports:
+      local-prefixes:
+        - github.com/hugegraph/MemOS/apps/memory-console-be
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0

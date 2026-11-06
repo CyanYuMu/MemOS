@@ -1,0 +1,1 @@
+ALTER TABLE chat_conversations ADD COLUMN archived INTEGER NOT NULL DEFAULT 0;
