@@ -7,7 +7,7 @@ cache is derived in the same transaction and never rewrites a Validation node.
 from __future__ import annotations
 
 from memos.skill_drafting.domain import hash_json
-from memos.skill_governance.domain import adjudicate_assessment, validate_assessment
+from memos.skill_governance import domain as legacy_contract
 from memos.skill_management.domain import (
     branches,
     digest,
@@ -17,6 +17,18 @@ from memos.skill_management.domain import (
     require,
     text,
 )
+
+
+def _contract_for(assessment):
+    """Version dispatch preserves the producer identity of historical decisions."""
+    require(isinstance(assessment, dict))
+    version = assessment.get("schemaVersion")
+    require(type(version) is int and version in (1, 2), "unsupported_assessment_version")
+    if version == 1:
+        return legacy_contract
+    from memos.skill_branch_validation import governance
+
+    return governance
 
 
 class GovernanceMixin:
@@ -121,7 +133,9 @@ class GovernanceMixin:
             state = self._state(records, skill_id, revision)
             require(isinstance(assessment, dict))
             validation = self._validation(records, state, assessment.get("validationId"))
-            value = validate_assessment(state["candidate"], validation, assessment)
+            value = _contract_for(assessment).validate_assessment(
+                state["candidate"], validation, assessment
+            )
             if ("assessment", value["assessmentId"]) not in records:
                 self._put(records, "assessment", value["assessmentId"], value)
                 state.setdefault("currentAssessments", {})[value["validationId"]] = value[
@@ -249,7 +263,7 @@ class GovernanceMixin:
                 "adjudication_conflict",
                 409,
             )
-            contribution = adjudicate_assessment(
+            contribution = _contract_for(assessment).adjudicate_assessment(
                 state["candidate"], package["validation"], assessment, decision
             )
             value = {
