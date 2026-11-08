@@ -139,6 +139,13 @@ def test_reasonable_stop_does_not_become_repair_success():
     assert result["boundaryCoverage"] == ["unresolved"]
 
 
+def test_unchanged_healthy_task_is_not_counted_as_a_repair():
+    c, v, a, d = facts()
+    a["behaviorChanged"] = False
+    with pytest.raises(ManagementError, match="evidence_insufficient"):
+        adjudicate_assessment(c, v, validate_assessment(c, v, a), d)
+
+
 def test_scope_and_misuse_cannot_approve_repair_branch():
     c, v, a, d = facts()
     d["applicability"] = "out_of_scope"

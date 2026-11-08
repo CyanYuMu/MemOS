@@ -217,7 +217,9 @@ def adjudicate_assessment(
         require(decision["violations"] == "none", "evidence_insufficient", 422)
         if decision["taskDecision"] == "repair_confirmed":
             require(
-                verification["status"] == "passed" and decision["boundary"] is None,
+                verification["status"] == "passed"
+                and assessment["behaviorChanged"]
+                and decision["boundary"] is None,
                 "evidence_insufficient",
                 422,
             )
