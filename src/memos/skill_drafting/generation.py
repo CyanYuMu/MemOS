@@ -206,6 +206,17 @@ def build_messages(packet: dict) -> list[dict]:
         "independent_lineages": packet["independent_lineages"],
         "sources": sources,
         "facts": packet["facts"],
+        "reference_policy": {
+            # Mirror the domain's existing restriction without rewriting any
+            # source fact or promoting a passed check within a failed attempt.
+            "background_only_fact_ids": sorted(
+                fact["fact_id"]
+                for fact in packet["facts"]
+                if fact["qualification"] == "qualified_failure"
+                and fact["failure_attribution"] == "unknown"
+                and fact["category"] != "contract"
+            ),
+        },
     }
     assert_public_json(public)
     schema = proposal_schema()
@@ -226,6 +237,10 @@ def build_messages(packet: dict) -> list[dict]:
         "a valid identifier alone does not make a claim justified. "
         "Non-contract observations from a qualified_failure whose failure_attribution is unknown "
         "may only be background; do not infer a root cause or universal prohibition from them. "
+        "The host-computed reference_policy.background_only_fact_ids list is a mandatory citation "
+        "constraint: each listed ID may only use kind background, even if its individual check "
+        "has status passed. You may cite failed-attempt Memory and check facts as background; "
+        "one passed check never upgrades the attempt's qualified_failure status. "
         "Distinguish empirical observations, normative contracts and hypotheses. Hypotheses remain "
         "unverified and must be described as needing evidence, never as established guidance. "
         "Define observable conditions, actions, expected local results, branch decisions, constraints "

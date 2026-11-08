@@ -119,6 +119,52 @@ def test_memory_and_facts_are_projected_as_untrusted_data(packet):
     assert "background" in messages[0]["content"]
 
 
+def test_reference_policy_preserves_failed_passed_checks_as_background(packet):
+    original = packet["facts"][0]
+    packet["facts"] = [
+        {**original, "fact_id": "failed-memory", "qualification": "qualified_failure"},
+        {
+            **original,
+            "fact_id": "failed-passed-check",
+            "qualification": "qualified_failure",
+            "category": "final_check",
+            "target_kind": "EvidenceRevision",
+            "value": {"status": "passed"},
+        },
+        {
+            **original,
+            "fact_id": "failed-contract",
+            "qualification": "qualified_failure",
+            "category": "contract",
+            "target_kind": "EvidenceRevision",
+        },
+        {
+            **original,
+            "fact_id": "successful-check",
+            "category": "final_check",
+            "target_kind": "EvidenceRevision",
+            "value": {"status": "passed"},
+        },
+        {
+            **original,
+            "fact_id": "attributed-failure",
+            "qualification": "qualified_failure",
+            "category": "final_check",
+            "failure_attribution": "established",
+        },
+    ]
+    before = json.loads(json.dumps(packet))
+    messages = build_messages(packet)
+    projection = json.loads(messages[1]["content"])["untrusted_source_data"]
+    assert projection["reference_policy"] == {
+        "background_only_fact_ids": ["failed-memory", "failed-passed-check"]
+    }
+    assert projection["facts"] == before["facts"]
+    assert packet == before
+    assert "reference_policy.background_only_fact_ids" in messages[0]["content"]
+    assert "even if" in messages[0]["content"] and "passed" in messages[0]["content"]
+
+
 def test_success_records_public_output_without_tools_or_raw_response(packet):
     client = Client()
     proposal, metadata = make(client).generate(packet)
