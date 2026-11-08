@@ -190,3 +190,20 @@ it('does not treat a modified behavior file as a reasonable unchanged stop', asy
   expect((screen.getByRole('button', { name: '提交我的裁决' }) as HTMLButtonElement).disabled).toBe(true)
   expect(api.skills.adjudicate).not.toHaveBeenCalled()
 })
+
+it('does not count an already healthy unchanged task as a repair', async () => {
+  vi.mocked(api.skills.prepareAdjudication).mockResolvedValue({
+    ...packet,
+    assessment: { ...assessment, verification: { ...assessment.verification, status: 'passed' } },
+  })
+  mount()
+  fireEvent.click(screen.getByRole('button', { name: '准备人工裁决包' }))
+  await screen.findByText('固定裁决包')
+  fireEvent.change(screen.getByLabelText('任务判断'), { target: { value: 'repair_confirmed' } })
+  fireEvent.change(screen.getByLabelText('违规判断'), { target: { value: 'none' } })
+  fireEvent.click(screen.getByLabelText('引用事件 event-1'))
+  fireEvent.change(screen.getByLabelText('裁决理由'), { target: { value: 'No behavior change is not a repair' } })
+  fireEvent.click(screen.getByLabelText('我已审阅证据，确认提交我的判断'))
+  expect((screen.getByRole('button', { name: '提交我的裁决' }) as HTMLButtonElement).disabled).toBe(true)
+  expect(api.skills.adjudicate).not.toHaveBeenCalled()
+})

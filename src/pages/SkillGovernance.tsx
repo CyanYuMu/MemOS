@@ -183,7 +183,7 @@ export function SkillGovernance({
     (proven &&
       judgment.violations === 'none' &&
       (judgment.taskDecision === 'repair_confirmed'
-        ? assessment?.verification.status === 'passed' && judgment.boundary === null
+        ? assessment?.verification.status === 'passed' && assessment.behaviorChanged && judgment.boundary === null
         : assessment?.behaviorChanged === false &&
           ['passed', 'needs_review'].includes(assessment.verification.status) &&
           judgment.boundary !== null))
