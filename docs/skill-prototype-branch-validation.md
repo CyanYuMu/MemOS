@@ -84,3 +84,13 @@ A4a 的完成条件是可信任务资产，而非分支覆盖完成；A4c 的运
 `python -m memos.skill_branch_validation list` 查看固定资产；`audit --output /private/new-directory` 对两题各执行 initial/reference/unsafe。实际终端自检六个单元全部符合预期：两份 reference 通过，四份初始/错误解失败。13 项测试通过，包括真实无 fork/无网络执行、公开检查初始失败/参考通过、资产锁被改时拒绝读取。原 P4 registry 与 P4.1 资格文件未改动。
 
 输出明确标记 `purpose=branch_asset_selftest`、`qualifiedAgentExperience=false`、`branchCoverage=[]`、模型调用与人工批准为 0。此批是合同驱动的新案例，不是随机生产任务，不证明整个 Skill 已通过或出现效果收益。后续新执行协议仍需单独资格验证后才能调用 Claude；不能拿此 selftest 摘要代替运行准入。
+
+## 7 A4b 首增量：新凭条协议
+
+`branch-receipt-1` 只用于新 registry 的两个核心任务。它不使用旧 schema/version，也不声称提供新的停止结果类型。先独立完成 `verify_task` / `check_receipt`，再增加 broker、资格检查和 Agent 编排；初始与最终验收各有独立凭条，运行报告将绑定二者。
+
+凭条绑定：固定协议和实现摘要、task ID/revision/digest、run/attempt、候选完整快照、受信 oracle phase、环境、实际执行目录、执行记录及全部工件摘要、文件策略、实际 checks、status、时间和限制。只允许三个状态 passed/failed/error；未执行、缺检查、错导入、进程/资源异常或凭条不匹配均不得 passed。文件政策拒绝新增/删除文件及修改 TASK/公开检查/非允许文件。
+
+回读器以当前固定任务重新构建 phase，通过 P4.1 的通用工件检查器复核实际程序、参数、无 fork/no-network profile 与运行限制；再从保留报告重算状态，不能信任自报通过。替换补丁、篡改执行后重新计算外层摘要、放宽 profile、修改任务锁/协议、缺检查以及跨目录凭条均拒绝。原 P4 和 P4.1 checker 拒绝本协议；本协议也不接受旧凭条。
+
+该凭条只证明受信宿主执行记录和最终文件绑定，不是对抗 Python 同解释器反射的完整安全边界，也不是签名证明。Agent 只能接触独立的公开检查入口；不得得到此 oracle、其文件路径或隐藏验收输出。首增量的完成条件是真实隔离执行和上述反向测试通过，不授予 Skill 发布或模型调用资格。
