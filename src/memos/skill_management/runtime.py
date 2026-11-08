@@ -20,7 +20,7 @@ from memos.skill_evaluation.tasks import case_digest
 from memos.skill_evaluation.verifier import check_receipt
 
 
-PROJECTION_VERSION = "management-native-1"
+PROJECTION_VERSION = "management-native-2"
 
 
 def dev_case(case_id: str):
@@ -40,7 +40,23 @@ def case_options() -> list[dict]:
 
 
 def native_skill(candidate: dict) -> SkillRevision:
-    lines = [f"# {candidate['title']}", "", candidate["goal"]]
+    lines = [
+        f"# {candidate['title']}",
+        "",
+        candidate["goal"],
+        "",
+        "## Adapter execution reporting contract (management-native-2)",
+        "",
+        "For each rule you actually apply, use mcp__memos_run__record_rule with its exact rule_id, "
+        "phase, a short public observation, and decision. Do not report private reasoning.",
+        "Allowed phase values are observe, select, act, check, and exit.",
+        "References must be exact host event IDs supplied by the host, never filenames, line "
+        "numbers, check_index labels, or invented IDs. If no host event ID is available, send "
+        "evidence_refs=[] and related_tool_events=[] (or omit those optional fields). "
+        "Describe file/check observations in observation, local_result, or change_ref instead.",
+        "An acknowledgement records a declaration only, not verified rule use or independent "
+        "acceptance. Never mark your own branch coverage as validated.",
+    ]
     for key in ("applicability", "exclusions", "prerequisites", "constraints"):
         lines += ["", "## " + key, "", *["- " + value for value in candidate[key]]]
     lines += ["", "## Rules", "", "Entry: " + candidate["entry_rule"]]

@@ -412,3 +412,122 @@ def test_persisted_job_lookup_replays_completed_request_and_rejects_operation_re
     assert found["jobId"] == created["jobId"] and found["status"] == "unknown"
     with pytest.raises(ManagementError, match="operation_conflict"):
         repo.find_job(c["skill_id"], c["revision"], **{**request, "actor": "another-editor"})
+
+
+def test_host_export_rebind_keeps_old_evidence_and_is_idempotent(repositories):
+    repo = repositories()
+    c, _, _ = register(repo)
+    original = report(c, kind="isolated_dev")
+    job = repo.create_job(
+        c["skill_id"],
+        c["revision"],
+        case_id=original["caseId"],
+        actor="host",
+        operation_id="old-job",
+        export_hash=original["exportHash"],
+    )
+    repo.claim_job(job["jobId"])
+    validation = repo.record_validation(
+        c["skill_id"], c["revision"], report=original, actor="host", operation_id="old-validation"
+    )
+    repo.finish_job(
+        job["jobId"],
+        status="passed",
+        validation_id=validation["validationId"],
+        task_result=original["taskResult"],
+        skill_usage=original["skillUsage"],
+    )
+    before = repo.get_revision(c["skill_id"], c["revision"])
+    request = {
+        "export_hash": "f" * 64,
+        "projection_version": "management-native-2",
+        "expected_sequence": before["management"]["sequence"],
+        "operation_id": "rebind-1",
+        "actor": "host-config",
+        "reason": "Explicit rule evidence event contract",
+    }
+    after = repo.bind_export(c["skill_id"], c["revision"], **request)
+    assert after == repo.bind_export(c["skill_id"], c["revision"], **request)
+    assert after["management"]["exportHash"] == "f" * 64
+    assert after["management"]["projectionVersion"] == "management-native-2"
+    assert after["management"]["sequence"] == before["management"]["sequence"] + 1
+    assert after["candidate"] == before["candidate"]
+    assert after["validations"] == before["validations"] and after["jobs"] == before["jobs"]
+    assert after["validations"][0]["exportHash"] == "d" * 64
+    with pytest.raises(ManagementError, match="operation_conflict"):
+        repo.bind_export(c["skill_id"], c["revision"], **{**request, "export_hash": "e" * 64})
+    with repo._driver.session(database=repo.database) as session:
+        events = [
+            json.loads(row["payload"])
+            for row in session.run(
+                "MATCH (n:SkillManagementRecord {project_id:$project,category:'event'}) RETURN n.payload_json AS payload",
+                project=repo.project_id,
+            )
+        ]
+    rebound = [event for event in events if event["action"] == "export_rebound"]
+    assert len(rebound) == 1
+    assert rebound[0]["details"] == {
+        "previousExportHash": "d" * 64,
+        "exportHash": "f" * 64,
+        "previousProjectionVersion": None,
+        "projectionVersion": "management-native-2",
+    }
+
+
+def test_host_export_rebind_rejects_queued_and_running_jobs(repositories):
+    repo = repositories()
+    c, _, _ = register(repo)
+    job = repo.create_job(
+        c["skill_id"],
+        c["revision"],
+        case_id="dev-synthetic-one",
+        actor="host",
+        operation_id="active-job",
+        export_hash="d" * 64,
+    )
+    for status in ("queued", "running"):
+        if status == "running":
+            repo.claim_job(job["jobId"])
+        before = repo.get_revision(c["skill_id"], c["revision"])
+        with pytest.raises(ManagementError, match="evaluation_pending"):
+            repo.bind_export(
+                c["skill_id"],
+                c["revision"],
+                export_hash="f" * 64,
+                projection_version="management-native-2",
+                expected_sequence=before["management"]["sequence"],
+                operation_id="rebind-" + status,
+                actor="host",
+                reason="Projection update",
+            )
+        assert repo.get_revision(c["skill_id"], c["revision"]) == before
+
+
+def test_host_export_rebind_never_changes_a_previously_published_revision(repositories):
+    repo = repositories()
+    c, _, _, package = qualified(repo)
+    result = publish(repo, c, package)
+    for status in ("published", "paused", "withdrawn"):
+        if status != "published":
+            result = repo.set_status(
+                c["skill_id"],
+                c["revision"],
+                action="pause" if status == "paused" else "withdraw",
+                expected_sequence=result["sequence"],
+                operation_id="status-" + status,
+                actor="owner",
+                reason="Synthetic state transition",
+            )
+        before = repo.get_revision(c["skill_id"], c["revision"])
+        with pytest.raises(ManagementError, match="export_frozen"):
+            repo.bind_export(
+                c["skill_id"],
+                c["revision"],
+                export_hash="f" * 64,
+                projection_version="management-native-2",
+                expected_sequence=result["sequence"],
+                operation_id="rebind-" + status,
+                actor="host",
+                reason="Projection update",
+            )
+        assert repo.get_revision(c["skill_id"], c["revision"]) == before

@@ -113,6 +113,7 @@ def build_service(config):
     from memos.skill_experience.bridge import MemoryBridge
     from memos.skill_experience.client import ProductMemoryClient
     from memos.skill_management.repository import ManagementRepository
+    from memos.skill_management.runtime import export_identity
     from memos.skill_management.service import Project, SkillService
 
     runtime = config["runtime"]
@@ -156,6 +157,7 @@ def build_service(config):
             repo = ManagementRepository(project_id=setting["graphProject"], **config["graph"])
             repositories.append(repo)
             repo.initialize()
+            candidates = []
             for registration in setting["candidates"]:
                 directory = Path(registration["directory"]).resolve()
                 loaded = load_candidate(directory)
@@ -177,7 +179,29 @@ def build_service(config):
                     directory,
                     challenges=registration["challenges"],
                 )
+                candidates.append(loaded["candidate"])
             repo.recover_jobs()
+            for candidate in candidates:
+                detail = repo.get_revision(candidate["skill_id"], candidate["revision"])
+                projected = export_identity(candidate)
+                if (
+                    detail["management"].get("exportHash") != projected["exportHash"]
+                    or detail["management"].get("projectionVersion")
+                    != projected["projectionVersion"]
+                ):
+                    repo.bind_export(
+                        candidate["skill_id"],
+                        candidate["revision"],
+                        export_hash=projected["exportHash"],
+                        projection_version=projected["projectionVersion"],
+                        expected_sequence=detail["management"]["sequence"],
+                        operation_id="export-"
+                        + projected["projectionVersion"]
+                        + "-"
+                        + projected["exportHash"],
+                        actor="host_export_registration",
+                        reason="Bind the fixed host projection; prior validation records remain immutable.",
+                    )
             projects[setting["projectId"]] = Project(repo, sources)
         return SkillService(
             projects, Path(config["artifactsRoot"]), run_config, runtime["providerEnvironment"]

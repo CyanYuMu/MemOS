@@ -211,7 +211,7 @@ class ManagementRepository(SkillGraphRepository):
             and value.get("revision") == candidate["revision"]
         ]
 
-    def _changed(self, records, state, action, actor, reason=None):
+    def _changed(self, records, state, action, actor, reason=None, *, details=None):
         state["sequence"] += 1
         state["updatedAt"] = now()
         event = {
@@ -223,6 +223,8 @@ class ManagementRepository(SkillGraphRepository):
             "reason": reason,
             "timestamp": state["updatedAt"],
         }
+        if details is not None:
+            event["details"] = details
         self._put(records, "event", hash_json(event), event)
 
     def _core_node(self, nodes, kind, payload):
@@ -369,6 +371,7 @@ class ManagementRepository(SkillGraphRepository):
                 "challenges": state["challenges"],
                 "releaseId": state.get("releaseId"),
                 "exportHash": state.get("exportHash"),
+                "projectionVersion": state.get("projectionVersion"),
             },
             "validations": validations,
             "jobs": jobs,
@@ -418,6 +421,7 @@ class ManagementRepository(SkillGraphRepository):
                     source["source_id"] for source in candidate["source_refs"]
                 ),
                 "exportHash": None,
+                "projectionVersion": None,
                 "releaseId": None,
                 "updatedAt": created,
                 "challenges": [
@@ -467,6 +471,75 @@ class ManagementRepository(SkillGraphRepository):
                 records, nodes, self._state(records, skill_id, revision)
             )
         )[0]
+
+    def bind_export(
+        self,
+        skill_id,
+        revision,
+        *,
+        export_hash,
+        projection_version,
+        expected_sequence,
+        operation_id,
+        actor,
+        reason,
+    ):
+        """Host-only projection migration; published exports are permanently frozen.
+
+        Old jobs and validations retain their original export hashes. A corrected
+        projection requires fresh runs and never retroactively repairs evidence.
+        """
+        key = identity(skill_id, revision)
+        digest(export_hash)
+        text(projection_version, maximum=80)
+        operation(projection_version)
+        text(actor, maximum=300)
+        text(reason)
+        request = {
+            "action": "bind_export",
+            "skillId": skill_id,
+            "revision": revision,
+            "exportHash": export_hash,
+            "projectionVersion": projection_version,
+            "expectedSequence": expected_sequence,
+            "actor": actor,
+            "reason": reason,
+        }
+
+        def perform(records, nodes, edges):
+            state = self._state(records, skill_id, revision)
+            self._check_sequence(state, expected_sequence)
+            previously_published = any(
+                edge["kind"] == "PUBLISHES"
+                and edge["target"] == {"kind": "SkillRevision", "key": key}
+                for edge in edges.values()
+            )
+            require(
+                not state.get("releaseId")
+                and not previously_published
+                and state["state"] not in {"published", "paused", "withdrawn"},
+                "export_frozen",
+                409,
+            )
+            require(
+                not any(
+                    job["status"] in {"queued", "running"}
+                    for job in self._items(records, "job", state)
+                ),
+                "evaluation_pending",
+                409,
+            )
+            transition = {
+                "previousExportHash": state.get("exportHash"),
+                "previousProjectionVersion": state.get("projectionVersion"),
+                "exportHash": export_hash,
+                "projectionVersion": projection_version,
+            }
+            state.update(exportHash=export_hash, projectionVersion=projection_version)
+            self._changed(records, state, "export_rebound", actor, reason, details=transition)
+            return self._detail(records, nodes, state)
+
+        return self._run(perform, mutation=True, op=(operation_id, request))[0]
 
     def record_validation(self, skill_id, revision, *, report, actor, operation_id):
         identity(skill_id, revision)

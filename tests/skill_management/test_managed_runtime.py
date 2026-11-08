@@ -99,6 +99,15 @@ def test_normal_denial_precedes_any_agent_process(tmp_path, candidate, monkeypat
     assert not (tmp_path / "job").exists()
 
 
+def test_projection_explains_the_recorder_reference_contract(candidate):
+    spec = runtime.native_skill(candidate)
+    assert "mcp__memos_run__record_rule" in spec.body
+    assert "evidence_refs=[]" in spec.body
+    assert "check_index" in spec.body
+    assert "not verified rule use" in spec.body
+    assert runtime.PROJECTION_VERSION == "management-native-2"
+
+
 @pytest.fixture
 def run_fixture(tmp_path, candidate, monkeypatch):
     monkeypatch.setattr(runtime, "load_candidate", lambda _: {"candidate": candidate})
