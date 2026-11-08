@@ -310,13 +310,24 @@ function SkillWorkspace({
         <dl className="skills-identities">
           <dt>Skill ID</dt>
           <dd>{skillId}</dd>
-          <dt>固定版本</dt>
+          <dt>规范修订号</dt>
           <dd>
             <code>{revision}</code>
+          </dd>
+          <dt>原生投影版本</dt>
+          <dd>
+            <code>{management.projectionVersion ?? '尚未绑定'}</code>
+          </dd>
+          <dt>原生导出摘要</dt>
+          <dd>
+            <code>{management.exportHash ?? '尚未生成'}</code>
           </dd>
           <dt>管理序号</dt>
           <dd>{management.sequence}</dd>
         </dl>
+        <p className="skills-muted">
+          规范修订号绑定 Skill 内容；原生投影版本与导出摘要绑定当前 Agent 工件。投影升级可能产生新的导出摘要，历史运行保留各自绑定。
+        </p>
         <div className="skills-status-grid">
           <div>
             <span>来源与结构</span>

@@ -78,6 +78,9 @@ export interface SkillSummary {
 export interface SkillManagement {
   state: string
   sequence: number
+  /** 原生工件由宿主投影绑定，不由 canonical revision 单独决定。 */
+  projectionVersion: string | null
+  exportHash: string | null
   readiness: SkillReadiness
   challenges: unknown[]
 }

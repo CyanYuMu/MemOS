@@ -80,7 +80,14 @@ export const skillDetail: z.ZodType<SkillDetail> = z.object({
     })
     .passthrough(),
   management: z
-    .object({ state: z.string(), sequence: z.number().int().nonnegative(), readiness, challenges: z.array(z.unknown()) })
+    .object({
+      state: z.string(),
+      sequence: z.number().int().nonnegative(),
+      projectionVersion: z.string().nullable(),
+      exportHash: z.string().nullable(),
+      readiness,
+      challenges: z.array(z.unknown()),
+    })
     .passthrough(),
   validations: z.array(record),
   jobs: z.array(skillJob),

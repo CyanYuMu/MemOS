@@ -3,6 +3,7 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { api, ApiError } from '../lib/api'
 import { makeT } from '../lib/i18n'
+import { skillDetail } from '../lib/skills.contract'
 import { Skills } from './Skills'
 
 const identity = vi.hoisted(() => ({ projectId: 'project-a', role: 'owner' as string | null, admin: false }))
@@ -63,6 +64,8 @@ function detail(readiness = 'BLOCK', state = 'blocked') {
     management: {
       state,
       sequence: 7,
+      projectionVersion: null,
+      exportHash: null,
       readiness: { status: readiness, reasons: readiness === 'PASS' ? [] : ['open_challenges', 'independent_validation_missing'] },
       challenges: ['验收遗漏'],
     },
@@ -129,6 +132,23 @@ async function page() {
   await screen.findByRole('heading', { name: candidate.title })
   return view
 }
+
+it('规范修订号与当前原生投影版本和导出摘要并列展示', async () => {
+  const exportHash = 'd'.repeat(64)
+  const current = detail()
+  vi.mocked(api.skills.detail).mockResolvedValue(
+    skillDetail.parse({
+      ...current,
+      management: { ...current.management, projectionVersion: 'management-native-3', exportHash },
+      jobs: [{ jobId: 'historical-job', status: 'unknown', revision: candidate.revision, exportHash: 'e'.repeat(64) }],
+    }),
+  )
+  await page()
+  expect(screen.getByText('规范修订号').nextElementSibling?.textContent).toBe(candidate.revision)
+  expect(screen.getByText('原生投影版本').nextElementSibling?.textContent).toBe('management-native-3')
+  expect(screen.getByText('原生导出摘要').nextElementSibling?.textContent).toBe(exportHash)
+  expect(screen.getByText(/历史运行保留各自绑定/)).toBeTruthy()
+})
 
 it.each([null, 'viewer'])('未知权限和 viewer 无法发起评测或审阅（%s）', async (role) => {
   identity.role = role
