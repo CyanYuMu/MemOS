@@ -250,3 +250,7 @@ Content corrections invalidate content-derived tags in the actual upstream metad
 
 
 Implementation validation: goal5-history-before.log reproduced the two frontend historical lookup/retention failures; goal5-history-fe-verify.log passes 50 tests and frontend gates. goal5-history-be-tests.log passes service/store/upstream/dashboard/MCP race+shuffle cases, including tenant-specific old-call lookup beyond latest50, real metadata tag invalidation, preserved before tags, version-gap failure, serialized before-version chain, and cancellation while waiting. Retry failures preserve the feed cursor.
+
+### P3 独立 Skill 服务
+
+`SkillGateway.Call(ctx, domain.SkillCall)` 对固定 action 集合发出单次 POST `/v1/skills/{action}`，不与 Memory 客户端共享配置。仅服务端注入 Bearer 服务凭据与 X-Skill-Actor/Capability/Project，且 payload.projectId 必须和可信项目一致。禁止跟随重定向；30 秒超时、8 MiB 响应上限，无自动重试。上游 `{data:...}` 原样放回控制台 data；错误仅保留安全错误码和 currentSequence，私有 message/details/端点不透传。服务凭据 401 转 503，避免把服务器配置问题误报为浏览器会话过期。

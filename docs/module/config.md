@@ -192,3 +192,7 @@ See the public version-control history.
 ## 2026-11-01 对外接入地址（implemented）
 
 `MEMOSD_PUBLIC_SERVICE_URL`/`MEMOSD_PUBLIC_CONSOLE_URL` 归HTTP配置管理，均空为未启用；配置时必须成对、为不含凭据/query/fragment的HTTP(S)绝对地址，去掉尾斜杠。HTTP构造提取为同组helper以保持入口长度。只供运行时前端脚本及安装脚本使用，不从分支名推导，不影响内部数据面地址或鉴权。
+
+### P3 Skill 服务可选配置
+
+`MEMOS_SKILL_API_BASE_URL` 与 `MEMOS_SKILL_API_TOKEN` 默认都空（接口返回未启用 503），启用时必须同时提供。URL 只接受 http/https、禁止 userinfo/query/fragment；token 至少 32 个字符，禁止空白和控制字符。独立于 MEMOS_API_BASE_URL；凭据不出现在 Redacted 日志摘要、浏览器配置或审计中。启动装配给 dashboard 的独立 SkillGateway，超时固定 30 秒。实际部署变量放仓库外。

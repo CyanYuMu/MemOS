@@ -52,6 +52,7 @@ type Config struct {
 	Log         LogConfig
 	HTTP        HTTPConfig
 	Upstream    UpstreamConfig
+	Skill       SkillConfig
 	Store       StoreConfig
 	Redis       RedisConfig
 	Identity    IdentityConfig
@@ -102,6 +103,12 @@ type UpstreamConfig struct {
 	// DashboardMaxBytes 是控制台记忆列表流式读取的原始字节上限。
 	// 上游一页偏好记忆实测可达 148 MB，所以它与通用响应上限分开配置。
 	DashboardMaxBytes int64
+}
+
+// SkillConfig 是可选的独立 Skill 管理服务；Token 只在服务器之间使用。
+type SkillConfig struct {
+	BaseURL string
+	Token   string
 }
 
 // StoreConfig 是控制面自有数据的存储位置。
@@ -347,6 +354,7 @@ func FromEnv(getenv func(string) string) (Config, error) {
 			MaxResponseBytes:  env.int64("MEMOSD_UPSTREAM_MAX_BYTES", defaultUpstreamMaxBytes),
 			DashboardMaxBytes: env.int64("MEMOSD_UPSTREAM_DASHBOARD_MAX_BYTES", defaultDashboardMaxBytes),
 		},
+		Skill: skillConfigFromEnv(env),
 		Store: StoreConfig{
 			Path:             env.str("MEMOSD_DB_PATH", defaultDBPath),
 			MigrationTimeout: env.duration("MEMOSD_MIGRATION_TIMEOUT", defaultMigrationTimeout),
@@ -472,7 +480,7 @@ func localSyncConfig(env reader) LocalSyncConfig {
 // Validate 检查跨字段约束。错误信息只报变量名与约束，不回显取值。
 func (c Config) Validate() error {
 	for _, check := range []func() error{
-		c.validateBasic, c.validateHTTP, c.validateUpstream,
+		c.validateBasic, c.validateHTTP, c.validateUpstream, c.validateSkill,
 		c.validateIdentity, c.validateAuth, c.validateLimits, c.validatePrompt, c.validateWorker, c.validateAudit,
 		c.validateRedis, c.validateStore, c.validateChat, c.validateLocalSync,
 	} {
@@ -1120,4 +1128,31 @@ func validatePublicURLs(c HTTPConfig) error {
 		}
 	}
 	return nil
+}
+
+// validateSkill 不回显服务凭据，也不允许把凭据混进 URL。
+func (c Config) validateSkill() error {
+	if c.Skill.BaseURL == "" && c.Skill.Token == "" {
+		return nil
+	}
+	if c.Skill.BaseURL == "" || c.Skill.Token == "" {
+		return errors.New("MEMOS_SKILL_API_BASE_URL and MEMOS_SKILL_API_TOKEN must be set together")
+	}
+	u, err := url.Parse(c.Skill.BaseURL)
+	if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Hostname() == "" || u.User != nil || u.RawQuery != "" || u.ForceQuery || u.Fragment != "" {
+		return errors.New("MEMOS_SKILL_API_BASE_URL must be an HTTP(S) URL without credentials, query or fragment")
+	}
+	if len(c.Skill.Token) < 32 {
+		return errors.New("MEMOS_SKILL_API_TOKEN must be at least 32 characters")
+	}
+	for _, r := range c.Skill.Token {
+		if r <= 32 || r >= 127 {
+			return errors.New("MEMOS_SKILL_API_TOKEN must contain only visible ASCII without spaces")
+		}
+	}
+	return nil
+}
+
+func skillConfigFromEnv(env reader) SkillConfig {
+	return SkillConfig{BaseURL: strings.TrimRight(env.str("MEMOS_SKILL_API_BASE_URL", ""), "/"), Token: env.getenv("MEMOS_SKILL_API_TOKEN")}
 }

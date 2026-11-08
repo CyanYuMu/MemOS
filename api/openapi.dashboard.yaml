@@ -56,6 +56,8 @@ servers:
   - url: http://localhost:5280
     description: 控制台进程（与对外 /memory/* 同一个二进制，5280 端口）
 tags:
+  - name: Skill 管理
+    description: 固定版本候选、隔离评测、人工审阅发布与加载准入。
   - name: 项目
     description: 工作区。几乎所有业务接口都要它的 id。
   - name: 接口密钥
@@ -1728,8 +1730,933 @@ paths:
       responses:
         '200':
           $ref: '#/components/responses/Ok'
+  /api/v1/skills/list:
+    post:
+      tags: [Skill 管理]
+      operationId: skill_list
+      summary: 查看 Skill 候选列表
+      description: |-
+        必须显式 projectId，要求项目 view 能力；身份从已认证会话获取。
+        只接受列出的字段。服务端代理到固定 Python Skill 服务，不接受 actor、路径或任意命令。
+        409 必须重新读取状态和审阅包，禁止自动重试人工批准。评测只返回 jobId，由后续轮询取结果。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [projectId]
+              properties:
+                projectId:
+                  type: string
+                  pattern: "^[A-Za-z0-9][A-Za-z0-9._:-]{0,299}$"
+                query:
+                  type: string
+                  maxLength: 200
+      responses:
+        '200':
+          description: 成功；candidate 保留规范 snake_case 正文
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/SkillListData'
+        '400':
+          $ref: '#/components/responses/ErrorBadRequest'
+        '401':
+          $ref: '#/components/responses/ErrorUnauthorized'
+        '403':
+          $ref: '#/components/responses/ErrorForbidden'
+        '404':
+          $ref: '#/components/responses/ErrorNotFound'
+        '409':
+          description: 状态、操作 ID 或发布证据冲突；data 含 errorCode，可选 currentSequence
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillErrorEnvelope'
+        '422':
+          description: Skill 业务校验未通过；不回显原始异常或端点
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillErrorEnvelope'
+        '503':
+          $ref: '#/components/responses/ErrorUnavailable'
+  /api/v1/skills/detail:
+    post:
+      tags: [Skill 管理]
+      operationId: skill_detail
+      summary: 查看固定版本与管理状态
+      description: |-
+        必须显式 projectId，要求项目 view 能力；身份从已认证会话获取。
+        只接受列出的字段。服务端代理到固定 Python Skill 服务，不接受 actor、路径或任意命令。
+        409 必须重新读取状态和审阅包，禁止自动重试人工批准。评测只返回 jobId，由后续轮询取结果。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [projectId, skillId, revision]
+              properties:
+                projectId:
+                  type: string
+                  pattern: "^[A-Za-z0-9][A-Za-z0-9._:-]{0,299}$"
+                skillId:
+                  type: string
+                  pattern: "^[a-z0-9][a-z0-9-]{0,79}$"
+                revision:
+                  type: string
+                  pattern: "^[a-f0-9]{64}$"
+      responses:
+        '200':
+          description: 成功；candidate 保留规范 snake_case 正文
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/SkillDetailData'
+        '400':
+          $ref: '#/components/responses/ErrorBadRequest'
+        '401':
+          $ref: '#/components/responses/ErrorUnauthorized'
+        '403':
+          $ref: '#/components/responses/ErrorForbidden'
+        '404':
+          $ref: '#/components/responses/ErrorNotFound'
+        '409':
+          description: 状态、操作 ID 或发布证据冲突；data 含 errorCode，可选 currentSequence
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillErrorEnvelope'
+        '422':
+          description: Skill 业务校验未通过；不回显原始异常或端点
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillErrorEnvelope'
+        '503':
+          $ref: '#/components/responses/ErrorUnavailable'
+  /api/v1/skills/evidence:
+    post:
+      tags: [Skill 管理]
+      operationId: skill_evidence
+      summary: 查看规则来源证据
+      description: |-
+        必须显式 projectId，要求项目 view 能力；身份从已认证会话获取。
+        只接受列出的字段。服务端代理到固定 Python Skill 服务，不接受 actor、路径或任意命令。
+        409 必须重新读取状态和审阅包，禁止自动重试人工批准。评测只返回 jobId，由后续轮询取结果。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [projectId, skillId, revision, ruleId]
+              properties:
+                projectId:
+                  type: string
+                  pattern: "^[A-Za-z0-9][A-Za-z0-9._:-]{0,299}$"
+                skillId:
+                  type: string
+                  pattern: "^[a-z0-9][a-z0-9-]{0,79}$"
+                revision:
+                  type: string
+                  pattern: "^[a-f0-9]{64}$"
+                ruleId:
+                  type: string
+                  pattern: "^[A-Za-z0-9][A-Za-z0-9._:-]{0,299}$"
+      responses:
+        '200':
+          description: 成功；candidate 保留规范 snake_case 正文
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/SkillEvidenceData'
+        '400':
+          $ref: '#/components/responses/ErrorBadRequest'
+        '401':
+          $ref: '#/components/responses/ErrorUnauthorized'
+        '403':
+          $ref: '#/components/responses/ErrorForbidden'
+        '404':
+          $ref: '#/components/responses/ErrorNotFound'
+        '409':
+          description: 状态、操作 ID 或发布证据冲突；data 含 errorCode，可选 currentSequence
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillErrorEnvelope'
+        '422':
+          description: Skill 业务校验未通过；不回显原始异常或端点
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillErrorEnvelope'
+        '503':
+          $ref: '#/components/responses/ErrorUnavailable'
+  /api/v1/skills/evaluations/start:
+    post:
+      tags: [Skill 管理]
+      operationId: skill_evaluate
+      summary: 启动隔离候选评测
+      description: |-
+        必须显式 projectId，要求项目 write 能力；身份从已认证会话获取。
+        只接受列出的字段。服务端代理到固定 Python Skill 服务，不接受 actor、路径或任意命令。
+        409 必须重新读取状态和审阅包，禁止自动重试人工批准。评测只返回 jobId，由后续轮询取结果。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [projectId, skillId, revision, caseId, operationId]
+              properties:
+                projectId:
+                  type: string
+                  pattern: "^[A-Za-z0-9][A-Za-z0-9._:-]{0,299}$"
+                skillId:
+                  type: string
+                  pattern: "^[a-z0-9][a-z0-9-]{0,79}$"
+                revision:
+                  type: string
+                  pattern: "^[a-f0-9]{64}$"
+                caseId:
+                  type: string
+                  pattern: "^[A-Za-z0-9][A-Za-z0-9._:-]{0,299}$"
+                operationId:
+                  type: string
+                  pattern: "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
+      responses:
+        '200':
+          description: 成功；candidate 保留规范 snake_case 正文
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/SkillJobData'
+        '400':
+          $ref: '#/components/responses/ErrorBadRequest'
+        '401':
+          $ref: '#/components/responses/ErrorUnauthorized'
+        '403':
+          $ref: '#/components/responses/ErrorForbidden'
+        '404':
+          $ref: '#/components/responses/ErrorNotFound'
+        '409':
+          description: 状态、操作 ID 或发布证据冲突；data 含 errorCode，可选 currentSequence
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillErrorEnvelope'
+        '422':
+          description: Skill 业务校验未通过；不回显原始异常或端点
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillErrorEnvelope'
+        '503':
+          $ref: '#/components/responses/ErrorUnavailable'
+  /api/v1/skills/jobs/detail:
+    post:
+      tags: [Skill 管理]
+      operationId: skill_job
+      summary: 查看异步评测结果
+      description: |-
+        必须显式 projectId，要求项目 view 能力；身份从已认证会话获取。
+        只接受列出的字段。服务端代理到固定 Python Skill 服务，不接受 actor、路径或任意命令。
+        409 必须重新读取状态和审阅包，禁止自动重试人工批准。评测只返回 jobId，由后续轮询取结果。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [projectId, jobId]
+              properties:
+                projectId:
+                  type: string
+                  pattern: "^[A-Za-z0-9][A-Za-z0-9._:-]{0,299}$"
+                jobId:
+                  type: string
+                  pattern: "^[A-Za-z0-9][A-Za-z0-9._:-]{0,299}$"
+      responses:
+        '200':
+          description: 成功；candidate 保留规范 snake_case 正文
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/SkillJobData'
+        '400':
+          $ref: '#/components/responses/ErrorBadRequest'
+        '401':
+          $ref: '#/components/responses/ErrorUnauthorized'
+        '403':
+          $ref: '#/components/responses/ErrorForbidden'
+        '404':
+          $ref: '#/components/responses/ErrorNotFound'
+        '409':
+          description: 状态、操作 ID 或发布证据冲突；data 含 errorCode，可选 currentSequence
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillErrorEnvelope'
+        '422':
+          description: Skill 业务校验未通过；不回显原始异常或端点
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillErrorEnvelope'
+        '503':
+          $ref: '#/components/responses/ErrorUnavailable'
+  /api/v1/skills/reviews/prepare:
+    post:
+      tags: [Skill 管理]
+      operationId: skill_review_prepare
+      summary: 准备绑定证据的人工审阅包
+      description: |-
+        必须显式 projectId，要求项目 manage 能力；身份从已认证会话获取。
+        只接受列出的字段。服务端代理到固定 Python Skill 服务，不接受 actor、路径或任意命令。
+        409 必须重新读取状态和审阅包，禁止自动重试人工批准。评测只返回 jobId，由后续轮询取结果。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [projectId, skillId, revision]
+              properties:
+                projectId:
+                  type: string
+                  pattern: "^[A-Za-z0-9][A-Za-z0-9._:-]{0,299}$"
+                skillId:
+                  type: string
+                  pattern: "^[a-z0-9][a-z0-9-]{0,79}$"
+                revision:
+                  type: string
+                  pattern: "^[a-f0-9]{64}$"
+      responses:
+        '200':
+          description: 成功；candidate 保留规范 snake_case 正文
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/SkillReviewPackage'
+        '400':
+          $ref: '#/components/responses/ErrorBadRequest'
+        '401':
+          $ref: '#/components/responses/ErrorUnauthorized'
+        '403':
+          $ref: '#/components/responses/ErrorForbidden'
+        '404':
+          $ref: '#/components/responses/ErrorNotFound'
+        '409':
+          description: 状态、操作 ID 或发布证据冲突；data 含 errorCode，可选 currentSequence
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillErrorEnvelope'
+        '422':
+          description: Skill 业务校验未通过；不回显原始异常或端点
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillErrorEnvelope'
+        '503':
+          $ref: '#/components/responses/ErrorUnavailable'
+  /api/v1/skills/reviews/decide:
+    post:
+      tags: [Skill 管理]
+      operationId: skill_review_decide
+      summary: 要求补证据或阻断发布
+      description: |-
+        必须显式 projectId，要求项目 manage 能力；身份从已认证会话获取。
+        只接受列出的字段。服务端代理到固定 Python Skill 服务，不接受 actor、路径或任意命令。
+        409 必须重新读取状态和审阅包，禁止自动重试人工批准。评测只返回 jobId，由后续轮询取结果。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [projectId, skillId, revision, expectedSequence, operationId, decision, reason]
+              properties:
+                projectId:
+                  type: string
+                  pattern: "^[A-Za-z0-9][A-Za-z0-9._:-]{0,299}$"
+                skillId:
+                  type: string
+                  pattern: "^[a-z0-9][a-z0-9-]{0,79}$"
+                revision:
+                  type: string
+                  pattern: "^[a-f0-9]{64}$"
+                expectedSequence:
+                  type: integer
+                  minimum: 0
+                  maximum: 9007199254740991
+                operationId:
+                  type: string
+                  pattern: "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
+                decision:
+                  type: string
+                  enum: [needs_evidence, block]
+                reason:
+                  type: string
+                  minLength: 1
+                  maxLength: 2000
+      responses:
+        '200':
+          description: 成功；candidate 保留规范 snake_case 正文
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/SkillManagement'
+        '400':
+          $ref: '#/components/responses/ErrorBadRequest'
+        '401':
+          $ref: '#/components/responses/ErrorUnauthorized'
+        '403':
+          $ref: '#/components/responses/ErrorForbidden'
+        '404':
+          $ref: '#/components/responses/ErrorNotFound'
+        '409':
+          description: 状态、操作 ID 或发布证据冲突；data 含 errorCode，可选 currentSequence
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillErrorEnvelope'
+        '422':
+          description: Skill 业务校验未通过；不回显原始异常或端点
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillErrorEnvelope'
+        '503':
+          $ref: '#/components/responses/ErrorUnavailable'
+  /api/v1/skills/publish:
+    post:
+      tags: [Skill 管理]
+      operationId: skill_publish
+      summary: 人工发布固定版本
+      description: |-
+        必须显式 projectId，要求项目 manage 能力；身份从已认证会话获取。
+        只接受列出的字段。服务端代理到固定 Python Skill 服务，不接受 actor、路径或任意命令。
+        409 必须重新读取状态和审阅包，禁止自动重试人工批准。评测只返回 jobId，由后续轮询取结果。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [projectId, skillId, revision, packageId, packageHash, expectedSequence, operationId, reason]
+              properties:
+                projectId:
+                  type: string
+                  pattern: "^[A-Za-z0-9][A-Za-z0-9._:-]{0,299}$"
+                skillId:
+                  type: string
+                  pattern: "^[a-z0-9][a-z0-9-]{0,79}$"
+                revision:
+                  type: string
+                  pattern: "^[a-f0-9]{64}$"
+                packageId:
+                  type: string
+                  pattern: "^[A-Za-z0-9][A-Za-z0-9._:-]{0,299}$"
+                packageHash:
+                  type: string
+                  pattern: "^[a-f0-9]{64}$"
+                expectedSequence:
+                  type: integer
+                  minimum: 0
+                  maximum: 9007199254740991
+                operationId:
+                  type: string
+                  pattern: "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
+                reason:
+                  type: string
+                  minLength: 1
+                  maxLength: 2000
+      responses:
+        '200':
+          description: 成功；candidate 保留规范 snake_case 正文
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/SkillManagement'
+        '400':
+          $ref: '#/components/responses/ErrorBadRequest'
+        '401':
+          $ref: '#/components/responses/ErrorUnauthorized'
+        '403':
+          $ref: '#/components/responses/ErrorForbidden'
+        '404':
+          $ref: '#/components/responses/ErrorNotFound'
+        '409':
+          description: 状态、操作 ID 或发布证据冲突；data 含 errorCode，可选 currentSequence
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillErrorEnvelope'
+        '422':
+          description: Skill 业务校验未通过；不回显原始异常或端点
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillErrorEnvelope'
+        '503':
+          $ref: '#/components/responses/ErrorUnavailable'
+  /api/v1/skills/status:
+    post:
+      tags: [Skill 管理]
+      operationId: skill_status
+      summary: 暂停或撤回版本
+      description: |-
+        必须显式 projectId，要求项目 manage 能力；身份从已认证会话获取。
+        只接受列出的字段。服务端代理到固定 Python Skill 服务，不接受 actor、路径或任意命令。
+        409 必须重新读取状态和审阅包，禁止自动重试人工批准。评测只返回 jobId，由后续轮询取结果。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [projectId, skillId, revision, expectedSequence, operationId, action, reason]
+              properties:
+                projectId:
+                  type: string
+                  pattern: "^[A-Za-z0-9][A-Za-z0-9._:-]{0,299}$"
+                skillId:
+                  type: string
+                  pattern: "^[a-z0-9][a-z0-9-]{0,79}$"
+                revision:
+                  type: string
+                  pattern: "^[a-f0-9]{64}$"
+                expectedSequence:
+                  type: integer
+                  minimum: 0
+                  maximum: 9007199254740991
+                operationId:
+                  type: string
+                  pattern: "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
+                action:
+                  type: string
+                  enum: [pause, withdraw]
+                reason:
+                  type: string
+                  minLength: 1
+                  maxLength: 2000
+      responses:
+        '200':
+          description: 成功；candidate 保留规范 snake_case 正文
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/SkillManagement'
+        '400':
+          $ref: '#/components/responses/ErrorBadRequest'
+        '401':
+          $ref: '#/components/responses/ErrorUnauthorized'
+        '403':
+          $ref: '#/components/responses/ErrorForbidden'
+        '404':
+          $ref: '#/components/responses/ErrorNotFound'
+        '409':
+          description: 状态、操作 ID 或发布证据冲突；data 含 errorCode，可选 currentSequence
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillErrorEnvelope'
+        '422':
+          description: Skill 业务校验未通过；不回显原始异常或端点
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillErrorEnvelope'
+        '503':
+          $ref: '#/components/responses/ErrorUnavailable'
+  /api/v1/skills/challenges:
+    post:
+      tags: [Skill 管理]
+      operationId: skill_challenge
+      summary: 登记反例挑战
+      description: |-
+        必须显式 projectId，要求项目 manage 能力；身份从已认证会话获取。
+        只接受列出的字段。服务端代理到固定 Python Skill 服务，不接受 actor、路径或任意命令。
+        409 必须重新读取状态和审阅包，禁止自动重试人工批准。评测只返回 jobId，由后续轮询取结果。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [projectId, skillId, revision, expectedSequence, operationId, reason]
+              properties:
+                projectId:
+                  type: string
+                  pattern: "^[A-Za-z0-9][A-Za-z0-9._:-]{0,299}$"
+                skillId:
+                  type: string
+                  pattern: "^[a-z0-9][a-z0-9-]{0,79}$"
+                revision:
+                  type: string
+                  pattern: "^[a-f0-9]{64}$"
+                expectedSequence:
+                  type: integer
+                  minimum: 0
+                  maximum: 9007199254740991
+                operationId:
+                  type: string
+                  pattern: "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
+                reason:
+                  type: string
+                  minLength: 1
+                  maxLength: 2000
+      responses:
+        '200':
+          description: 成功；candidate 保留规范 snake_case 正文
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/SkillManagement'
+        '400':
+          $ref: '#/components/responses/ErrorBadRequest'
+        '401':
+          $ref: '#/components/responses/ErrorUnauthorized'
+        '403':
+          $ref: '#/components/responses/ErrorForbidden'
+        '404':
+          $ref: '#/components/responses/ErrorNotFound'
+        '409':
+          description: 状态、操作 ID 或发布证据冲突；data 含 errorCode，可选 currentSequence
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillErrorEnvelope'
+        '422':
+          description: Skill 业务校验未通过；不回显原始异常或端点
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillErrorEnvelope'
+        '503':
+          $ref: '#/components/responses/ErrorUnavailable'
+  /api/v1/skills/load-preview:
+    post:
+      tags: [Skill 管理]
+      operationId: skill_load_preview
+      summary: 预览 Claude Code 正式加载准入
+      description: |-
+        必须显式 projectId，要求项目 view 能力；身份从已认证会话获取。
+        只接受列出的字段。服务端代理到固定 Python Skill 服务，不接受 actor、路径或任意命令。
+        409 必须重新读取状态和审阅包，禁止自动重试人工批准。评测只返回 jobId，由后续轮询取结果。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [projectId, skillId, revision, caseId, mode]
+              properties:
+                projectId:
+                  type: string
+                  pattern: "^[A-Za-z0-9][A-Za-z0-9._:-]{0,299}$"
+                skillId:
+                  type: string
+                  pattern: "^[a-z0-9][a-z0-9-]{0,79}$"
+                revision:
+                  type: string
+                  pattern: "^[a-f0-9]{64}$"
+                caseId:
+                  type: string
+                  pattern: "^[A-Za-z0-9][A-Za-z0-9._:-]{0,299}$"
+                mode:
+                  type: string
+                  enum: [normal]
+      responses:
+        '200':
+          description: 成功；candidate 保留规范 snake_case 正文
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/SkillLoadPreview'
+        '400':
+          $ref: '#/components/responses/ErrorBadRequest'
+        '401':
+          $ref: '#/components/responses/ErrorUnauthorized'
+        '403':
+          $ref: '#/components/responses/ErrorForbidden'
+        '404':
+          $ref: '#/components/responses/ErrorNotFound'
+        '409':
+          description: 状态、操作 ID 或发布证据冲突；data 含 errorCode，可选 currentSequence
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillErrorEnvelope'
+        '422':
+          description: Skill 业务校验未通过；不回显原始异常或端点
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillErrorEnvelope'
+        '503':
+          $ref: '#/components/responses/ErrorUnavailable'
 components:
   schemas:
+    SkillErrorEnvelope:
+      allOf:
+        - $ref: '#/components/schemas/ErrorEnvelope'
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                errorCode:
+                  type: string
+                currentSequence:
+                  type: integer
+                  minimum: 0
+    SkillReadiness:
+      type: object
+      required: [status, reasons]
+      properties:
+        status:
+          type: string
+        reasons:
+          type: array
+          items:
+            type: string
+    SkillManagement:
+      type: object
+      description: Neo4j 管理真相；revision 不变，sequence 用于乐观并发控制。
+      properties:
+        state:
+          type: string
+        sequence:
+          type: integer
+        releaseId:
+          type: string
+        readiness:
+          $ref: '#/components/schemas/SkillReadiness'
+        challenges:
+          type: array
+          items:
+            type: object
+    SkillListData:
+      type: object
+      required: [items, total]
+      properties:
+        total:
+          type: integer
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              skillId:
+                type: string
+              revision:
+                type: string
+              title:
+                type: string
+              purpose:
+                type: string
+              tags:
+                type: array
+                items:
+                  type: string
+              state:
+                type: string
+              sequence:
+                type: integer
+              readiness:
+                $ref: '#/components/schemas/SkillReadiness'
+              ruleCount:
+                type: integer
+              validationCount:
+                type: integer
+    SkillDetailData:
+      type: object
+      required: [projectId, candidate, management, validations, jobs, releases, caseOptions]
+      properties:
+        projectId:
+          type: string
+        candidate:
+          type: object
+          description: P2 规范候选，snake_case，不包含原始运行目录或 oracle。
+        management:
+          $ref: '#/components/schemas/SkillManagement'
+        validations:
+          type: array
+          items:
+            type: object
+        jobs:
+          type: array
+          items:
+            $ref: '#/components/schemas/SkillJobData'
+        releases:
+          type: array
+          items:
+            type: object
+        caseOptions:
+          type: array
+          items:
+            type: object
+            properties:
+              caseId:
+                type: string
+              title:
+                type: string
+    SkillEvidenceData:
+      type: object
+      properties:
+        rule:
+          type: object
+        facts:
+          type: array
+          items:
+            type: object
+    SkillJobData:
+      type: object
+      properties:
+        jobId:
+          type: string
+        status:
+          type: string
+        skillId:
+          type: string
+        revision:
+          type: string
+        caseId:
+          type: string
+        mode:
+          type: string
+        taskResult:
+          type: object
+          nullable: true
+        skillUsage:
+          type: object
+          nullable: true
+        validationId:
+          type: string
+          nullable: true
+        errorCode:
+          type: string
+          nullable: true
+    SkillReviewPackage:
+      type: object
+      required: [packageId, packageHash, sequence, skillId, revision, readiness]
+      properties:
+        packageId:
+          type: string
+        packageHash:
+          type: string
+        sequence:
+          type: integer
+        skillId:
+          type: string
+        revision:
+          type: string
+        readiness:
+          $ref: '#/components/schemas/SkillReadiness'
+        validationIds:
+          type: array
+          items:
+            type: string
+        sourceWatermark:
+          type: array
+          items:
+            type: string
+        contentHash:
+          type: string
+        reviewChecklist:
+          type: array
+          items:
+            type: object
+            properties:
+              ruleId:
+                type: string
+              branchCount:
+                type: integer
+              coveredBranches:
+                type: array
+                items:
+                  type: string
+    SkillLoadPreview:
+      type: object
+      description: 正式加载门禁只读结果，不代表候选评测通过。
+      properties:
+        allowed:
+          type: boolean
+        reasons:
+          type: array
+          items:
+            type: string
     ErrorEnvelope:
       type: object
       description: 错误信封。HTTP 状态码与 `code` 一起判断；`data` 按场景可能带 `errors`、`currentVersionId`、`retryAfterSec`。

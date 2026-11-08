@@ -481,6 +481,9 @@ func (a *App) buildDashboard(cfg config.Config, ids *identity.Service, client *u
 		AuthMode:      authMode(cfg),
 		Logger:        a.log,
 	}
+	if cfg.Skill.BaseURL != "" {
+		deps.Skills = upstream.NewSkillGateway(cfg.Skill.BaseURL, cfg.Skill.Token)
+	}
 	// 只有 all/mcp 角色才有同进程的 MCP 监听；console 单独部署时这里留空，
 	// /api/health 会如实报网关不可达，而不是假装正常。
 	if cfg.Role == config.RoleAll {

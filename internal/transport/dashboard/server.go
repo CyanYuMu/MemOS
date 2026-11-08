@@ -119,6 +119,7 @@ const (
 
 // Deps 是 Dashboard 路由的依赖。
 type Deps struct {
+	Skills    SkillGateway // nil 表示独立 Skill 服务未配置。
 	Tenants   Tenants
 	Tokens    Tokens
 	Memory    *memory.Service
@@ -246,6 +247,7 @@ func (s *Server) register() {
 	route("POST "+base+"prompt-config/generate", "dashboard.prompt.generate", auth.InBodyStrict(domain.CapProjectWrite), s.promptGenerate)
 	route("POST "+base+"prompt-config/debug/extract", "dashboard.prompt.debug", auth.InBodyStrict(domain.CapProjectWrite), s.promptDebug)
 	s.registerPromptStudio(base, route, routeWritePrompt)
+	s.registerSkills(route, routeWritePrompt)
 	// 属性树模板
 	route("POST "+base+"profileTemplate/list", "dashboard.profile.list", auth.InBody(domain.CapProjectView), s.profileList)
 	route("GET "+base+"profileTemplate/detail", "dashboard.profile.detail", auth.InBody(domain.CapProjectView), s.profileDetail)
@@ -492,9 +494,15 @@ func retryAfterOf(err error) (time.Duration, bool) {
 	return 0, false
 }
 
-// errorData 是错误信封里除 message 之外的业务数据。目前只有两种：
-// 版本冲突给当前版本号，限流给等待秒数。
+// errorData 只返回安全业务摘要：版本/序号冲突、限流等待及校验问题。
 func errorData(err error) map[string]any {
+	if skill, ok := errors.AsType[*domain.SkillServiceError](err); ok {
+		data := map[string]any{"errorCode": skill.Code}
+		if skill.CurrentSequence != nil {
+			data["currentSequence"] = *skill.CurrentSequence
+		}
+		return data
+	}
 	// 是不是版本冲突由错误类型判断，不看值：别人把槽位还原成默认后，
 	// 当前版本就是 0（合法值）。用 >0 判断会在这种时候把字段整个丢掉。
 	if conflict, ok := errors.AsType[*domain.VersionConflictError](err); ok {
@@ -515,6 +523,9 @@ func errorData(err error) map[string]any {
 }
 
 func mapError(err error) (int, int, string) {
+	if skill, ok := errors.AsType[*domain.SkillServiceError](err); ok && skill.Status == http.StatusUnprocessableEntity {
+		return http.StatusUnprocessableEntity, httpx.CodeBadRequest, skill.Error()
+	}
 	switch {
 	case errors.Is(err, httpx.ErrBodyTooLarge):
 		return http.StatusRequestEntityTooLarge, httpx.CodePayloadTooLarge, "请求体过大"
