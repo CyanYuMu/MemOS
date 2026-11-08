@@ -23,7 +23,9 @@ def main(argv=None):
         parser.add_argument("--config", required=True, type=Path)
         args = parser.parse_args(argv)
         config = read_config(args.config)
-        logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+        logging.basicConfig(
+            level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s", force=True
+        )
         with service_lock(config):
             service = build_service(config)
             try:

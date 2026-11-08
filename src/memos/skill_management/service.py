@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import re
 import threading
 
 from concurrent.futures import ThreadPoolExecutor
@@ -29,6 +30,26 @@ def public(value):
     if isinstance(value, list):
         return [public(item) for item in value]
     return value
+
+
+def evidence_projection(fact):
+    """Keep the original hash while explicitly marking a redacted display copy."""
+
+    def redact(value):
+        if isinstance(value, str):
+            return re.sub(
+                r"file://[^\s<>\"']+|/(?:Users|home|private|tmp|var/folders)/[^\s<>\"']+",
+                "<host-artifact-redacted>",
+                value,
+            )
+        if isinstance(value, dict):
+            return {k: redact(v) for k, v in value.items()}
+        if isinstance(value, list):
+            return [redact(v) for v in value]
+        return value
+
+    display = redact(fact["value"])
+    return {**public(fact), "value": display, "display_redacted": display != fact["value"]}
 
 
 @dataclass
@@ -107,7 +128,11 @@ class SkillService:
             return public(
                 {
                     "rule": rule,
-                    "facts": [f for f in loaded["packet"]["facts"] if f["fact_id"] in ids],
+                    "facts": [
+                        evidence_projection(f)
+                        for f in loaded["packet"]["facts"]
+                        if f["fact_id"] in ids
+                    ],
                 }
             )
         if action in {"load_preview", "evaluate"}:

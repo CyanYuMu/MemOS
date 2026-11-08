@@ -23,9 +23,30 @@ import urllib.request
 from pathlib import Path
 
 
+def ensure_available(port):
+    # bind() can reject TIME_WAIT sockets left by a stopped service.
+    with socket.socket() as check:
+        check.settimeout(0.5)
+        if check.connect_ex(("127.0.0.1", port)) == 0:
+            raise ValueError("required_port_in_use")
+
+
+def loopback_request(url, payload=None, token=None):
+    headers = {"Content-Type": "application/json"}
+    if token:
+        headers["Authorization"] = "Bearer " + token
+    req = urllib.request.Request(
+        url, data=json.dumps(payload).encode() if payload is not None else None, headers=headers
+    )
+    opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
+    with opener.open(req, timeout=3) as response:
+        return json.load(response)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--config", required=True, type=Path)
+    parser.add_argument("--check", action="store_true", help="只检查启动条件，不启动服务")
     args = parser.parse_args()
     config_path = args.config.resolve()
     if config_path.stat().st_mode & 0o077:
@@ -42,11 +63,10 @@ def main():
     if not binary.is_file() or not (web / "node_modules").is_dir():
         raise ValueError("build_go_and_install_locked_frontend_first")
     for port in (5280, 5274, service["listen"]["port"]):
-        with socket.socket() as check:
-            try:
-                check.bind(("127.0.0.1", port))
-            except OSError:
-                raise ValueError("required_port_in_use") from None
+        ensure_available(port)
+    if args.check:
+        print("[console] 启动条件检查通过；未启动服务。", flush=True)
+        return
     Path(config["goEnvironment"]["MEMOSD_DB_PATH"]).parent.mkdir(
         parents=True, exist_ok=True, mode=0o700
     )
@@ -89,16 +109,6 @@ def main():
 
         threading.Thread(target=copy, daemon=True).start()
         return child
-
-    def request(url, payload=None, token=None):
-        headers = {"Content-Type": "application/json"}
-        if token:
-            headers["Authorization"] = "Bearer " + token
-        req = urllib.request.Request(
-            url, data=json.dumps(payload).encode() if payload is not None else None, headers=headers
-        )
-        with urllib.request.urlopen(req, timeout=3) as response:
-            return json.load(response)
 
     def stop(*_):
         raise KeyboardInterrupt
@@ -146,9 +156,16 @@ def main():
             if any(child.poll() is not None for child in required):
                 raise ValueError("required_service_stopped")
             try:
-                projects = request("http://127.0.0.1:5280/api/dashboard/project/dict", token=token)
-                if config["projectId"] not in json.dumps(projects):
-                    created = request(
+                projects = loopback_request(
+                    "http://127.0.0.1:5280/api/dashboard/project/dict", token=token
+                )
+                if projects.get("code") != 0 or not isinstance(projects.get("data"), list):
+                    raise ValueError("project_bootstrap_failed")
+                if not any(
+                    isinstance(item, dict) and item.get("id") == config["projectId"]
+                    for item in projects["data"]
+                ):
+                    created = loopback_request(
                         "http://127.0.0.1:5280/api/dashboard/project/create",
                         {
                             "name": config["projectId"],
@@ -191,6 +208,21 @@ def main():
 if __name__ == "__main__":
     try:
         main()
-    except Exception:
-        print("[console] 启动未完成，请检查已显示的服务日志及私有配置。", flush=True)
+    except Exception as error:
+        safe = (
+            str(error)
+            if type(error) is ValueError
+            and str(error)
+            in {
+                "private_config_required",
+                "build_go_and_install_locked_frontend_first",
+                "required_port_in_use",
+                "pnpm_missing",
+                "required_service_stopped",
+                "project_bootstrap_failed",
+                "console_not_ready",
+            }
+            else "configuration_or_runtime_error"
+        )
+        print("[console] 启动未完成：" + safe + "。请检查服务日志及私有配置。", flush=True)
         raise SystemExit(1) from None

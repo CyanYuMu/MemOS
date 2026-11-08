@@ -77,6 +77,10 @@ def read_config(path: Path) -> dict:
         }
     )
     require(all(isinstance(v, str) and v for v in provider.values()))
+    require(
+        not provider.get("ANTHROPIC_BASE_URL", "").rstrip("/").endswith("/v1/messages"),
+        "provider_base_url_required",
+    )
     require(Path(value["artifactsRoot"]).is_absolute())
     return value
 

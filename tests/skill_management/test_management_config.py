@@ -63,6 +63,9 @@ def test_private_permissions_required(tmp_path):
     [
         lambda c: c["listen"].update(host="0.0.0.0"),
         lambda c: c["runtime"]["providerEnvironment"].update(CLAUDE_CONFIG_DIR="/private"),
+        lambda c: c["runtime"]["providerEnvironment"].update(
+            ANTHROPIC_BASE_URL="https://example.invalid/v1/messages"
+        ),
         lambda c: c["projects"].append(c["projects"][0]),
         lambda c: c["projects"].append({**c["projects"][0], "projectId": "other-project"}),
         lambda c: c.update(serviceToken="short"),

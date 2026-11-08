@@ -6,7 +6,7 @@ from types import SimpleNamespace
 import pytest
 
 from memos.skill_management.domain import ManagementError
-from memos.skill_management.service import Project, SkillService, public
+from memos.skill_management.service import Project, SkillService, evidence_projection, public
 
 
 class Repository:
@@ -140,3 +140,16 @@ def test_busy_queue_and_job_replay(service):
     with pytest.raises(ManagementError, match="busy"):
         svc.call("evaluate", body(caseId="dev-one", operationId="two"), "owner")
     assert repo.created == 1
+
+
+def test_fact_display_redacts_embedded_host_paths_without_rewriting_evidence():
+    fact = {
+        "fact_id": "a" * 64,
+        "value_sha256": "b" * 64,
+        "value": "Contract and result. Evidence URI: file:///Users/private/run/evidence.json.\n",
+    }
+    display = evidence_projection(fact)
+    assert "file:///" not in display["value"] and "/Users/" not in display["value"]
+    assert display["display_redacted"] is True
+    assert display["value_sha256"] == fact["value_sha256"]
+    assert "file:///" in fact["value"]
