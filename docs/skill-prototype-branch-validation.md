@@ -132,3 +132,19 @@ A4a 的完成条件是可信任务资产，而非分支覆盖完成；A4c 的运
 新运行器显式使用独立 registry，复用固定 CLI/hooks/事件采集和 OS 隔离，不修改原运行器。初始与最终隐藏验收都在 Agent 退出后执行；每次公开检查必须与原生工具开始/完成事件配对，返回的检查序号、快照和完整公开结果必须相同。固定 Skill 额外要求已验证加载及四字段声明，声明本身不授予覆盖。
 
 23 项运行器测试和 3 项批次调度测试通过，代码复审通过。包含资格变更、错版本/导出、缺失或篡改送达结果、取消、删除受保护文件、声明缺失/格式不符。一个新增反例证实“隐藏通过、公开仍失败”可能发生，现要求两题初始公开失败、最终公开通过，并与双隐藏凭条共同决定 `task_accepted`；隐藏 passed 事实仍独立保留。测试使用明确标注的宿主模拟过程，不能替代随后真实 Claude 验证。
+
+## 10 A4d 首增量：核心任务事实接入与人工分支判断
+
+新事实采用 `schemaVersion=2`、`collectorVersion=branch-review-1`，由新模块负责。旧 `host-review-1` 的 domain、collector、digest 和已保存决定保持不变；仓库只在登记和裁决入口按 schemaVersion 显式分派，未知版本拒绝。管理层的 Validation 仍用已有 actual/independent_task 合同，且导入时 coverage 为空。旧评分与历史裁决不得被新任务覆盖。
+
+新 assessment 保留旧版共同字段，额外绑定 `initialVerification`（status/receiptSha256/protocol/matches/candidateSnapshot）、`publicVerification`（initialExitCode/finalExitCode/recordsVerified/deliveriesVerified/deliveryRefs）、`outcome`、`batchId`、`taskDigest`。deliveryRefs 每项含 checkIndex、startedEvent、completedEvent；引用必须来自本次事件。outcome 只允许 repair_candidate、failed、incomplete：当前仅支持两个初始失败的核心修复题，健康、停止和工具故障任务待单独增量，不能借用旧 stop_confirmed。
+
+自动采集器必须回读：冻结批次、当前协议资格、精确 task/lineage、固定 Skill 控制快照及导出、原生事件完整性、全部公开执行工件及实际送达、初始/最终完整快照和双凭条。初始必须对应锁定 initial 变体；candidateSnapshot 对应最终文件，报告与凭条引用不得逃逸私有根。凭据不进入图或页面，事件展示沿用脱敏投影。只接受批次中的两个 skill 单元；none 校准不登记独立验证。
+
+repair_candidate 要求初始隐藏 failed、初始公开 1、最终隐藏 passed、最终公开 0、行为有变化，并且采集、加载、双凭条、公开工件和送达均完整。否则保留 failed/incomplete 事实，不允许人越过自动事实确认修复。人工判断仍使用原四类 taskDecision，但此版仅允许 repair_confirmed、failed、needs_evidence；确认修复不自动确认规则使用。
+
+每题最多申报 task lock 中对应的三个目标分支。分支需绑定条件观察、动作/退出、检查名称与本次该规则的声明，且确认适用、正确使用、无严重违规；条件与动作不能只有模型声明。未出现的分支仍 missing。两题均通过也最多补六个正常分支，其余十六个及边界覆盖、未决挑战仍阻断发布。
+
+页面展示初始和最终结果、公开检查/送达状态、任务结果分类和批次摘要，解释“候选分支”尚未获得覆盖。沿用现有审阅包/序号/哈希/人工确认事务。真实写入只登记事实；具体裁决在页面准备完毕、用户确认后才提交。
+
+验收：版本分派和旧决定回归；篡改双凭条、初始变体、公开返回、任务/批次身份被拒绝；校准单元禁止登记；自动事实不完整时人工确认修复被拒绝；超出三目标或没有该规则声明的分支被拒绝；真实 Neo4j 登记回读、页面展示与发布继续拒绝。服务由当前终端管理，只重启本任务三个已知进程，不影响 Memory/存储服务。
