@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "purpose": "branch_asset_freeze",
+  "candidateRevision": "f92905541710def3172d16e9c78d7226bf22e646b4c8baa73da499bf826e2a4c",
+  "tasks": [
+    {
+      "taskId": "branch-scoped-table",
+      "lineageId": "independent-row-table-20261109",
+      "digest": "af535516e987471019a3c131048211e50c376e94ae36697ea670818929bf4d46"
+    },
+    {
+      "taskId": "branch-dream-journal",
+      "lineageId": "independent-action-journal-20261109",
+      "digest": "8b56a8bfdbf8f18b129ac3f6b126b65cbfb5910d601df32555f80d281ec8ebd5"
+    }
+  ]
+}
