@@ -100,7 +100,9 @@ source 使用独立来源 cube/namespace；dev 与 holdout 不写入该入口。
 使用已经配置好的虚拟环境。显式执行 `.venv/bin/python`，避免测试启动器隐式同步依赖。Claude 的凭据通过受限环境变量传入，不通过命令参数、证据包或 Git 保存。此入口不读取和改写用户的 Claude 设置。
 
 ```bash
-skill_source_root=$(mktemp -d /tmp/memos-skill-source-XXXXXX)
+skill_artifacts="$HOME/.local/share/memos-skill-experiments"
+mkdir -p "$skill_artifacts"
+skill_source_root=$(mktemp -d "$skill_artifacts/source-XXXXXX")
 PYTHONPATH=src .venv/bin/python -m memos.skill_experience collect-source \
   source-dream-update --output "$skill_source_root/dream" \
   --cli-path /path/to/claude --model FIXED_MODEL \
@@ -142,3 +144,48 @@ PYTHONPATH=src .venv/bin/python -m memos.skill_experience list-sources \
 排查发现启动提示仅要求修复任务、保持两个保护文件、调用固定检查，没有明确表达工具和文件边界。本轮补齐启动提示：只能使用本次明确开放的工具、只修改注册允许路径、不得创建临时测试或请求任意程序执行，额外正确性由宿主独立验收。此修正不改变 oracle、不放宽权限、也不绕过缺失记录门禁。补充实际命令生成测试后重新采集两个来源任务。
 
 适配器内容摘要会随修正变化；旧报告和 Evidence 保留原文、原资格与当时的环境，当前实现拒绝把旧版本证据直接纳入新的来源池。后续实际结果须区分修正前后的运行，不把历史运行重新标成新版本通过。
+
+## 10 实施与验收结果
+
+2026-11-08，P1b 的 D01–D10 已完成本地验收。实际使用 Python 3.12.13、Claude Code 2.1.296、显式模型 `claude-opus-5-5`，每次配置 300 秒、20 turns、2 USD 预算上限；原生报告的轮次与费用保留原值，不将费用估计当作账单。实际服务为 MemOS 1.0.1 / contract 2、Neo4j 5.26.6、Qdrant 1.15.3。
+
+### 10.1 自动测试与审查
+
+```bash
+.venv/bin/python -m pytest tests/skill_evaluation tests/skill_adapter \
+  tests/skill_experience tests/api/test_public_no_skill.py \
+  tests/dream/test_persistence.py tests/api/test_update_memory.py -q
+```
+
+最终结果：**519 passed in 81.63s**。其中 P1b 新增 93 项，启动提示修正新增 3 项，其余覆盖 P0/P1a 与相关 API 回归。Ruff、格式、每次提交的适用 pre-commit 检查通过，独立代码审查为 APPROVE。自动测试中的原生事件和 HTTP 故障夹具明确标注为合成数据；以下 Claude 与服务结果另行实际执行，不由 mock 测试推断。
+
+### 10.2 当前适配器下的真实来源
+
+| 任务尝试 | 最终独立验收 | 资格 | Agent 耗时 | 原生报告费用 USD |
+| --- | --- | --- | --- | --- |
+| S1 第一次 | failed：Fake 新增 `*args`，不符合严格签名合同 | qualified_failure | 103.962 秒 | 0.2456872 |
+| S1 新 Attempt | passed：5 项检查通过 | qualified_success | 149.523 秒 | 0.2650864 |
+| S2 | passed：6 项检查通过 | qualified_success | 215.944 秒 | 0.4396158 |
+
+三次均先验证健康基线通过、初始故障按预期失败，再无 Skill 启动 Claude。最终候选、公开轨迹、回执、run/attempt 与 EvidenceRevision 重新绑定核查。S1 成功修复仅改 `caller.py`，S2 成功修复改 `fake_graph.py`；健康调用、错误调用与租户边界均由固定独立检查验收。失败尝试不冒充成功，根因归因仍由后续人工审阅判断。
+
+修正提示前另有 **6 次**真实尝试：最终候选都通过，但其中 4 次因被拒绝的 Bash 或外部临时文件请求而缺少完整配对记录，资格为 needs_evidence；另外 2 次在当时版本合格。所有 9 次运行完整保留。旧版本记录不会通过当前实现的摘要核查，因此不纳入当前来源池；这不是丢弃失败样本后声称成功率提升。重复尝试仍只有 **2 个独立 case/lineage**，本轮未做 Skill 收益或统计效果实验。
+
+### 10.3 真实 Memory 链路与故障验证
+
+- 当前三个来源记录均通过真实 `/product/add` 写入，按实际 ID 和 cube 回读，正文、sources、证据字段匹配，`vector_sync=success`。可用来源池为 **2 条成功经验 + 1 条完整失败经验，覆盖 2 个独立案例**。
+- S1 重复 ingest 仅回读，Memory ID 不变。S2 在真实服务成功写入后人为丢弃响应，先进入 pending_reconcile，再由新客户端精确查询、逐 ID 回读恢复 completed；该操作实际只 POST 一次。
+- 错误 cube 读取返回空数据。仅受理、错归属、部分可见、空读回等边界由自动测试补充，均不能伪造可用快照。
+- 独立 namespace 的同案例探针经真实 update API 修改元数据后返回 changed，旧快照字节保持不变，该探针不再出现在可用来源列表中。探针和重复 Memory 均不增加案例数。
+- 提示修正前，实验 API 随启动父会话退出，造成一次真实投递结果未知。服务已改用独立后台 supervisor 并恢复原端口；精确查询仍无 ID 时，旧操作持续 pending_reconcile，未删除账本或重发。随后通过新的实际执行产生新 Evidence，而非改写旧身份。该保守策略的可用性代价已实际观察到。
+- 当前运行工件、账本和快照保存在仓库外的持久目录；迁移保留原操作键、状态和全部快照字节，旧路径保留别名。历史临时运行另行归档；旧待决操作、旧版本写入和变化探针均保留，当前导出重新验证资格后排除它们。
+
+验收对应：D01–D04 由真实采集及证据篡改/用途隔离测试覆盖；D05 由当前三条实际入库回读覆盖；D06–D08 由真实故障探针与自动测试共同覆盖；D09–D10 由最终 519 项回归、代码审查、注释、使用说明及提交检查覆盖。没有修改生产 API 默认行为，也没有清空或重建已有数据库。
+
+### 10.4 交付边界与下一阶段
+
+当前可运行的增量是：**Claude 执行受控任务 → 保存完整经验与证据 → MemOS 实际写入回读 → 提供可追溯来源输入**。Neo4j 此时承载现有 Memory 数据，尚未创建 P2 的 Skill Graph。
+
+仍需保留这些限制：macOS 隔离、受信本地主机、短摘要回读、同一账本的幂等边界、手动触发刷新、历史实现/环境变化后重新验证。被拒绝操作的早期路径可能没有 hook，当前策略保守阻止准入；明确提示减少误用，但不保证所有 Agent 尝试合格。持久工件目录不可随意移动，连接地址变化也不能当作无风险重试方式。
+
+下一阶段 P2 将消费真正回读的 MemorySnapshot，结合成功和失败证据生成有限适用范围的候选 Skill，并将每条规则、来源 Memory/Evidence 和 Skill 关系写入独立 Neo4j Skill Graph。人工审批发布、独立任务效果比较、版本替代与失效传播继续属于 P3–P5；本轮没有提前宣称 issue 全链路完成。
