@@ -43,6 +43,8 @@ _ASSESSMENT_KEYS = {
     "events",
     "branchCandidates",
     "coveragePlanHash",
+    "collectorVersion",
+    "collectorDigest",
 }
 _DECISION_KEYS = {
     "taskDecision",
@@ -91,6 +93,12 @@ def validate_assessment(candidate: dict, validation: dict, assessment: dict) -> 
     require(value["contentHash"] == candidate["content_hash"], "assessment_binding_mismatch", 409)
     for key in ("reportSha256", "eventsSha256", "candidateSnapshot", "coveragePlanHash"):
         digest(value[key])
+    require(value["collectorVersion"] == "host-review-1")
+    digest(value["collectorDigest"])
+    if value["purpose"] == "actual":
+        from memos.skill_governance.collector import collector_digest
+
+        require(value["collectorDigest"] == collector_digest(), "collector_changed", 409)
     for key in ("captureComplete", "loadVerified", "behaviorChanged"):
         require(type(value[key]) is bool)
     _enum(value["originalStatus"], _STATUSES)
@@ -137,6 +145,47 @@ def validate_assessment(candidate: dict, validation: dict, assessment: dict) -> 
     return value
 
 
+def validate_judgment_shape(decision: dict) -> dict:
+    """Transport-level validation; evidence semantics are checked in the transaction."""
+    require(isinstance(decision, dict) and set(decision) == _DECISION_KEYS)
+    decision = public_copy(decision, maximum=32768)
+    for key, allowed in (
+        ("taskDecision", {"repair_confirmed", "stop_confirmed", "failed", "needs_evidence"}),
+        ("historyDecision", {"retain", "infra_explained"}),
+        ("usageDecision", {"correct", "misused", "not_used", "unknown"}),
+        ("applicability", {"in_scope", "out_of_scope", "unknown"}),
+        ("violations", {"none", "serious", "unknown"}),
+    ):
+        _enum(decision[key], allowed)
+    require(
+        decision["boundary"] is None
+        or (isinstance(decision["boundary"], str) and decision["boundary"] in BOUNDARIES)
+    )
+    text(decision["reason"])
+    require(isinstance(decision["eventRefs"], list))
+    _refs(decision["eventRefs"], decision["eventRefs"], nonempty=False)
+    claims = decision["branches"]
+    require(isinstance(claims, list) and len(claims) <= 100)
+    for claim in claims:
+        require(
+            isinstance(claim, dict)
+            and set(claim)
+            == {
+                "branchId",
+                "conditionRefs",
+                "actionRefs",
+                "checkRefs",
+                "reason",
+            }
+        )
+        text(claim["branchId"], maximum=200)
+        text(claim["reason"])
+        for name in ("conditionRefs", "actionRefs", "checkRefs"):
+            require(isinstance(claim[name], list))
+            _refs(claim[name], claim[name])
+    return decision
+
+
 def adjudicate_assessment(
     candidate: dict, validation: dict, assessment: dict, decision: dict
 ) -> dict:
@@ -153,21 +202,7 @@ def adjudicate_assessment(
         {key: value for key, value in assessment.items() if key != "assessmentId"},
     )
     require(checked == assessment, "assessment_binding_mismatch", 409)
-    require(isinstance(decision, dict) and set(decision) == _DECISION_KEYS)
-    decision = public_copy(decision, maximum=32768)
-    for key, allowed in (
-        ("taskDecision", {"repair_confirmed", "stop_confirmed", "failed", "needs_evidence"}),
-        ("historyDecision", {"retain", "infra_explained"}),
-        ("usageDecision", {"correct", "misused", "not_used", "unknown"}),
-        ("applicability", {"in_scope", "out_of_scope", "unknown"}),
-        ("violations", {"none", "serious", "unknown"}),
-    ):
-        _enum(decision[key], allowed)
-    require(
-        decision["boundary"] is None
-        or (isinstance(decision["boundary"], str) and decision["boundary"] in BOUNDARIES)
-    )
-    text(decision["reason"])
+    decision = validate_judgment_shape(decision)
     events = {event["id"]: event for event in assessment["events"]}
     _refs(decision["eventRefs"], events, nonempty=decision["taskDecision"] != "needs_evidence")
     verification = assessment["verification"]

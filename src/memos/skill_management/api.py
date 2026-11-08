@@ -32,6 +32,8 @@ COMMANDS = {
     "evaluate": (_KEY | {"caseId", "operationId"}, "write"),
     "job": ({"projectId", "jobId"}, "view"),
     "review_prepare": (_KEY, "manage"),
+    "adjudication_prepare": (_KEY | {"assessmentId"}, "manage"),
+    "adjudicate": (_MUTATION | {"packageId", "packageHash", "judgment"}, "manage"),
     "review_decide": (_MUTATION | {"decision"}, "manage"),
     "publish": (_MUTATION | {"packageId", "packageHash"}, "manage"),
     "status": (_MUTATION | {"action"}, "manage"),
@@ -64,10 +66,19 @@ def decode(raw: bytes) -> dict:
 
 def _validate(action, body):
     required, _ = COMMANDS[action]
-    optional = {"query"} if action == "list" else set()
+    optional = (
+        {"query"} if action == "list" else {"supersedes"} if action == "adjudicate" else set()
+    )
     require(required <= set(body) <= required | optional)
     for key, value in body.items():
-        if key == "expectedSequence":
+        if key == "judgment":
+            from memos.skill_governance.domain import validate_judgment_shape
+
+            validate_judgment_shape(value)
+        elif key == "supersedes":
+            if value is not None:
+                digest(value)
+        elif key == "expectedSequence":
             require(type(value) is int and 0 <= value <= 2**53 - 1)
         elif key == "query":
             require(isinstance(value, str) and len(value) <= 200)
@@ -79,6 +90,8 @@ def _validate(action, body):
         operation(body["operationId"])
     if "packageHash" in body:
         digest(body["packageHash"])
+    if "assessmentId" in body:
+        digest(body["assessmentId"])
     if "experimentId" in body:
         digest(body["experimentId"])
     if action == "review_decide":

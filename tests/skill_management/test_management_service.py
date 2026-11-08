@@ -153,3 +153,27 @@ def test_fact_display_redacts_embedded_host_paths_without_rewriting_evidence():
     assert display["display_redacted"] is True
     assert display["value_sha256"] == fact["value_sha256"]
     assert "file:///" in fact["value"]
+
+
+def test_adjudication_projects_public_alias_and_keeps_session_actor(service):
+    svc, repo, _ = service
+    captured = {}
+
+    def prepare(*_, **kwargs):
+        captured.update(kwargs)
+        return {
+            "projectId": "private-graph-namespace",
+            "packageHash": "d" * 64,
+            "validation": {"receipt": {"uri": "file:///private/run", "sha256": "e" * 64}},
+        }
+
+    repo.prepare_adjudication = prepare
+    result = svc.call("adjudication_prepare", body(assessmentId="f" * 64), "session-owner")
+    assert result["projectId"] == "public-project"
+    assert result["packageHash"] == "d" * 64
+    assert "uri" not in result["validation"]["receipt"]
+    assert captured == {
+        "assessment_id": "f" * 64,
+        "source_watermark": ["source-one"],
+        "actor": "session-owner",
+    }

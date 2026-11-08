@@ -93,6 +93,31 @@ def test_public_result_and_actor_are_bound():
     assert calls == [("list", {"projectId": "project-one"}, "account:owner")]
 
 
+def test_adjudication_has_manage_only_nested_contract_and_no_evidence_upload():
+    from test_adjudication_contract import facts
+
+    base = {"projectId": "project-one", "skillId": "synthetic-repair", "revision": "a" * 64}
+    preparation = {**base, "assessmentId": "b" * 64}
+    assert request("adjudication_prepare", preparation)[0] == 200
+    assert request("adjudication_prepare", preparation, **{"X-Skill-Capability": "write"})[0] == 403
+    body = {
+        **base,
+        "expectedSequence": 1,
+        "operationId": "judge-1",
+        "reason": "Human review",
+        "packageId": "c" * 64,
+        "packageHash": "d" * 64,
+        "judgment": facts()[3],
+        "supersedes": None,
+    }
+    status, _, calls = request("adjudicate", body)
+    assert status == 200 and calls[0][2] == "account:owner"
+    assert request("adjudicate", body, **{"X-Skill-Capability": "view"})[0] == 403
+    assert request("adjudicate", {**body, "judgment": {"passed": True}})[0] == 400
+    assert request("adjudicate", {**body, "path": "/private/evidence"})[0] == 400
+    assert request("record_assessment", {**base, "assessment": {"passed": True}})[0] == 404
+
+
 def test_errors_do_not_expose_exception_body():
     class Broken:
         def call(self, *_):

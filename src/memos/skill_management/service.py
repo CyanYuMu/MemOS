@@ -274,6 +274,18 @@ class SkillService:
                     skill_id, revision, source_watermark=source["watermark"], actor=actor
                 )
             )
+        if action == "adjudication_prepare":
+            source = self._sources(project, detail)
+            package = public(
+                repo.prepare_adjudication(
+                    skill_id,
+                    revision,
+                    assessment_id=body["assessmentId"],
+                    source_watermark=source["watermark"],
+                    actor=actor,
+                )
+            )
+            return {**package, "projectId": body["projectId"]}
         kwargs = {
             "expected_sequence": body["expectedSequence"],
             "operation_id": body["operationId"],
@@ -289,6 +301,20 @@ class SkillService:
                     package_id=body["packageId"],
                     package_hash=body["packageHash"],
                     source_watermark=source["watermark"],
+                    **kwargs,
+                )
+            )
+        if action == "adjudicate":
+            source = self._sources(project, detail)
+            return public(
+                repo.adjudicate(
+                    skill_id,
+                    revision,
+                    package_id=body["packageId"],
+                    package_hash=body["packageHash"],
+                    source_watermark=source["watermark"],
+                    decision=body["judgment"],
+                    supersedes=body.get("supersedes"),
                     **kwargs,
                 )
             )

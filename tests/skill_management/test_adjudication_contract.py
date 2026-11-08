@@ -16,6 +16,8 @@ def facts():
     validation = validate_report(candidate, report(candidate, status="unknown"))
     assessment = {
         "schemaVersion": 1,
+        "collectorVersion": "host-review-1",
+        "collectorDigest": "6" * 64,
         "validationId": validation["validationId"],
         "contentHash": validation["contentHash"],
         "exportHash": validation["exportHash"],
