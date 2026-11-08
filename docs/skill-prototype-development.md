@@ -134,4 +134,77 @@ P0a 的普通子进程及只读文件是测试隔离手段，不是防恶意代�
 
 计划运行：新增模块测试、`tests/api/test_public_no_skill.py`、与案例依据相关的 Dream 和租户更新回归，以及新增路径的 Ruff lint/format 检查。执行命令、结果与已知限制在完成后补入本节，未执行前不填写通过数。
 
-当前状态：开发计划已形成，P0a 待实现。P0b–P5 尚未开始；文档中的路线不是已经完成的功能。
+当前状态：**P0a 已实现并完成本地验收**。P0b–P5 尚未开始；完整 Agent、Memory、图存储与人工发布链路仍按前述工作包推进。
+
+### 8.1 实际验证记录
+
+在项目现有 Python 3.12.13 环境执行，未新增或重装依赖：
+
+| 检查 | 实际结果 |
+| --- | --- |
+| `.venv/bin/python -m pytest tests/skill_evaluation -q` | 88 passed，11.40 秒 |
+| `.venv/bin/python -m pytest tests/api/test_public_no_skill.py tests/dream/test_persistence.py tests/api/test_update_memory.py -q` | 39 passed，2.73 秒 |
+| `.venv/bin/python -m ruff check src/memos/skill_evaluation tests/skill_evaluation` | All checks passed |
+| `.venv/bin/python -m ruff format --check src/memos/skill_evaluation tests/skill_evaluation` | 10 files already formatted |
+| 实际 `python -m memos.skill_evaluation demo` | 退出码 0，两个案例的八次验收均符合预期；两个旧回执变更检查均拒绝新状态 |
+
+TDD 中已观察到模块缺失、特殊文件权限漏检、执行记录字段缺失、结构错误、子进程启动错误及租户默认回退等失败，再完成对应修正。macOS 的 `/var` 与 `/private/var` 路径需规范化后核验导入身份。进程清理测试确认只终止本次验证的后台进程，其他独立进程保持运行。
+
+实际 demo 中，每个案例的基线和参考修复为 passed，初始错误和削弱检查的修复为 failed，且反向检查的失败项符合预期。这些结果证明验收底座的自检行为，不证明 Skill 收益，也不增加独立 Agent 经验样本。
+
+## 9 使用与复现
+
+在仓库根目录、已配置好的项目虚拟环境中运行。显式设置 `PYTHONPATH=src`，确保使用当前检出的代码。
+
+列出公开 dev 案例：
+
+```bash
+PYTHONPATH=src .venv/bin/python -m memos.skill_evaluation list
+```
+
+运行完整底座自检，输出目录必须尚不存在：
+
+```bash
+skill_demo_parent=$(mktemp -d /tmp/memos-skill-p0-XXXXXX)
+PYTHONPATH=src .venv/bin/python -m memos.skill_evaluation demo \
+  --output "$skill_demo_parent/run"
+```
+
+`summary.json` 汇总两个案例的基线、错误、参考修复、错误修复及旧回执失效检查。`artifacts/snapshots` 保存可恢复快照，`artifacts/runs/<run_id>/<attempt_id>` 保存独立 oracle、实际输出、结构化报告和回执。输出目录可以在审阅完后整体归档或删除，不提交到 Git。
+
+手动修改一个候选并验收：
+
+```bash
+skill_work_parent=$(mktemp -d /tmp/memos-skill-work-XXXXXX)
+PYTHONPATH=src .venv/bin/python -m memos.skill_evaluation prepare \
+  dev-strict-signature --workspace "$skill_work_parent/candidate"
+
+# 阅读 candidate/TASK.md，修改允许的候选文件，再运行：
+PYTHONPATH=src .venv/bin/python -m memos.skill_evaluation verify \
+  dev-strict-signature --candidate "$skill_work_parent/candidate" \
+  --artifacts "$skill_work_parent/artifacts" --timeout 10
+```
+
+初始错误未修复时，`verify` 预期返回 1 和 failed；正确修复返回 0 和 passed；导入、超时、缺失报告等无效验证返回 2 和 error。所有实际验证结果均保存对应回执，失败不能只从终端输出中忽略。
+
+检查命令返回的 `receipt` 路径是否仍适用于当前代码：
+
+```bash
+PYTHONPATH=src .venv/bin/python -m memos.skill_evaluation check-receipt \
+  /path/to/receipt.json --candidate "$skill_work_parent/candidate" \
+  --artifacts "$skill_work_parent/artifacts"
+```
+
+`matches=true` 和退出码 0 仅表示绑定与完整性成立；同时查看 `verification_status`，原本 failed 或 error 的回执不会因此变成通过。代码或当前合同变化导致失配返回 1，回执或引用工件损坏返回 2。环境、验证器实现或 oracle 变化后需重新验证；不通过手工改回执继续使用旧结果。
+
+既有 `memos` 包初始化可能先向标准输出写诊断日志，因此命令最终 JSON 位于最后一行，完整结果以报告文件为准。本轮保留了现有初始化行为，未为了输出纯 JSON 修改全项目启动机制。
+
+## 10 当前限制与下一增量
+
+- 当前两个任务是公开、人工定义的 dev 探针。真实 S1/S2 的生产调用路径副本和七个 holdout 尚待 P0b 制作。
+- 快照面向受控目录，验证回执建立在可信采集器和工件存储假设上；不提供第三方签名或恶意文件系统并发隔离。
+- 当前进程组清理在 POSIX 环境验证；Windows 后台子进程的完整生命周期控制需要补充平台实现和验收。
+- 进程崩溃可能留下未完成作业、快照暂存目录或发布锁。它们不会被当作完成回执；自动恢复与清理留给后续 Runner。
+- 本轮没有 Claude Code 调用、MemOS 写入、Neo4j 服务或真实效果实验；参考修复不能被计入来源经验。
+
+下一增量按 P0b 与 P1a 推进：将真实项目任务打包到独立工作区，同时锁定 Claude Code 版本验证原生加载和事件记录。继续先更新该增量的功能与验收文档，再写实现并作中文提交。
