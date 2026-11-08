@@ -1,6 +1,6 @@
 # P3：管理、审阅、隔离评测与发布准入
 
-日期：2026-11-08。依据[冻结设计](skill-extraction-design.md)第 9–10、14 节及 [P2 验收](skill-prototype-p2.md)。本文件先提交范围和契约，实际结果随后追加。
+日期：2026-11-08。依据[冻结设计](skill-extraction-design.md)第 9–10、14 节及 [P2 验收](skill-prototype-p2.md)。范围和契约先于实现提交；第 10 节记录实际验收结果与后续边界。
 
 ## 1 目标与边界
 
@@ -76,6 +76,10 @@ P2 已知待审问题以管理挑战登记，原候选不改写。补证据/阻�
 
 新增规范到原生 Skill 的确定性投影，保留规则、条件、分支、退出、约束和验收内容，记录 canonical revision、exporter version、runtime_alias 和 export_hash。不导出来源原始日志、审阅包、连接配置或 oracle。超长 rule_id、动态内容、未知依赖等现有适配器不支持的输入 fail closed；不偷偷改名或截断规则。
 
+真实联调补充：原生工具的 `evidence_refs` 只接受宿主事件 ID，文件行号或检查序号不能冒充事件关联。当前工具没有向 Agent 暴露这些 ID；`management-native-3` 因此要求每次声明只提交 `rule_id/phase/observation/decision` 四个字段，省略引用字段，保留 `declared_only/unreviewed`，由后续人工及独立任务判断使用是否正确。v2 的条件性空引用提示在真实运行中仍出现检查序号误用，相关失败记录保留。此约束属于适配器输出契约，不修改候选正文或来源证据。
+
+导出格式修订使用新的 exportHash/projectionVersion。宿主专用 `bind_export` 在无活动作业、从未发布的版本上原子登记新摘要并增加 sequence，审计保存前后版本；旧 Job/Validation 不覆盖。浏览器没有此接口，已发布、暂停、撤回或存在历史 Release 的版本不能静默替换导出。服务启动先恢复中断作业，再显式绑定当前投影；已批准版本的导出升级需要单独的迁移设计。
+
 候选评测由宿主创建固定候选/任务/预算授权，服务进程异步执行已有 `run_case`，仅允许已注册 dev。没有 source 或 holdout 任意路径参数。继续复用 OS sandbox、visible-check broker、事件记录、最终快照及外部 verifier；结果重新 `check_receipt`，严格区分通过、失败和采集未知。评测产物不会进入 P1b source 入库。
 
 normal 路径在启动前检查匹配 Release、固定工件、当前状态/sequence、任务范围、依赖与源水位；未发布候选直接拒绝。完成时再次核对许可，若期间变更，运行标记需复核，不能当作可用 Skill 的验收。旧 Runner/Hook 没有状态回查扩展，本轮只承诺**阻止新加载和最终结果准入**，不声称可中途撤去模型上下文或拦截每个工具动作。后续增强须另版本化适配器并处理旧证据迁移。
@@ -101,6 +105,82 @@ React 增加独立 Skill 页面及导航，包含搜索/状态列表、条件和
 
 最终必须区分三种证据：真实 P2 候选的管理/拒绝及 Claude dev 执行；合成管理测试的批准/竞态；尚未进行的 P4 独立效果实验。Go/前端/Python 各作中文提交，最终文档记录具体版本、命令、通过数、实际结果、限制及 P4 入口。未经用户实际人工裁决，不给真实候选生成 Release。
 
-## 9 实际结果
+## 9 运行配置与部署边界
 
-待执行后补充，不预填成功。
+启动 Python 服务：`.venv/bin/python -m memos.skill_management serve --config <私有配置文件>`；`check` 命令仅执行配置、候选导入、真实来源回读和作业恢复检查后退出。两者均持有同一宿主的全局进程锁，防止地址别名或不同配置文件触发第二个恢复进程。P3 不支持多宿主副本；扩展前必须增加数据库租约及任务所有权。
+
+私有服务 JSON 必须为 `0600`，字段如下。真实密码、端点、工件路径只保存在仓库外。
+
+| 字段 | 内容 |
+| --- | --- |
+| serviceToken | 至少 32 字符、无空白的服务间凭据 |
+| listen | host 固定 `127.0.0.1`，显式 port |
+| graph | uri、user、password、database、memory_database_id；复用 P2 的独立图身份校验 |
+| memory | url、ledger、snapshots，可选 token；必须指向已有 P1b 注册账本 |
+| projects | projectId、graphProject、candidates；外部项目与图项目均不允许重复 |
+| candidates 每项 | directory、challenges；只能由宿主配置，不接受 HTTP 路径 |
+| runtime | cliPath、固定 model、timeoutSeconds、maxTurns、maxBudgetUsd、providerEnvironment |
+| providerEnvironment | 仅支持旧适配器的四个 provider 凭据/端点字段，不继承全局插件和 Hook |
+| artifactsRoot | 仓库外绝对路径，存放每个 job 的运行工件 |
+
+`scripts/dev/skill_p3_console.py --config <私有控制台配置>` 在调用它的终端启动 Python、Go、Vite，输出 `[skill]`、`[go]`、`[web]` 日志并保存分服务日志。控制台配置包含 serviceConfig、goWorktree、webWorktree、projectId、logRoot、goEnvironment，以及可选 followLogs 和 dockerContainers。它不安装依赖；Go 先执行 `make check`，前端按锁文件安装后执行 `pnpm verify`。Ctrl+C 只关闭本次创建的进程，原有 Memory 和存储容器保持运行。
+
+Go 使用 `MEMOS_SKILL_API_BASE_URL`、`MEMOS_SKILL_API_TOKEN` 接入服务。前端使用真实 Go 代理启动，路径为 `/cn/skills`。控制台启动器通过既有管理员 API 创建有真实 owner 关系的演示项目，不直接修改身份数据库。登录密码只保存在私有配置，不打印到日志。
+
+新模块的职责：`domain.py` 定义验证/发布条件；`repository.py` 负责图事务与作业账本；`runtime.py` 负责固定候选投影、运行前后准入及凭条复验；`service.py` 负责宿主编排与单执行槽；`api.py` 负责服务身份、能力和严格命令边界；`config.py`/`__main__.py` 负责私有配置、来源回读、进程互斥与启动。
+
+来源片段在浏览器显示为明确标记的副本：隐藏文本内嵌的宿主 `file://` 地址及私有路径，`display_redacted=true` 表示正文已脱敏，`value_sha256` 始终指向原始值。原始事实和封存候选不变。P3 扩展的 Validation/Release 由 `ManagementRepository` 解码和追溯；P2 通用图写入口仍不具备发布权。
+
+作业无自动重试；同 operationId 从持久记录重放，不因另一个作业正在执行而重复启动。服务重启将未完成作业标为 unknown。新的作业、验证或挑战改变 sequence，运行结果若观察到期间的变化，需要复核。源水位、候选内容、导出摘要、Release 和最终 receipt 均分别核验。
+
+## 10 实际结果
+
+### 10.1 工程验证
+
+Python 相关回归（含旧 P0–P2 和 P3）为 **786 passed in 86.67s**，其中 **19 项真实 Neo4j 测试**；P3 专项 **85 passed in 4.97s**。最后将规则声明格式收紧为四字段后，运行器专项再次 **12 passed**。Ruff 和提交钩子通过；为保持既有来源环境，未运行会改动环境/锁文件的 Poetry install/lock。旧适配器、验收核心和 Python 依赖环境均未修改。
+
+Go `make check` 通过，含 lint、vet、全库 race/乱序测试、tidy、文档、部署检查和构建；新增 13 个顶层测试覆盖角色权限、会话、代理、安全错误、审计和项目隔离。React 完整 `pnpm verify` 通过，含 135 项测试、typecheck、lint、格式、自测和生产构建，Skill 专项 35 项。构建保留现有大 chunk 提示。
+
+真实终端启动由用户在 iTerm 执行准备好的短启动器。联调发现并修复本机检查误用代理、TIME_WAIT 被当成端口占用、项目字典非成功信封/模糊匹配等问题；启动器新增 11 项隔离回归。服务日志带名称显示，并在仓库外分别保存。
+
+### 10.2 真实链路结果
+
+Go → Python 已实际验证：候选详情、6 条规则的来源片段、脱敏标记均返回成功；未登记的隐藏任务返回 400；未发布候选 normal 准入返回 allowed=false。前端已在用户 Chrome 中展示真实项目、候选、来源片段和运行状态。
+
+Claude 开发运行记录全部保留，均未进入正式收益评估：第一次因为私有 provider 基址误包含 `/v1/messages` 而失败；第二次补丁外部验收通过，但规则声明误用了文件行号；第三次补丁验收也通过并记录 3 条有效声明，但两条声明误用了检查序号。两次声明不完整的运行均保留 unknown / partial，没有放宽采集器把它们转为成功。
+
+第四次真实运行在 `management-native-3` 下通过。CLI 为 Claude Code 2.1.296，固定请求模型为 `claude-opus-5-5`，任务仍为 `dev-tenant-isolation`；这是适配调试后的开发验证，不是新的独立样本。原生执行耗时 108.844 秒，CLI 报告费用约 0.2250812 USD（非账单核对值），退出码为 0。
+
+| 核验项 | 实际值 |
+| --- | --- |
+| jobId | `2674085e71ac203b4f50c09b65d139bfe3035b78bee70f2b93d8351570e359d1` |
+| canonical revision | `9a3b0c13435bbe8f4c578b6956307e0ea9f9a0f9c1327fbd8550db0cd8fd455e` |
+| exportHash | `ddc95b60aa545762683847edcbe628c7d4ada09a371d80bf3dd1481546f1608c` |
+| 最终补丁 | 外部验收通过；receipt 与 run、attempt 和最终补丁快照绑定，复验通过 |
+| Skill 加载 | `verified`，固定版本及原生展开已核验 |
+| 事件采集 | `complete`，157 个事件，无采集问题 |
+| 规则声明 | 5 条有效声明，`usageReview=unreviewed` |
+| 独立分支/边界覆盖 | 均为空；开发运行不计入正式覆盖 |
+| 结束时准入复核 | `allowed`，仅本次候选隔离执行 |
+
+五条声明对应 `confirm_contract`、`repair_scoped_reads`、`verify_scoped_reads`、`repair_dream_update`、`verify_dream_update`。声明完整性只能证明记录符合契约，不能证明每条规则选择和执行正确；`handle_unresolved` 未在本次声明，未声称覆盖该分支。
+
+浏览器实际展示最新通过作业及此前三次 unknown 记录、当前导出摘要和固定审阅包。审阅包绑定 sequence=14、全部 4 个开发 Validation 和来源水位，状态为 `NEEDS_EVIDENCE`，原因为 `open_challenges`、`validation_unknown`、`independent_validation_missing`；19 个规则分支的独立覆盖仍为零。发布确认控件禁用，普通加载仍被拒绝。经真实 Go → Python 发起的拒绝测试返回 **HTTP 422 / not_ready**，随后回读 **Release 数为 0**，没有自动批准真实候选。
+
+独立 Neo4j 经 `ManagementRepository.inspect()` 回读为 **33 个核心节点、57 条边**：包含 1 个 Skill、1 个 SkillRevision、6 个 Rule、3 个 MemorySnapshot、3 个 CaseRevision、7 个 Run、7 个 EvidenceRevision、5 个 Validation，未包含 Release。5 个 Validation 分别是 P2 结构检查与本轮 4 次开发运行。内部管理账本不计入上述核心图数量。
+
+实际报告保存在仓库外实验目录：`development-runs.json` 保留四次运行及费用；`projection-v3.json` 固定最终导出；`final-management.json`、`publication-rejection.json`、`graph-summary.json` 保存管理/拒绝/图回读；`verification-summary.json` 汇总工程与真实验证。浏览器截图和分服务日志也在该目录。凭据、宿主连接信息和原始运行工件不提交到仓库。
+
+### 10.3 提交与验收结论
+
+Python 依次提交范围文档 `d235b808`、管理与隔离执行 `f59ffc94`、启动与脱敏修复 `2889461f`、声明契约与导出版本审计 `6d0a85ff`、四字段声明约束 `1d281caa`。Go 实现为 `1c5010b8`；前端审阅页为 `18fb7d53`，导出绑定展示为 `9710a1f0`。均保留在第 2 节对应分支，无推送或合并。
+
+P3 的管理接口、真实审阅界面、候选隔离执行、人工发布事务和加载准入基础能力完成本地验收。批准成功、幂等、并发挑战与撤回等路径由明确标记的管理测试夹具和真实 Neo4j 测试覆盖；真实候选只验证了管理、隔离运行及拒绝，尚未发布，也尚未证明收益。
+
+### 10.4 P4 入口与尚未交付内容
+
+1. **修订候选语义。** 对验收清单遗漏、健康无需修改分支和修复预算三个挑战作人工判断，生成新的不可变候选版本；不改写 P2 的封存正文和来源证据。
+2. **定义历史结果处置。** 当前 readiness 保守地保留全部历史 unknown/failed 的阻断理由；一次成功不会自动消除旧未知记录。P4 需明确新导出验证与旧记录的审阅/替代规则，或对新候选建立新的验证集合，仍保留完整审计，不能覆盖旧报告。
+3. **接入正式任务注册和评分。** 当前 HTTP 评测、加载预览及运行器只接受宿主登记的 dev case。P4 要增加受控 holdout/普通任务注册、独立 Validation 的可信生成、逐规则分支和边界评分；不得开放任意代码或客户端报告上传。
+4. **执行三组固定版本实验。** 按冻结协议比较无 Skill、手工 Skill、提炼 Skill，记录逐任务通过/失败/未知、正确修复与正确退出、质量、耗时和成本。开发调试的四次运行不能替代这组实验。
+5. **完成真实人工发布。** 独立证据满足要求后重新生成精确审阅包，由人审阅并确认，才能创建真实 Release、验证普通使用准入。当前非空 REQUIRES 仍阻断；已发布版本的导出迁移、多宿主调度、持续监测与完整失效传播需后续设计，最后两项演进能力按 P5 推进。
