@@ -330,6 +330,7 @@
   "nav.chat": "对话",
   "nav.collapse": "收起",
   "nav.prompts": "提示词工作台",
+  "nav.skills": "Skill 管理",
   "nav.docs": "接口文档",
   "nav.exitPreview": "退出普通用户视角",
   "nav.jobs": "异步任务",

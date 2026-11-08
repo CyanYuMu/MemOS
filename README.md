@@ -37,6 +37,8 @@ pnpm verify       # typecheck + lint + format:check + build
 
 ## 页面
 
+Skill 管理位于 `/cn/skills`，提供固定候选、来源证据、隔离评测、人工审阅与加载准入。权限与验收边界见 [P3 Skill 页面说明](docs/tasks/project-skills/README.md)。
+
 | 页面 | 路由 | 数据来源 |
 |---|---|---|
 | 快速开始 | `/cn/quickstart` | `/api/meta` 的接入参数 |

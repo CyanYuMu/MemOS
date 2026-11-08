@@ -2,6 +2,7 @@
 
 import { z } from 'zod'
 import { API_BASE } from './config'
+import { skillDetail, skillEvidence, skillJob, skillList, skillReview } from './skills.contract'
 import type { TKey } from './i18n'
 import type {
   Account,
@@ -50,6 +51,17 @@ import type {
   RequestLog,
   ToolInfo,
   UsageDailyStat,
+  SkillCandidate,
+  SkillReadiness,
+  SkillRef,
+  SkillMutation,
+  SkillMutationResult,
+  SkillLoadPreview,
+  SkillDetail,
+  SkillSummary,
+  SkillReviewPackage,
+  SkillRule,
+  SkillJob,
 } from '../../shared/contract'
 
 /** 页面照旧从 `lib/api` 取这些类型；定义只有 `shared/contract.ts` 一份 */
@@ -100,6 +112,17 @@ export type {
   RequestLog,
   ToolInfo,
   UsageDailyStat,
+  SkillCandidate,
+  SkillDetail,
+  SkillSummary,
+  SkillRef,
+  SkillMutation,
+  SkillMutationResult,
+  SkillReviewPackage,
+  SkillRule,
+  SkillJob,
+  SkillReadiness,
+  SkillLoadPreview,
 }
 
 /* ------------------------------------------------------------ 请求层 */
@@ -375,6 +398,23 @@ export interface LocalMemoryListQuery {
 }
 
 export const api = {
+  /** 权限与发布事务由服务器裁定；这些写请求从不自动重试。 */
+  skills: {
+    list: (body: { projectId: string; query?: string }) => callValidated(skillList, '/api/v1/skills/list', { body }),
+    detail: (body: SkillRef) => callValidated(skillDetail, '/api/v1/skills/detail', { body }),
+    evidence: (body: SkillRef & { ruleId: string }) => callValidated(skillEvidence, '/api/v1/skills/evidence', { body }),
+    evaluate: (body: SkillRef & { caseId: string; operationId: string }) =>
+      callValidated(skillJob, '/api/v1/skills/evaluations/start', { body }),
+    job: (body: { projectId: string; jobId: string }) => callValidated(skillJob, '/api/v1/skills/jobs/detail', { body }),
+    prepareReview: (body: SkillRef) => callValidated(skillReview, '/api/v1/skills/reviews/prepare', { body }),
+    decide: (body: SkillMutation & { decision: 'needs_evidence' | 'block' }) =>
+      call<SkillMutationResult>('/api/v1/skills/reviews/decide', { body }),
+    publish: (body: SkillMutation & { packageId: string; packageHash: string }) =>
+      call<SkillMutationResult>('/api/v1/skills/publish', { body }),
+    status: (body: SkillMutation & { action: 'pause' | 'withdraw' }) => call<SkillMutationResult>('/api/v1/skills/status', { body }),
+    challenge: (body: SkillMutation) => call<SkillMutationResult>('/api/v1/skills/challenges', { body }),
+    loadPreview: (body: SkillRef & { caseId: string; mode: 'normal' }) => call<SkillLoadPreview>('/api/v1/skills/load-preview', { body }),
+  },
   onboarding: {
     get: (projectId: string) => call<OnboardingProgress>('/api/auth/onboarding', { method: 'GET', query: { projectId } }),
     update: (projectId: string, action: OnboardingAction, revision: number, checkpoint?: OnboardingCheckpoint) =>

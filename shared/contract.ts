@@ -18,6 +18,137 @@ export interface Records<T> {
   size?: number
 }
 
+/* ------------------------------------------------------------ Skill 管理（P3） */
+
+/** candidate 保留 Python 规范的 snake_case；管理接口使用 camelCase。 */
+export interface SkillRule {
+  rule_id: string
+  condition: string
+  observation: string
+  action: string
+  expected_result: string
+  basis: string
+  branches: { when: string; target: string }[]
+  evidence_links: Record<string, unknown>[]
+  validation_status?: string
+}
+
+export interface SkillCandidate {
+  skill_id: string
+  revision: string
+  title: string
+  goal: string
+  purpose: string
+  tags: string[]
+  applicability: string[]
+  exclusions: string[]
+  prerequisites: string[]
+  constraints: string[]
+  acceptance: string[]
+  limitations: string[]
+  entry_rule: string
+  exits: Record<string, string>
+  rules: SkillRule[]
+  semantic_review: string
+  independent_validation: string
+  content_hash: string
+  source_refs: Record<string, unknown>[]
+  host_limits: string[]
+  requires: unknown[]
+}
+
+export interface SkillReadiness {
+  status: string
+  reasons: string[]
+}
+
+export interface SkillSummary {
+  skillId: string
+  revision: string
+  title: string
+  purpose: string
+  tags: string[]
+  state: string
+  sequence: number
+  readiness: SkillReadiness
+  ruleCount: number
+  validationCount: number
+}
+
+export interface SkillManagement {
+  state: string
+  sequence: number
+  readiness: SkillReadiness
+  challenges: unknown[]
+}
+
+export interface SkillJob {
+  jobId: string
+  status: string
+  skillId?: string
+  revision?: string
+  caseId?: string
+  mode?: string
+  taskResult?: { status: string; accepted: boolean; receiptMatches: boolean } | null
+  skillUsage?: { loading: string; capture: string; usageReview: string; declaredRuleIds: string[]; endedAdmission?: string } | null
+  validationId?: string | null
+  errorCode?: string | null
+}
+
+export interface SkillDetail {
+  projectId: string
+  candidate: SkillCandidate
+  management: SkillManagement
+  validations: Record<string, unknown>[]
+  jobs: SkillJob[]
+  releases: Record<string, unknown>[]
+  caseOptions: { caseId: string; title: string }[]
+}
+
+export interface SkillReviewPackage {
+  projectId?: string
+  packageId: string
+  packageHash: string
+  sequence: number
+  skillId: string
+  revision: string
+  readiness: SkillReadiness
+  validationIds: string[]
+  sourceWatermark: string[]
+  contentHash: string
+  manifestId?: string
+  exportHash?: string | null
+  actor?: string
+  preparedAt?: string
+  reviewChecklist: { ruleId: string; branchCount: number; coveredBranches: string[] }[]
+}
+
+export interface SkillRef {
+  projectId: string
+  skillId: string
+  revision: string
+}
+
+export interface SkillMutation extends SkillRef {
+  expectedSequence: number
+  operationId: string
+  reason: string
+}
+
+export interface SkillMutationResult {
+  state?: string
+  sequence: number
+  releaseId?: string
+}
+
+export interface SkillLoadPreview {
+  allowed: boolean
+  reasons?: string[]
+  reason?: string
+  errorCode?: string
+  [key: string]: unknown
+}
+
 /* ------------------------------------------------------------ 项目 */
 
 export interface Project {

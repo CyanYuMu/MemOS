@@ -40,6 +40,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { label: 'nav.memoryList', to: '/cn/memoryList', img: '/icons/memory-list.svg' },
       { label: 'nav.localMemories', to: '/cn/localMemories', icon: 'i-lucide:plug', hidden: true },
       { label: 'nav.memoryGraph', to: '/cn/memoryGraph', icon: 'i-db-graph' },
+      { label: 'nav.skills', to: '/cn/skills', icon: 'i-db-skill', iconActive: 'i-db-skill-fill' },
       { label: 'nav.models', to: '/cn/models', icon: 'i-db-model', iconActive: 'i-db-model-fill' },
     ],
   },

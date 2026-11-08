@@ -23,6 +23,7 @@ import { Usage } from './pages/Usage'
 import { Docs } from './pages/Docs'
 import { About } from './pages/About'
 import { Projects } from './pages/Projects'
+import { Skills } from './pages/Skills'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -61,6 +62,7 @@ function AnimatedRoutes() {
       <Route path="/cn/localMemories" element={<LocalMemories />} />
       <Route path="/cn/memoryGraph" element={<MemoryGraph />} />
       <Route path="/cn/models" element={<Models />} />
+      <Route path="/cn/skills" element={<Skills />} />
       <Route path="/cn/profileTemplate" element={<ProfileTemplates />} />
       <Route path="/cn/prompts" element={<Extractions />} />
       <Route path="/cn/customExtraction" element={<Navigate to="/cn/prompts" replace />} />

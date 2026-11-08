@@ -2590,6 +2590,294 @@
         "required": ["id", "createTime", "eventType", "status"],
         "type": "object"
       },
+      "SkillDetailData": {
+        "properties": {
+          "candidate": {
+            "description": "P2 规范候选，snake_case，不包含原始运行目录或 oracle。",
+            "type": "object"
+          },
+          "caseOptions": {
+            "items": {
+              "properties": {
+                "caseId": {
+                  "type": "string"
+                },
+                "title": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "jobs": {
+            "items": {
+              "$ref": "#/components/schemas/SkillJobData"
+            },
+            "type": "array"
+          },
+          "management": {
+            "$ref": "#/components/schemas/SkillManagement"
+          },
+          "projectId": {
+            "type": "string"
+          },
+          "releases": {
+            "items": {
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "validations": {
+            "items": {
+              "type": "object"
+            },
+            "type": "array"
+          }
+        },
+        "required": ["projectId", "candidate", "management", "validations", "jobs", "releases", "caseOptions"],
+        "type": "object"
+      },
+      "SkillErrorEnvelope": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ErrorEnvelope"
+          },
+          {
+            "properties": {
+              "data": {
+                "properties": {
+                  "currentSequence": {
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  "errorCode": {
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        ]
+      },
+      "SkillEvidenceData": {
+        "properties": {
+          "facts": {
+            "items": {
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "rule": {
+            "type": "object"
+          }
+        },
+        "type": "object"
+      },
+      "SkillJobData": {
+        "properties": {
+          "caseId": {
+            "type": "string"
+          },
+          "errorCode": {
+            "nullable": true,
+            "type": "string"
+          },
+          "jobId": {
+            "type": "string"
+          },
+          "mode": {
+            "type": "string"
+          },
+          "revision": {
+            "type": "string"
+          },
+          "skillId": {
+            "type": "string"
+          },
+          "skillUsage": {
+            "nullable": true,
+            "type": "object"
+          },
+          "status": {
+            "type": "string"
+          },
+          "taskResult": {
+            "nullable": true,
+            "type": "object"
+          },
+          "validationId": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "SkillListData": {
+        "properties": {
+          "items": {
+            "items": {
+              "properties": {
+                "purpose": {
+                  "type": "string"
+                },
+                "readiness": {
+                  "$ref": "#/components/schemas/SkillReadiness"
+                },
+                "revision": {
+                  "type": "string"
+                },
+                "ruleCount": {
+                  "type": "integer"
+                },
+                "sequence": {
+                  "type": "integer"
+                },
+                "skillId": {
+                  "type": "string"
+                },
+                "state": {
+                  "type": "string"
+                },
+                "tags": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                "title": {
+                  "type": "string"
+                },
+                "validationCount": {
+                  "type": "integer"
+                }
+              },
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "total": {
+            "type": "integer"
+          }
+        },
+        "required": ["items", "total"],
+        "type": "object"
+      },
+      "SkillLoadPreview": {
+        "description": "正式加载门禁只读结果，不代表候选评测通过。",
+        "properties": {
+          "allowed": {
+            "type": "boolean"
+          },
+          "reasons": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "SkillManagement": {
+        "description": "Neo4j 管理真相；revision 不变，sequence 用于乐观并发控制。",
+        "properties": {
+          "challenges": {
+            "items": {
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "readiness": {
+            "$ref": "#/components/schemas/SkillReadiness"
+          },
+          "releaseId": {
+            "type": "string"
+          },
+          "sequence": {
+            "type": "integer"
+          },
+          "state": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "SkillReadiness": {
+        "properties": {
+          "reasons": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "required": ["status", "reasons"],
+        "type": "object"
+      },
+      "SkillReviewPackage": {
+        "properties": {
+          "contentHash": {
+            "type": "string"
+          },
+          "packageHash": {
+            "type": "string"
+          },
+          "packageId": {
+            "type": "string"
+          },
+          "readiness": {
+            "$ref": "#/components/schemas/SkillReadiness"
+          },
+          "reviewChecklist": {
+            "items": {
+              "properties": {
+                "branchCount": {
+                  "type": "integer"
+                },
+                "coveredBranches": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                "ruleId": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "revision": {
+            "type": "string"
+          },
+          "sequence": {
+            "type": "integer"
+          },
+          "skillId": {
+            "type": "string"
+          },
+          "sourceWatermark": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "validationIds": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": ["packageId", "packageHash", "sequence", "skillId", "revision", "readiness"],
+        "type": "object"
+      },
       "SubscriptionDetails": {
         "properties": {
           "currentCycle": {
@@ -5041,6 +5329,1113 @@
         "summary": "订阅周期",
         "tags": ["账号"]
       }
+    },
+    "/api/v1/skills/challenges": {
+      "post": {
+        "description": "必须显式 projectId，要求项目 manage 能力；身份从已认证会话获取。\n只接受列出的字段。服务端代理到固定 Python Skill 服务，不接受 actor、路径或任意命令。\n409 必须重新读取状态和审阅包，禁止自动重试人工批准。评测只返回 jobId，由后续轮询取结果。",
+        "operationId": "skill_challenge",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "expectedSequence": {
+                    "maximum": 9007199254740991,
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  "operationId": {
+                    "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$",
+                    "type": "string"
+                  },
+                  "projectId": {
+                    "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,299}$",
+                    "type": "string"
+                  },
+                  "reason": {
+                    "maxLength": 2000,
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "revision": {
+                    "pattern": "^[a-f0-9]{64}$",
+                    "type": "string"
+                  },
+                  "skillId": {
+                    "pattern": "^[a-z0-9][a-z0-9-]{0,79}$",
+                    "type": "string"
+                  }
+                },
+                "required": ["projectId", "skillId", "revision", "expectedSequence", "operationId", "reason"],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Envelope"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/SkillManagement"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  ]
+                }
+              }
+            },
+            "description": "成功；candidate 保留规范 snake_case 正文"
+          },
+          "400": {
+            "$ref": "#/components/responses/ErrorBadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/ErrorUnauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/ErrorForbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/ErrorNotFound"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SkillErrorEnvelope"
+                }
+              }
+            },
+            "description": "状态、操作 ID 或发布证据冲突；data 含 errorCode，可选 currentSequence"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SkillErrorEnvelope"
+                }
+              }
+            },
+            "description": "Skill 业务校验未通过；不回显原始异常或端点"
+          },
+          "503": {
+            "$ref": "#/components/responses/ErrorUnavailable"
+          }
+        },
+        "summary": "登记反例挑战",
+        "tags": ["Skill 管理"]
+      }
+    },
+    "/api/v1/skills/detail": {
+      "post": {
+        "description": "必须显式 projectId，要求项目 view 能力；身份从已认证会话获取。\n只接受列出的字段。服务端代理到固定 Python Skill 服务，不接受 actor、路径或任意命令。\n409 必须重新读取状态和审阅包，禁止自动重试人工批准。评测只返回 jobId，由后续轮询取结果。",
+        "operationId": "skill_detail",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "projectId": {
+                    "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,299}$",
+                    "type": "string"
+                  },
+                  "revision": {
+                    "pattern": "^[a-f0-9]{64}$",
+                    "type": "string"
+                  },
+                  "skillId": {
+                    "pattern": "^[a-z0-9][a-z0-9-]{0,79}$",
+                    "type": "string"
+                  }
+                },
+                "required": ["projectId", "skillId", "revision"],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Envelope"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/SkillDetailData"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  ]
+                }
+              }
+            },
+            "description": "成功；candidate 保留规范 snake_case 正文"
+          },
+          "400": {
+            "$ref": "#/components/responses/ErrorBadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/ErrorUnauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/ErrorForbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/ErrorNotFound"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SkillErrorEnvelope"
+                }
+              }
+            },
+            "description": "状态、操作 ID 或发布证据冲突；data 含 errorCode，可选 currentSequence"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SkillErrorEnvelope"
+                }
+              }
+            },
+            "description": "Skill 业务校验未通过；不回显原始异常或端点"
+          },
+          "503": {
+            "$ref": "#/components/responses/ErrorUnavailable"
+          }
+        },
+        "summary": "查看固定版本与管理状态",
+        "tags": ["Skill 管理"]
+      }
+    },
+    "/api/v1/skills/evaluations/start": {
+      "post": {
+        "description": "必须显式 projectId，要求项目 write 能力；身份从已认证会话获取。\n只接受列出的字段。服务端代理到固定 Python Skill 服务，不接受 actor、路径或任意命令。\n409 必须重新读取状态和审阅包，禁止自动重试人工批准。评测只返回 jobId，由后续轮询取结果。",
+        "operationId": "skill_evaluate",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "caseId": {
+                    "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,299}$",
+                    "type": "string"
+                  },
+                  "operationId": {
+                    "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$",
+                    "type": "string"
+                  },
+                  "projectId": {
+                    "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,299}$",
+                    "type": "string"
+                  },
+                  "revision": {
+                    "pattern": "^[a-f0-9]{64}$",
+                    "type": "string"
+                  },
+                  "skillId": {
+                    "pattern": "^[a-z0-9][a-z0-9-]{0,79}$",
+                    "type": "string"
+                  }
+                },
+                "required": ["projectId", "skillId", "revision", "caseId", "operationId"],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Envelope"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/SkillJobData"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  ]
+                }
+              }
+            },
+            "description": "成功；candidate 保留规范 snake_case 正文"
+          },
+          "400": {
+            "$ref": "#/components/responses/ErrorBadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/ErrorUnauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/ErrorForbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/ErrorNotFound"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SkillErrorEnvelope"
+                }
+              }
+            },
+            "description": "状态、操作 ID 或发布证据冲突；data 含 errorCode，可选 currentSequence"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SkillErrorEnvelope"
+                }
+              }
+            },
+            "description": "Skill 业务校验未通过；不回显原始异常或端点"
+          },
+          "503": {
+            "$ref": "#/components/responses/ErrorUnavailable"
+          }
+        },
+        "summary": "启动隔离候选评测",
+        "tags": ["Skill 管理"]
+      }
+    },
+    "/api/v1/skills/evidence": {
+      "post": {
+        "description": "必须显式 projectId，要求项目 view 能力；身份从已认证会话获取。\n只接受列出的字段。服务端代理到固定 Python Skill 服务，不接受 actor、路径或任意命令。\n409 必须重新读取状态和审阅包，禁止自动重试人工批准。评测只返回 jobId，由后续轮询取结果。",
+        "operationId": "skill_evidence",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "projectId": {
+                    "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,299}$",
+                    "type": "string"
+                  },
+                  "revision": {
+                    "pattern": "^[a-f0-9]{64}$",
+                    "type": "string"
+                  },
+                  "ruleId": {
+                    "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,299}$",
+                    "type": "string"
+                  },
+                  "skillId": {
+                    "pattern": "^[a-z0-9][a-z0-9-]{0,79}$",
+                    "type": "string"
+                  }
+                },
+                "required": ["projectId", "skillId", "revision", "ruleId"],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Envelope"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/SkillEvidenceData"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  ]
+                }
+              }
+            },
+            "description": "成功；candidate 保留规范 snake_case 正文"
+          },
+          "400": {
+            "$ref": "#/components/responses/ErrorBadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/ErrorUnauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/ErrorForbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/ErrorNotFound"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SkillErrorEnvelope"
+                }
+              }
+            },
+            "description": "状态、操作 ID 或发布证据冲突；data 含 errorCode，可选 currentSequence"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SkillErrorEnvelope"
+                }
+              }
+            },
+            "description": "Skill 业务校验未通过；不回显原始异常或端点"
+          },
+          "503": {
+            "$ref": "#/components/responses/ErrorUnavailable"
+          }
+        },
+        "summary": "查看规则来源证据",
+        "tags": ["Skill 管理"]
+      }
+    },
+    "/api/v1/skills/jobs/detail": {
+      "post": {
+        "description": "必须显式 projectId，要求项目 view 能力；身份从已认证会话获取。\n只接受列出的字段。服务端代理到固定 Python Skill 服务，不接受 actor、路径或任意命令。\n409 必须重新读取状态和审阅包，禁止自动重试人工批准。评测只返回 jobId，由后续轮询取结果。",
+        "operationId": "skill_job",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "jobId": {
+                    "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,299}$",
+                    "type": "string"
+                  },
+                  "projectId": {
+                    "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,299}$",
+                    "type": "string"
+                  }
+                },
+                "required": ["projectId", "jobId"],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Envelope"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/SkillJobData"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  ]
+                }
+              }
+            },
+            "description": "成功；candidate 保留规范 snake_case 正文"
+          },
+          "400": {
+            "$ref": "#/components/responses/ErrorBadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/ErrorUnauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/ErrorForbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/ErrorNotFound"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SkillErrorEnvelope"
+                }
+              }
+            },
+            "description": "状态、操作 ID 或发布证据冲突；data 含 errorCode，可选 currentSequence"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SkillErrorEnvelope"
+                }
+              }
+            },
+            "description": "Skill 业务校验未通过；不回显原始异常或端点"
+          },
+          "503": {
+            "$ref": "#/components/responses/ErrorUnavailable"
+          }
+        },
+        "summary": "查看异步评测结果",
+        "tags": ["Skill 管理"]
+      }
+    },
+    "/api/v1/skills/list": {
+      "post": {
+        "description": "必须显式 projectId，要求项目 view 能力；身份从已认证会话获取。\n只接受列出的字段。服务端代理到固定 Python Skill 服务，不接受 actor、路径或任意命令。\n409 必须重新读取状态和审阅包，禁止自动重试人工批准。评测只返回 jobId，由后续轮询取结果。",
+        "operationId": "skill_list",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "projectId": {
+                    "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,299}$",
+                    "type": "string"
+                  },
+                  "query": {
+                    "maxLength": 200,
+                    "type": "string"
+                  }
+                },
+                "required": ["projectId"],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Envelope"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/SkillListData"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  ]
+                }
+              }
+            },
+            "description": "成功；candidate 保留规范 snake_case 正文"
+          },
+          "400": {
+            "$ref": "#/components/responses/ErrorBadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/ErrorUnauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/ErrorForbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/ErrorNotFound"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SkillErrorEnvelope"
+                }
+              }
+            },
+            "description": "状态、操作 ID 或发布证据冲突；data 含 errorCode，可选 currentSequence"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SkillErrorEnvelope"
+                }
+              }
+            },
+            "description": "Skill 业务校验未通过；不回显原始异常或端点"
+          },
+          "503": {
+            "$ref": "#/components/responses/ErrorUnavailable"
+          }
+        },
+        "summary": "查看 Skill 候选列表",
+        "tags": ["Skill 管理"]
+      }
+    },
+    "/api/v1/skills/load-preview": {
+      "post": {
+        "description": "必须显式 projectId，要求项目 view 能力；身份从已认证会话获取。\n只接受列出的字段。服务端代理到固定 Python Skill 服务，不接受 actor、路径或任意命令。\n409 必须重新读取状态和审阅包，禁止自动重试人工批准。评测只返回 jobId，由后续轮询取结果。",
+        "operationId": "skill_load_preview",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "caseId": {
+                    "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,299}$",
+                    "type": "string"
+                  },
+                  "mode": {
+                    "enum": ["normal"],
+                    "type": "string"
+                  },
+                  "projectId": {
+                    "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,299}$",
+                    "type": "string"
+                  },
+                  "revision": {
+                    "pattern": "^[a-f0-9]{64}$",
+                    "type": "string"
+                  },
+                  "skillId": {
+                    "pattern": "^[a-z0-9][a-z0-9-]{0,79}$",
+                    "type": "string"
+                  }
+                },
+                "required": ["projectId", "skillId", "revision", "caseId", "mode"],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Envelope"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/SkillLoadPreview"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  ]
+                }
+              }
+            },
+            "description": "成功；candidate 保留规范 snake_case 正文"
+          },
+          "400": {
+            "$ref": "#/components/responses/ErrorBadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/ErrorUnauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/ErrorForbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/ErrorNotFound"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SkillErrorEnvelope"
+                }
+              }
+            },
+            "description": "状态、操作 ID 或发布证据冲突；data 含 errorCode，可选 currentSequence"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SkillErrorEnvelope"
+                }
+              }
+            },
+            "description": "Skill 业务校验未通过；不回显原始异常或端点"
+          },
+          "503": {
+            "$ref": "#/components/responses/ErrorUnavailable"
+          }
+        },
+        "summary": "预览 Claude Code 正式加载准入",
+        "tags": ["Skill 管理"]
+      }
+    },
+    "/api/v1/skills/publish": {
+      "post": {
+        "description": "必须显式 projectId，要求项目 manage 能力；身份从已认证会话获取。\n只接受列出的字段。服务端代理到固定 Python Skill 服务，不接受 actor、路径或任意命令。\n409 必须重新读取状态和审阅包，禁止自动重试人工批准。评测只返回 jobId，由后续轮询取结果。",
+        "operationId": "skill_publish",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "expectedSequence": {
+                    "maximum": 9007199254740991,
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  "operationId": {
+                    "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$",
+                    "type": "string"
+                  },
+                  "packageHash": {
+                    "pattern": "^[a-f0-9]{64}$",
+                    "type": "string"
+                  },
+                  "packageId": {
+                    "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,299}$",
+                    "type": "string"
+                  },
+                  "projectId": {
+                    "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,299}$",
+                    "type": "string"
+                  },
+                  "reason": {
+                    "maxLength": 2000,
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "revision": {
+                    "pattern": "^[a-f0-9]{64}$",
+                    "type": "string"
+                  },
+                  "skillId": {
+                    "pattern": "^[a-z0-9][a-z0-9-]{0,79}$",
+                    "type": "string"
+                  }
+                },
+                "required": ["projectId", "skillId", "revision", "packageId", "packageHash", "expectedSequence", "operationId", "reason"],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Envelope"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/SkillManagement"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  ]
+                }
+              }
+            },
+            "description": "成功；candidate 保留规范 snake_case 正文"
+          },
+          "400": {
+            "$ref": "#/components/responses/ErrorBadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/ErrorUnauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/ErrorForbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/ErrorNotFound"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SkillErrorEnvelope"
+                }
+              }
+            },
+            "description": "状态、操作 ID 或发布证据冲突；data 含 errorCode，可选 currentSequence"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SkillErrorEnvelope"
+                }
+              }
+            },
+            "description": "Skill 业务校验未通过；不回显原始异常或端点"
+          },
+          "503": {
+            "$ref": "#/components/responses/ErrorUnavailable"
+          }
+        },
+        "summary": "人工发布固定版本",
+        "tags": ["Skill 管理"]
+      }
+    },
+    "/api/v1/skills/reviews/decide": {
+      "post": {
+        "description": "必须显式 projectId，要求项目 manage 能力；身份从已认证会话获取。\n只接受列出的字段。服务端代理到固定 Python Skill 服务，不接受 actor、路径或任意命令。\n409 必须重新读取状态和审阅包，禁止自动重试人工批准。评测只返回 jobId，由后续轮询取结果。",
+        "operationId": "skill_review_decide",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "decision": {
+                    "enum": ["needs_evidence", "block"],
+                    "type": "string"
+                  },
+                  "expectedSequence": {
+                    "maximum": 9007199254740991,
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  "operationId": {
+                    "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$",
+                    "type": "string"
+                  },
+                  "projectId": {
+                    "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,299}$",
+                    "type": "string"
+                  },
+                  "reason": {
+                    "maxLength": 2000,
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "revision": {
+                    "pattern": "^[a-f0-9]{64}$",
+                    "type": "string"
+                  },
+                  "skillId": {
+                    "pattern": "^[a-z0-9][a-z0-9-]{0,79}$",
+                    "type": "string"
+                  }
+                },
+                "required": ["projectId", "skillId", "revision", "expectedSequence", "operationId", "decision", "reason"],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Envelope"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/SkillManagement"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  ]
+                }
+              }
+            },
+            "description": "成功；candidate 保留规范 snake_case 正文"
+          },
+          "400": {
+            "$ref": "#/components/responses/ErrorBadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/ErrorUnauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/ErrorForbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/ErrorNotFound"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SkillErrorEnvelope"
+                }
+              }
+            },
+            "description": "状态、操作 ID 或发布证据冲突；data 含 errorCode，可选 currentSequence"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SkillErrorEnvelope"
+                }
+              }
+            },
+            "description": "Skill 业务校验未通过；不回显原始异常或端点"
+          },
+          "503": {
+            "$ref": "#/components/responses/ErrorUnavailable"
+          }
+        },
+        "summary": "要求补证据或阻断发布",
+        "tags": ["Skill 管理"]
+      }
+    },
+    "/api/v1/skills/reviews/prepare": {
+      "post": {
+        "description": "必须显式 projectId，要求项目 manage 能力；身份从已认证会话获取。\n只接受列出的字段。服务端代理到固定 Python Skill 服务，不接受 actor、路径或任意命令。\n409 必须重新读取状态和审阅包，禁止自动重试人工批准。评测只返回 jobId，由后续轮询取结果。",
+        "operationId": "skill_review_prepare",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "projectId": {
+                    "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,299}$",
+                    "type": "string"
+                  },
+                  "revision": {
+                    "pattern": "^[a-f0-9]{64}$",
+                    "type": "string"
+                  },
+                  "skillId": {
+                    "pattern": "^[a-z0-9][a-z0-9-]{0,79}$",
+                    "type": "string"
+                  }
+                },
+                "required": ["projectId", "skillId", "revision"],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Envelope"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/SkillReviewPackage"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  ]
+                }
+              }
+            },
+            "description": "成功；candidate 保留规范 snake_case 正文"
+          },
+          "400": {
+            "$ref": "#/components/responses/ErrorBadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/ErrorUnauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/ErrorForbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/ErrorNotFound"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SkillErrorEnvelope"
+                }
+              }
+            },
+            "description": "状态、操作 ID 或发布证据冲突；data 含 errorCode，可选 currentSequence"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SkillErrorEnvelope"
+                }
+              }
+            },
+            "description": "Skill 业务校验未通过；不回显原始异常或端点"
+          },
+          "503": {
+            "$ref": "#/components/responses/ErrorUnavailable"
+          }
+        },
+        "summary": "准备绑定证据的人工审阅包",
+        "tags": ["Skill 管理"]
+      }
+    },
+    "/api/v1/skills/status": {
+      "post": {
+        "description": "必须显式 projectId，要求项目 manage 能力；身份从已认证会话获取。\n只接受列出的字段。服务端代理到固定 Python Skill 服务，不接受 actor、路径或任意命令。\n409 必须重新读取状态和审阅包，禁止自动重试人工批准。评测只返回 jobId，由后续轮询取结果。",
+        "operationId": "skill_status",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "action": {
+                    "enum": ["pause", "withdraw"],
+                    "type": "string"
+                  },
+                  "expectedSequence": {
+                    "maximum": 9007199254740991,
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  "operationId": {
+                    "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$",
+                    "type": "string"
+                  },
+                  "projectId": {
+                    "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,299}$",
+                    "type": "string"
+                  },
+                  "reason": {
+                    "maxLength": 2000,
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "revision": {
+                    "pattern": "^[a-f0-9]{64}$",
+                    "type": "string"
+                  },
+                  "skillId": {
+                    "pattern": "^[a-z0-9][a-z0-9-]{0,79}$",
+                    "type": "string"
+                  }
+                },
+                "required": ["projectId", "skillId", "revision", "expectedSequence", "operationId", "action", "reason"],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Envelope"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/SkillManagement"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  ]
+                }
+              }
+            },
+            "description": "成功；candidate 保留规范 snake_case 正文"
+          },
+          "400": {
+            "$ref": "#/components/responses/ErrorBadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/ErrorUnauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/ErrorForbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/ErrorNotFound"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SkillErrorEnvelope"
+                }
+              }
+            },
+            "description": "状态、操作 ID 或发布证据冲突；data 含 errorCode，可选 currentSequence"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SkillErrorEnvelope"
+                }
+              }
+            },
+            "description": "Skill 业务校验未通过；不回显原始异常或端点"
+          },
+          "503": {
+            "$ref": "#/components/responses/ErrorUnavailable"
+          }
+        },
+        "summary": "暂停或撤回版本",
+        "tags": ["Skill 管理"]
+      }
     }
   },
   "servers": [
@@ -5050,6 +6445,10 @@
     }
   ],
   "tags": [
+    {
+      "description": "固定版本候选、隔离评测、人工审阅发布与加载准入。",
+      "name": "Skill 管理"
+    },
     {
       "description": "工作区。几乎所有业务接口都要它的 id。",
       "name": "项目"
