@@ -20,7 +20,7 @@ from memos.skill_evaluation.tasks import case_digest
 from memos.skill_evaluation.verifier import check_receipt
 
 
-PROJECTION_VERSION = "management-native-2"
+PROJECTION_VERSION = "management-native-3"
 
 
 def dev_case(case_id: str):
@@ -45,15 +45,20 @@ def native_skill(candidate: dict) -> SkillRevision:
         "",
         candidate["goal"],
         "",
-        "## Adapter execution reporting contract (management-native-2)",
+        "## Adapter execution reporting contract (management-native-3)",
         "",
         "For each rule you actually apply, use mcp__memos_run__record_rule with its exact rule_id, "
         "phase, a short public observation, and decision. Do not report private reasoning.",
         "Allowed phase values are observe, select, act, check, and exit.",
-        "References must be exact host event IDs supplied by the host, never filenames, line "
-        "numbers, check_index labels, or invented IDs. If no host event ID is available, send "
-        "evidence_refs=[] and related_tool_events=[] (or omit those optional fields). "
-        "Describe file/check observations in observation, local_result, or change_ref instead.",
+        "This controlled adapter NEVER exposes host event IDs to you. In EVERY record_rule "
+        "call, use EXACTLY these four fields: rule_id, phase, observation, decision. "
+        "MUST OMIT evidence_refs and related_tool_events entirely; never send these fields. "
+        "Visible-check check_index values (such as 1 or 2), snapshot IDs, filenames, and line "
+        "numbers are NOT host event IDs. Put all file/check descriptions in observation.",
+        '{"rule_id":"' + candidate["entry_rule"] + '","phase":"observe",'
+        '"observation":"Brief public contract observation",'
+        '"decision":"Brief rule selection or action"} is the record_rule argument shape. '
+        "Replace the example values with facts you actually observed; add no other fields.",
         "An acknowledgement records a declaration only, not verified rule use or independent "
         "acceptance. Never mark your own branch coverage as validated.",
     ]
