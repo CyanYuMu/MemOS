@@ -60,6 +60,24 @@ def test_start_idempotency_and_actor_conflict(control):
         controller.start("project", manifest["experimentId"], "op", "other")
 
 
+def test_operation_id_cannot_change_registered_experiment(control, tmp_path):
+    controller, _, _, manifest = control
+    other = tmp_path / "other"
+    other.mkdir()
+    controller.registrations[("project", "c" * 64)] = other
+    controller._save(
+        other,
+        {
+            "experimentId": "c" * 64,
+            "status": "completed",
+            "rows": [],
+            "operations": {"op": {"actor": "actor"}},
+        },
+    )
+    with pytest.raises(ManagementError, match="operation_conflict"):
+        controller.start("project", manifest["experimentId"], "op", "actor")
+
+
 def test_recovery_marks_unfinished_unknown_without_resubmission(control):
     controller, _, directory, manifest = control
     controller.start("project", manifest["experimentId"], "op", "actor")

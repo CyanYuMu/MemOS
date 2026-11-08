@@ -182,6 +182,13 @@ class ExperimentController:
             if previous:
                 require(previous["actor"] == actor, "operation_conflict", 409)
                 return self._item(manifest, state)
+            for (registered_project, registered_id), other in self.registrations.items():
+                if registered_project == project_id and registered_id != experiment_id:
+                    require(
+                        operation_id not in self._state(other)["operations"],
+                        "operation_conflict",
+                        409,
+                    )
             require(state["status"] == "frozen", "experiment_not_startable", 409)
             require(not self._active, "busy", 409)
             try:
