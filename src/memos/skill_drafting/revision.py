@@ -168,6 +168,12 @@ def _record(loaded: dict, history: list) -> dict:
             "Historical unknown and failed reports remain unchanged on the parent revision.",
         ],
     }
+    if loaded["generation"]["provider"] == "source_review_patch_v1":
+        value.update(
+            revision_method="source_review_patch_v1",
+            actor_kind="developer_agent",
+            patches_sha256=hash_json(loaded["generation"]["patches"]),
+        )
     value["record_id"] = hash_json(value)
     return value
 
@@ -230,7 +236,7 @@ def revise_candidate(
         # Domain failures are fixed categories; never persist arbitrary source
         # or provider exception text while retaining useful structural reasons.
         category = str(error)
-        if re.fullmatch(r"(?:draft|revision|generation)_[a-z0-9_]{1,100}", category):
+        if re.fullmatch(r"(?:draft|revision|generation|source_patch)_[a-z0-9_]{1,100}", category):
             job["error_code"] = category
         if isinstance(error, GenerationError) and error.diagnostic is not None:
             job["generation_diagnostic"] = error.diagnostic

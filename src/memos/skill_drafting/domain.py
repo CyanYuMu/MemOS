@@ -533,6 +533,11 @@ def _validate_proposal(proposal: dict, packet: dict) -> None:
 
 
 def _validate_generation(generation: dict, packet: dict, proposal: dict) -> None:
+    if isinstance(generation, dict) and generation.get("provider") == "source_review_patch_v1":
+        from memos.skill_drafting.source_patch import validate_source_patch_generation
+
+        validate_source_patch_generation(generation, packet, proposal)
+        return
     # This lazy import shares the generator's public projection without importing
     # the optional provider SDK or making a request. All providers must satisfy
     # the same content checks; test fixtures receive no provenance exemption.
@@ -758,6 +763,11 @@ def make_candidate(proposal: dict, packet: dict, *, skill_id: str, generation: d
     try:
         validate_packet(packet)
         _validate_generation(generation, packet, proposal)
+        if generation["provider"] == "source_review_patch_v1":
+            _require(
+                skill_id == generation["parent"]["candidate"]["skill_id"],
+                "source_patch_skill_mismatch",
+            )
         return _build(proposal, packet, skill_id, hash_json(generation))
     except (KeyError, TypeError, IndexError, AttributeError, RecursionError, OverflowError):
         raise ValueError("draft_invalid_candidate") from None

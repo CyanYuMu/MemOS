@@ -240,6 +240,13 @@ def freeze_experiment(
 ) -> dict:
     loaded = load_candidate(candidate_directory)
     candidate, packet = loaded["candidate"], loaded["packet"]
+    revision_record = None
+    if loaded.get("generation", {}).get("provider") == "source_review_patch_v1":
+        from memos.skill_drafting.revision import load_revision
+
+        revision_record = load_revision(Path(candidate_directory).parent)["record"]
+        if revision_record["new_revision"] != candidate["revision"]:
+            raise ValueError("experiment_revision_record_mismatch")
     cases = _cases(candidate)
     raw, selection = raw_context(packet, context_bytes)
     projection = export_identity(candidate)
@@ -259,6 +266,8 @@ def freeze_experiment(
     inputs.mkdir(mode=0o700)
     shutil.copytree(candidate_directory, inputs / "candidate")
     (inputs / "raw-memory.txt").write_text(raw)
+    if revision_record is not None:
+        write_json(inputs / "revision-record.json", revision_record)
     value = {
         "schemaVersion": 1,
         "protocol": PROTOCOL,
@@ -267,6 +276,8 @@ def freeze_experiment(
         "revision": candidate["revision"],
         "contentHash": candidate["content_hash"],
         "candidateManifest": loaded["manifest"]["manifest_id"],
+        "candidateOrigin": loaded.get("generation", {}).get("provider", "openai_compatible_json"),
+        "revisionRecordId": revision_record["record_id"] if revision_record else None,
         "projection": projection,
         "sourceWatermark": sorted(packet["watermark"]),
         "rawSelection": selection,
@@ -321,6 +332,15 @@ def load_experiment(directory: Path, config) -> dict:
         raise ValueError("experiment_input_changed")
     loaded = load_candidate(inputs / "candidate")
     candidate = loaded["candidate"]
+    if value.get("revisionRecordId") is not None:
+        record = read_json(inputs / "revision-record.json")
+        if (
+            record.get("record_id") != value["revisionRecordId"]
+            or record["record_id"]
+            != hash_json({k: v for k, v in record.items() if k != "record_id"})
+            or record["new_revision"] != candidate["revision"]
+        ):
+            raise ValueError("experiment_revision_record_mismatch")
     if (
         loaded["manifest"]["manifest_id"] != value["candidateManifest"]
         or candidate["revision"] != value["revision"]

@@ -160,6 +160,16 @@ class ExperimentController:
             summary["completePairs"] = summary["completePairedTasks"]
             for group in summary["groups"]:
                 group["costUnknown"] = group.get("unknownCostCount", group.get("costUnknown", 0))
+            limitations = [
+                "七个独立任务；每任务每组一次，不能证明普遍收益。",
+                "边界分流、规则使用与严重违规仍待人工审阅。",
+                "实验完成不等于 Skill 可发布；所有失败和未知均保留。",
+            ]
+            if manifest.get("candidateOrigin") == "source_review_patch_v1":
+                limitations.insert(
+                    0,
+                    "本次 Skill 是模型提炼后经开发者定点修订的候选，不能据此宣称纯自动提炼质量已验证。",
+                )
             return {
                 **self._item(manifest, state),
                 "groups": manifest["groups"],
@@ -167,11 +177,7 @@ class ExperimentController:
                 "rows": rows,
                 "summary": summary,
                 "publication": "not_approved",
-                "limitations": [
-                    "七个独立任务；每任务每组一次，不能证明普遍收益。",
-                    "边界分流、规则使用与严重违规仍待人工审阅。",
-                    "实验完成不等于 Skill 可发布；所有失败和未知均保留。",
-                ],
+                "limitations": limitations,
             }
 
     def start(self, project_id, experiment_id, operation_id, actor):
