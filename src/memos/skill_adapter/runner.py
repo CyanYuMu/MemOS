@@ -616,9 +616,35 @@ def run_case(
                 ).hexdigest()
                 control_digest = store.capture(control).snapshot_id
                 report["control_snapshot"] = control_digest
+                available_tools = [*config.tools, "mcp__memos_run__run_visible_checks"]
+                if skill:
+                    available_tools.append("mcp__memos_run__record_rule")
+                editable_paths = case.editable_paths
+                if case.split == "dev" and not editable_paths:
+                    # P0 dev probes predate the explicit editable_paths contract.
+                    # Their existing repair files remain usable; protected inputs do not.
+                    editable_paths = tuple(
+                        name for name in case.initial_files if name not in protected
+                    )
                 prompt = (
                     (f"/{alias}\n" if alias else "")
-                    + "Read TASK.md, diagnose and repair the task. Use the run_visible_checks MCP tool to run fixed visible checks. Keep TASK.md and visible_checks.py unchanged. Report the observed result."
+                    + "Read TASK.md, diagnose and repair the task. "
+                    + f"Available tools: {', '.join(available_tools)}. Use only these tools. "
+                    + "Do not request Bash, shell commands, or arbitrary program execution. "
+                    + f"Editable task paths: {', '.join(editable_paths) or '(none)'}. "
+                    + "Only modify these paths relative to the task workspace. "
+                    + "Do not create scratch files, temporary tests, or extra files; "
+                    + "do not write outside the task workspace. "
+                    + "Keep TASK.md and visible_checks.py unchanged. "
+                    + "Run checks only with mcp__memos_run__run_visible_checks. "
+                    + "The host performs additional independent acceptance after you finish; "
+                    + "do not recreate or execute extra tests yourself. "
+                    + (
+                        ""
+                        if skill
+                        else "This task starts without a Skill; do not load a Skill or invoke slash commands. "
+                    )
+                    + "Report the observed results and any remaining limitations."
                 )
                 command = command_for(
                     config,

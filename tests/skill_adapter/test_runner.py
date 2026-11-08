@@ -192,3 +192,56 @@ def test_post_launch_failure_preserves_partial_report_and_quarantines_unsafe_tre
     assert report["capture"]["status"] == "partial"
     assert report["events_sha256"]
     assert "sensitive error text" not in path.read_text()
+
+
+@pytest.mark.skipif(sys.platform != "darwin", reason="macOS runner")
+@pytest.mark.parametrize(
+    "case_id,tools",
+    [
+        ("source-dream-update", ("Read", "Edit")),
+        ("source-scoped-update", ("Read", "Write")),
+        ("dev-strict-signature", ("Read", "Edit", "Write")),
+    ],
+)
+def test_actual_launch_prompt_explains_configured_tools_and_task_boundaries(
+    tmp_path, monkeypatch, case_id, tools
+):
+    from memos.skill_adapter import runner
+    from memos.skill_evaluation.tasks import get_case
+
+    cli = tmp_path / "cli" / "claude"
+    cli.parent.mkdir()
+    cli.write_text("#!/bin/sh\necho '2.1.296 (Claude Code)'\n")
+    cli.chmod(0o700)
+    monkeypatch.setattr(runner, "_managed_configuration_present", lambda: False)
+    monkeypatch.setattr(runner, "probe_isolation", lambda _: {"passed": True})
+    commands = []
+
+    def capture_launch(command, cwd, environment, journal, timeout):
+        commands.append(command)
+        raise ValueError("test stops before launching the Agent")
+
+    monkeypatch.setattr(runner, "capture_process", capture_launch)
+    path = runner.run_case(
+        case_id,
+        tmp_path / "output",
+        RunConfig(cli_path=cli, model="claude-test-pinned-1", tools=tools),
+    )
+    assert len(commands) == 1
+    command = commands[0]
+    prompt = command[command.index("--output-format") - 1]
+    available = (*tools, "mcp__memos_run__run_visible_checks")
+    assert command[command.index("--allowedTools") + 1] == ",".join(available)
+    assert "Available tools: " + ", ".join(available) + "." in prompt
+    case = get_case(case_id)
+    expected_paths = case.editable_paths or ("caller.py", "fake_graph.py")
+    assert "Editable task paths: " + ", ".join(expected_paths) + "." in prompt
+    assert "Do not request Bash, shell commands, or arbitrary program execution." in prompt
+    assert "Do not create scratch files, temporary tests, or extra files" in prompt
+    assert "do not write outside the task workspace" in prompt
+    assert "Keep TASK.md and visible_checks.py unchanged." in prompt
+    assert "Run checks only with mcp__memos_run__run_visible_checks." in prompt
+    assert "The host performs additional independent acceptance" in prompt
+    assert "without a Skill" in prompt
+    assert not prompt.startswith("/")
+    assert json.loads(path.read_text())["skill_export"] is None
