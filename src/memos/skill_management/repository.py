@@ -14,6 +14,7 @@ from pathlib import Path
 
 from memos.skill_drafting.domain import hash_json
 from memos.skill_drafting.graph import SkillGraphRepository, edge_key, node_key
+from memos.skill_governance.repository import GovernanceMixin
 from memos.skill_management.domain import (
     ManagementError,
     digest,
@@ -21,6 +22,7 @@ from memos.skill_management.domain import (
     now,
     operation,
     public_copy,
+    qualified_validations,
     readiness,
     require,
     summary,
@@ -30,10 +32,20 @@ from memos.skill_management.domain import (
 )
 
 
-_CATEGORIES = {"state", "validation", "job", "package", "operation", "event"}
+_CATEGORIES = {
+    "state",
+    "validation",
+    "job",
+    "package",
+    "operation",
+    "event",
+    "assessment",
+    "adjudication_package",
+    "adjudication",
+}
 
 
-class ManagementRepository(SkillGraphRepository):
+class ManagementRepository(GovernanceMixin, SkillGraphRepository):
     """The trusted service owns these methods, never model-supplied graph writes."""
 
     max_management_records = 10000
@@ -376,6 +388,7 @@ class ManagementRepository(SkillGraphRepository):
             "validations": validations,
             "jobs": jobs,
             "releases": releases,
+            "governance": self._governance_detail(records, state),
             "artifactDirectory": state["artifactDirectory"],
         }
 
@@ -643,8 +656,7 @@ class ManagementRepository(SkillGraphRepository):
             candidate = state["candidate"]
             covered = {
                 branch
-                for item in validations
-                if item["kind"] == "independent_task" and item["status"] == "passed"
+                for item in qualified_validations(state, validations)
                 for branch in item["branchCoverage"]
             }
             package = {
@@ -657,6 +669,8 @@ class ManagementRepository(SkillGraphRepository):
                 "exportHash": state["exportHash"],
                 "sourceWatermark": state["sourceWatermark"],
                 "validationIds": sorted(item["validationId"] for item in validations),
+                "assessmentIds": sorted(state.get("currentAssessments", {}).values()),
+                "adjudicationIds": state.get("qualification", {}).get("activeAdjudicationIds", []),
                 "readiness": readiness(state, validations, self._items(records, "job", state)),
                 "reviewChecklist": [
                     {
@@ -744,11 +758,7 @@ class ManagementRepository(SkillGraphRepository):
                 gate,
             )
             require(state["state"] in {"candidate", "needs_evidence"}, "invalid_transition", 409)
-            independent = [
-                item
-                for item in validations
-                if item["kind"] == "independent_task" and item["status"] == "passed"
-            ]
+            independent = qualified_validations(state, validations)
             purpose = (
                 "management_test"
                 if any(item["purpose"] == "management_test" for item in independent)
@@ -763,6 +773,8 @@ class ManagementRepository(SkillGraphRepository):
                 "exportHash": state["exportHash"],
                 "sourceWatermark": state["sourceWatermark"],
                 "validationIds": package["validationIds"],
+                "assessmentIds": package.get("assessmentIds", []),
+                "adjudicationIds": package.get("adjudicationIds", []),
                 "packageId": package_id,
                 "packageHash": package_hash,
                 "approvedSequence": state["sequence"],
@@ -918,6 +930,11 @@ class ManagementRepository(SkillGraphRepository):
             or any(item["status"] == "open" for item in state["challenges"])
             or candidate["requires"]
         ):
+            return result
+        # A pending additional run does not revoke an already granted release;
+        # new contradictory facts or invalidated adjudication do revoke it.
+        if readiness(state, self._items(records, "validation", state), [])["status"] != "PASS":
+            result["reason"] = "qualification_unavailable"
             return result
         node = nodes.get(("Release", state["releaseId"]))
         require(

@@ -236,10 +236,42 @@ def validate_report(candidate: dict, report: dict) -> dict:
     return result
 
 
+def qualified_validations(record: dict, validations: list[dict]) -> list[dict]:
+    """Actual coverage requires a bound human decision; synthetic tests stay explicit."""
+    contributions = record.get("qualification", {}).get("contributions", {})
+    current = record.get("currentAssessments", {})
+    result = []
+    for item in validations:
+        validation_id = item.get("validationId")
+        if validation_id in contributions:
+            contribution = contributions[validation_id]
+            result.append(
+                {
+                    **item,
+                    "status": "passed",
+                    "receiptVerified": True,
+                    "branchCoverage": contribution["branchCoverage"],
+                    "boundaryCoverage": contribution["boundaryCoverage"],
+                    "scope": {**item["scope"], "caseIds": [item["caseId"]]},
+                }
+            )
+        elif (
+            item.get("purpose") == "management_test"
+            and validation_id not in current
+            and item["kind"] == "independent_task"
+            and item["status"] == "passed"
+            and item.get("receiptVerified") is True
+            and item.get("loadVerified") is True
+        ):
+            result.append(item)
+    return result
+
+
 def readiness(record: dict, validations: list[dict], jobs: list[dict]) -> dict:
     """Readiness is an automatic gate, never a human approval substitute."""
     candidate = record["candidate"]
     reasons = []
+    qualification = record.get("qualification", {})
     hard_block = record["state"] in {"blocked", "paused", "withdrawn"}
     if hard_block:
         reasons.append("revision_" + record["state"])
@@ -257,16 +289,19 @@ def readiness(record: dict, validations: list[dict], jobs: list[dict]) -> dict:
         reasons.append("evaluation_pending")
     if any(item["status"] == "failed" for item in validations):
         reasons.append("validation_failure_unresolved")
-    if any(item["status"] == "unknown" for item in validations):
-        reasons.append("validation_unknown")
-    approved = [
-        item
+    if any(
+        item["status"] == "unknown"
+        and item.get("validationId") not in qualification.get("resolvedValidationIds", [])
         for item in validations
-        if item["kind"] == "independent_task"
-        and item["status"] == "passed"
-        and item.get("receiptVerified") is True
-        and item.get("loadVerified") is True
-    ]
+    ):
+        reasons.append("validation_unknown")
+    if qualification.get("counterexamples"):
+        reasons.append("counterexample_unresolved")
+        hard_block = True
+    if qualification.get("seriousViolations"):
+        reasons.append("serious_violation_unresolved")
+        hard_block = True
+    approved = qualified_validations(record, validations)
     if not approved:
         reasons.append("independent_validation_missing")
     else:
