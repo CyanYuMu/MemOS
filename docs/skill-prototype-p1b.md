@@ -56,6 +56,8 @@ Case/lineage 是独立案例身份；多次 Attempt、多个 Memory 或多个 Ev
 
 来源使用 `info` 中非保留字段，包含专属 namespace、operation_id、EvidenceRevision、case/lineage/run/attempt/split 和摘要哈希；读回必须逐项核验。精确来源信息丢失或正文为空时保持未决，不通过相似度或“最近一条”猜测关联。
 
+P1b 支持正文与来源可完整对应的短摘要。客户端处理实际返回的 ID 列表，不假定接口永远只返回一个 ID；但这不代表已支持所有后端分块格式。当前 MultiModalStruct 的长文本分块保留全文 `sources`，而每个 Memory 正文只包含部分文本；首版不能为这种形态证明完整对应关系，因此拒绝进入来源池。测试中的可核对多片来源属于契约测试，不冒充真实长文本分块验证。后续需基于批次、片段顺序和完整性信息单独设计分块协议。
+
 MemorySnapshot 保存 backend/service identity、cube、实际 memory_id、观察时间、实际正文/来源/必要元数据、内容摘要、响应工件和 EvidenceRevision 引用。新观察形成新快照；读不到、服务错误、明确删除、内容变化分别记录。没有明确删除依据时只标记 unavailable。快照变化会使当前可用性检查报告 changed，不改写旧快照。
 
 source 使用独立来源 cube/namespace；dev 与 holdout 不写入该入口。读取提炼输入必须再核对注册用途与 Evidence 资格，而不是相信 Memory 的普通标签。后续页面或模型不能通过改标签重标用途。
@@ -87,8 +89,56 @@ source 使用独立来源 cube/namespace；dev 与 holdout 不写入该入口。
 | D09 | 新测试、P0/P1a 与相关 API 回归、Ruff 和 Git 提交检查通过；真实服务/Agent 验证与 mock 测试分别报告 |
 | D10 | 关键边界有代码注释；使用说明、服务版本、真实验收和限制写入文档；凭据与私有部署细节不入仓库 |
 
-当前仅冻结开发与验收标准；实施结果在完成后追加。没有用尚未执行的实验填充通过记录。
+以上是开发前冻结的验收标准；实际执行结果记录在后文，未执行实验不填充通过记录。
 
 ## 7 分支与提交
 
 分支 `codex/skill-prototype-p1b`，基于 `c8e1a798`。先文档，再证据/采集、Memory 桥接、集成与结果；每条提交说明使用中文，显式暂存对应文件，不改写旧历史。既有未跟踪 `bin/` 不属于本轮。
+
+## 8 使用方法
+
+使用已经配置好的虚拟环境。显式执行 `.venv/bin/python`，避免测试启动器隐式同步依赖。Claude 的凭据通过受限环境变量传入，不通过命令参数、证据包或 Git 保存。此入口不读取和改写用户的 Claude 设置。
+
+```bash
+skill_source_root=$(mktemp -d /tmp/memos-skill-source-XXXXXX)
+PYTHONPATH=src .venv/bin/python -m memos.skill_experience collect-source \
+  source-dream-update --output "$skill_source_root/dream" \
+  --cli-path /path/to/claude --model FIXED_MODEL \
+  --timeout 300 --max-turns 20 --max-budget 2
+```
+
+以新的输出目录运行 `source-scoped-update`。已有目录不会覆盖；失败后的重试也是新 Attempt。`collection.json` 指向前检、Agent 原始报告和 EvidenceRevision；原始报告仍标记 P1a 的 adapter validation 用途，来源资格由 P1b 的直接执行链单独判断。
+
+```bash
+PYTHONPATH=src .venv/bin/python -m memos.skill_experience verify-evidence \
+  "$skill_source_root/dream/evidence/evidence.json"
+```
+
+MemOS 地址通过 `MEMOS_SKILL_API_URL` 配置，需要令牌时使用 `MEMOS_SKILL_API_TOKEN`；不要把私有配置写进以下命令或项目文档。指定专属来源 cube 和 owner，所有重试使用同一 ledger。
+
+```bash
+PYTHONPATH=src .venv/bin/python -m memos.skill_experience ingest \
+  "$skill_source_root/dream/evidence/evidence.json" \
+  --ledger "$skill_source_root/delivery.sqlite" \
+  --snapshots "$skill_source_root/memory-snapshots" \
+  --cube skill-source-experiment --user skill-experiment-owner
+
+PYTHONPATH=src .venv/bin/python -m memos.skill_experience list-sources \
+  --ledger "$skill_source_root/delivery.sqlite" \
+  --snapshots "$skill_source_root/memory-snapshots" \
+  --cube skill-source-experiment --user skill-experiment-owner
+```
+
+`refresh /path/to/memory-snapshot.json` 使用相同 ledger、snapshots、cube、user 参数，重新观察实际 Memory。`ingest` 的 `pending_reconcile` 需要再次执行同一命令核对远端，不能通过换账本“重试”；没有确切回读时仍保持未决。
+
+采集命令退出码 0 表示合格成功修复，1 表示失败或缺证据，2 表示输入/操作错误；完整失败经验也返回 1，但可作为有限失败证据保存。写入返回 0 需要 `completed`，刷新返回 0 需要 `unchanged`。`verify-evidence` 的成功只表示证据一致，须同时查看 qualification，不能把 excluded 或 needs_evidence 当作来源。既有包初始化可能先输出诊断日志，结果以最后一行 JSON 及工件文件为准。
+
+工件引用目前使用本地主机绝对 URI；移动目录、改变验证器/依赖或改写已封存文件会使重验拒绝。原始文件应整体保留，不能只保存 evidence.json。跨主机工件仓库和历史验证器兼容属于后续工程工作。
+
+## 9 真实集成发现的适配修正
+
+首次真实采集中，多个最终补丁已通过独立验收，但 Claude 仍尝试调用被禁用的 Bash 或向允许目录之外写入临时测试。CLI/OS 拒绝了这些操作，其早期拒绝路径不产生完整 hook 配对；按现有门禁，记录保持 needs_evidence。
+
+排查发现启动提示仅要求修复任务、保持两个保护文件、调用固定检查，没有明确表达工具和文件边界。本轮补齐启动提示：只能使用本次明确开放的工具、只修改注册允许路径、不得创建临时测试或请求任意程序执行，额外正确性由宿主独立验收。此修正不改变 oracle、不放宽权限、也不绕过缺失记录门禁。补充实际命令生成测试后重新采集两个来源任务。
+
+适配器内容摘要会随修正变化；旧报告和 Evidence 保留原文、原资格与当时的环境，当前实现拒绝把旧版本证据直接纳入新的来源池。后续实际结果须区分修正前后的运行，不把历史运行重新标成新版本通过。
