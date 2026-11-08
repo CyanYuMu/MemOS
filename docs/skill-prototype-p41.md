@@ -64,3 +64,16 @@ CLI 提供宿主专用七任务隔离自检与单候选验收/凭条检查；输
 | P5 | 真实变化、审阅、验证、发布与失效闭环综合演示 | 上述能力与真人裁决满足 |
 
 实际测试与已知限制在运行后追加，不预填通过数。
+
+### 2026-11-09：实现与本机回归
+
+新增 `memos.skill_verification`，含固定计划、无 fork 执行器、新凭条 checker、可见 broker、七任务自检 CLI 和必须持有当前自检资格的 Claude runner。版本为 `host-fixed-phase-1`、`p41-plan-2`、凭条 schema 3 / validator `p41.1`。H4 的四种 pytest 顺序分别封存实际 setup/call/teardown 记录，宿主复核完整顺序、数量、outcome 与 xfail，再归并验收；退出码不能独自证明执行过检查。
+
+- 新包测试：**104 passed in 38.43s**，含真实 macOS sandbox 七任务三变体、可见 Unix broker、输出/CPU/文件限制、取消/超时清理，以及重新计算外层哈希后仍不能放宽 profile 或删去 pytest 审计的反例。
+- 旧 adapter/evaluation/experience/experiments 回归：**544 passed in 101.66s**。
+- Ruff 检查、格式检查与 `git diff --check` 通过；未安装或同步依赖。
+- 原 P4 manifest 仍为 `9e11b6e293978de61e548367e783159b5c6c0c8e1a7f5d1aacb987e0b1272e1b`，21 次运行及 3 次校准的旧协议凭条复验通过。52 个相关历史文件摘要封存在仓库外，用于正式运行前后比较。
+
+新增 `scripts/dev/skill_p41_console.py`，供 iTerm 运行：先复核历史记录，再独占生成 21 次验收与 14 次可见自检工件，然后用新协议检查三个原 H4 最终补丁，最后运行一次 Claude H4 无经验兼容验证。失败或中断工件保留，已有模型运行不自动重试。它不重启原 P4 服务、不回写原成绩、不发布候选。
+
+**此处尚未记录 iTerm 正式运行及真实 Claude 兼容验证结果。** 单元测试中模拟的 native 事件只用于 runner 编排检查，不算实际 Agent 验证。后续裁决/覆盖/变化传播的具体开发合同见 [P4 后续治理合同](skill-prototype-governance.md)。
