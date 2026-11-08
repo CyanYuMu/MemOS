@@ -195,6 +195,12 @@ memories与记忆详情同形，真实记忆详情补充memoryKey/memoryType/sta
 
 ### P3 Skill 管理接入（2026-11-08）
 
+### P4 后续人工裁决开发范围（2026-11-09）
+
+新增 `adjudications/prepare` 与 `adjudications/submit`，均要求 manage。固定 assessmentId 获取包；提交绑定 packageId/hash、revision、expectedSequence、operationId 与会话 actor，正文 `judgment` 分别表达任务、历史异常、使用、适用范围、违规及带事件引用的分支判断。纠正必须显式传 `supersedes`。嵌套字段白名单、枚举和数量必须检查；不开放 evidence 上传或任意宿主路径。审计仅保存 ID/序号，不保存判断理由、事件正文和分支说明。
+
+验收先覆盖管理员/owner 放行、viewer/editor 拒绝、跨项目、伪造 actor、未知字段和嵌套类型错误；由 Python 最终校验证据与事务，409 不自动重试。随后 `make check`、生成前端 OpenAPI JSON，并在 iTerm 服务与可见浏览器联调。合成测试不会成为真实人工批准。
+
 独立命名空间 `/api/v1/skills/*` 共 11 条 POST：list/detail/evidence/jobs/detail/load-preview 要求 view，evaluations/start 要求 write，reviews/prepare、reviews/decide、publish、status、challenges 要求 manage。每条都用 `InBodyStrict`，必须显式给出 projectId；不接受 actor、任意路径、命令或上游配置。新 SkillGateway 端口只代理到 Python 管理服务；SQLite 不保存发布真相，长评测只返回 jobId。
 
 字段按 P3 API 白名单逐条校验，revision/packageHash 是固定 SHA-256，expectedSequence 是非负安全整数，写入必须给 operationId 和非空 reason（评测只要求 operationId）。actor 取已认证的 `p.Actor()`。写审计只记操作标识、Skill 身份和序号，不记录 reason 或候选正文。409 不自动重试，前端必须重新读取审阅包。
