@@ -33,7 +33,7 @@ P1a 与 MemOS 写入回读的技术探针应尽早开展，避免到管理页面
 
 ## 4 分支与提交管理
 
-P0a 数据面分支为 `codex/skill-prototype-p0`，从 `master@5a595b4a` 创建。后续增量各自建分支，当前 P1b 为 `codex/skill-prototype-p1b`，从 P1a 的 `c8e1a798` 创建。各阶段先提交范围与验收文档，再实现、验证并作中文提交。
+P0a 数据面分支为 `codex/skill-prototype-p0`，从 `master@5a595b4a` 创建。后续增量各自建分支；P1b 为 `codex/skill-prototype-p1b`，从 P1a 的 `c8e1a798` 创建，P2 为 `codex/skill-prototype-p2`，从 P1b 的 `37a048ca` 创建。各阶段先提交范围与验收文档，再实现、验证并作中文提交。
 
 后续数据面增量使用独立的 `codex/skill-*` 分支；未合并时明确基于哪个已验证提交开发。控制面与前端分别从各自的 `be`、`fe` 基线创建分支及 worktree，不将不同分支的完整代码混入 master。跨组件契约修改先记录版本与兼容性，再分别提交。
 
@@ -134,7 +134,7 @@ P0a 的普通子进程及只读文件是测试隔离手段，不是防恶意代�
 
 计划运行：新增模块测试、`tests/api/test_public_no_skill.py`、与案例依据相关的 Dream 和租户更新回归，以及新增路径的 Ruff lint/format 检查。执行命令、结果与已知限制在完成后补入本节，未执行前不填写通过数。
 
-当前状态：**P0a、P0b、P1a、P1b 已实现并完成本地验收**。P0b 的 [具体开发与验收记录](skill-prototype-p0b.md) 包含真实来源函数副本、七个独立验证任务和用途注册；[P1a 实施记录](skill-prototype-p1a.md) 包含真实 Claude 修复、固定 Skill 加载、公开事件记录和 OS 隔离；[P1b 实施记录](skill-prototype-p1b.md) 包含 EvidenceRevision、真实 MemOS 入库回读、故障恢复及 519 项最终回归结果。P2–P5 尚未实施，自动提炼、Skill Graph、人工发布和演进链路仍按前述工作包推进。
+当前状态：**P0a、P0b、P1a、P1b、P2 已实现并完成本地验收**。P0b 的 [具体开发与验收记录](skill-prototype-p0b.md) 包含真实来源函数副本、七个独立验证任务和用途注册；[P1a 实施记录](skill-prototype-p1a.md) 包含真实 Claude 修复、固定 Skill 加载、公开事件记录和 OS 隔离；[P1b 实施记录](skill-prototype-p1b.md) 包含 EvidenceRevision、真实 MemOS 入库回读、故障恢复及 519 项最终回归结果；[P2 实施记录](skill-prototype-p2.md) 包含真实三来源提炼、六次开发生成作业、固定候选及独立 Skill Graph 的实际写入和重启回读。P3–P5 尚未实施，人工发布、独立收益实验和演进链路仍按前述工作包推进。
 
 ### 8.1 实际验证记录
 
@@ -207,4 +207,6 @@ PYTHONPATH=src .venv/bin/python -m memos.skill_evaluation check-receipt \
 - 进程崩溃可能留下未完成作业、快照暂存目录或发布锁。它们不会被当作完成回执；自动恢复与清理留给后续 Runner。
 - P0a 自检使用参考修复，不能计入来源经验。Claude Code 和真实 MemOS / Neo4j / Qdrant 接入已在 P1a/P1b 实测；Skill 收益实验仍未执行。
 
-下一增量按 P2 推进：消费 P1b 已实际回读的 MemorySnapshot，提炼带适用条件、分支、退出和验收要求的候选 Skill，并将每条规则与来源 Evidence/Memory 及 Skill Graph 关系绑定。当前 3 条来源经验只代表 2 个独立案例，不能把重试当作额外支持样本。P1b 首版采用同步 fast 写入，对仅异步受理的响应保持未决而不伪造 Memory；完整异步作业调度和远端幂等不在本轮交付内。继续先明确 P2 功能与验收文档，再实现并作中文提交。
+P2 已消费真正回读的 MemorySnapshot 并生成未发布候选：6 条规则、25 条精确引用，独立 Neo4j 实际保存 20 节点/41 边。当前 3 条来源经验仍只代表 2 个独立案例，6 次模型开发调用也不能增加独立支持样本。结构通过后仍保留语义待审、独立验证未运行的状态；候选中已发现的验收清单遗漏、健康分支和修复预算问题进入 P3 审阅，未手工改写封存候选或授权普通使用。
+
+下一增量按 P3 推进：先明确 Python 管理接口、Go 权限/任务控制和 React 审阅的范围与验收，再接候选隔离评测、人工裁决、绑定固定版本与验证报告的发布事务，以及普通 Agent 加载准入。P4 再执行三组效果实验，P5 再展示变更失效传播。P1b 的完整异步作业调度和远端幂等仍不在当前交付内。
