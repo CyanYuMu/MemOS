@@ -235,7 +235,12 @@ def build_messages(packet: dict) -> list[dict]:
         "such as success are invalid. Scope the candidate to the supplied contracts and environments, state "
         "unsupported branches and missing evidence in limitations. All semantic review is pending. "
         "Do not include private reasoning, secrets, dynamic command interpolation, extra identity "
-        "fields, approval fields or release status. Schema:\n" + _bytes(schema).decode()
+        "fields, approval fields or release status. Schema:\n"
+        + _bytes(schema).decode()
+        + "\nBefore returning, check that ALL required top-level fields are present, with no extras: "
+        + ", ".join(schema["required"])
+        + ". In particular, tags is a mandatory nonempty string array. Do not omit classification "
+        "fields while concentrating on rules. Check every evidence ID and every exit: target."
     )
     messages = [
         {"role": "system", "content": instruction},

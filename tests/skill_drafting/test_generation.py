@@ -58,7 +58,9 @@ class Client:
 def packet(monkeypatch):
     # Validation of domain evidence is tested separately; this isolates transport.
     monkeypatch.setattr(module, "validate_packet", lambda value: None)
-    monkeypatch.setattr(module, "proposal_schema", lambda: {"type": "object"})
+    monkeypatch.setattr(
+        module, "proposal_schema", lambda: {"type": "object", "required": ["title", "tags"]}
+    )
     return {
         "schema_version": 1,
         "packet_id": "a" * 64,
