@@ -2038,6 +2038,119 @@ paths:
                 $ref: '#/components/schemas/SkillErrorEnvelope'
         '503':
           $ref: '#/components/responses/ErrorUnavailable'
+  /api/v1/skills/adjudications/prepare:
+    post:
+      tags:
+      - Skill 管理
+      operationId: skill_adjudication_prepare
+      summary: 冻结执行证据人工裁决包
+      description: 要求项目 manage；固定 assessmentId。仅读取宿主核验的证据，不接收路径或客户端验收报告。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required:
+              - projectId
+              - skillId
+              - revision
+              - assessmentId
+              properties:
+                projectId:
+                  type: string
+                  pattern: ^[A-Za-z0-9][A-Za-z0-9._:-]{0,299}$
+                skillId:
+                  type: string
+                  pattern: ^[a-z0-9][a-z0-9-]{0,79}$
+                revision:
+                  type: string
+                  pattern: ^[a-f0-9]{64}$
+                assessmentId:
+                  type: string
+                  pattern: ^[a-f0-9]{64}$
+      responses:
+        '200':
+          description: 成功；candidate 保留规范 snake_case 正文
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/Envelope'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/SkillAdjudicationPackage'
+        '400':
+          $ref: '#/components/responses/ErrorBadRequest'
+        '401':
+          $ref: '#/components/responses/ErrorUnauthorized'
+        '403':
+          $ref: '#/components/responses/ErrorForbidden'
+        '404':
+          $ref: '#/components/responses/ErrorNotFound'
+        '409':
+          description: 状态、操作 ID 或发布证据冲突；data 含 errorCode，可选 currentSequence
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillErrorEnvelope'
+        '422':
+          description: Skill 业务校验未通过；不回显原始异常或端点
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillErrorEnvelope'
+        '503':
+          $ref: '#/components/responses/ErrorUnavailable'
+  /api/v1/skills/adjudications/submit:
+    post:
+      tags:
+      - Skill 管理
+      operationId: skill_adjudicate
+      summary: 追加人工裁决与逐分支证据判断
+      description: 要求项目 manage；绑定包、版本和 sequence。纠正须显式 supersedes。不会自动发布，409 不自动重试。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SkillAdjudicationRequest'
+      responses:
+        '200':
+          description: 成功；candidate 保留规范 snake_case 正文
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/Envelope'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/SkillAdjudicationResult'
+        '400':
+          $ref: '#/components/responses/ErrorBadRequest'
+        '401':
+          $ref: '#/components/responses/ErrorUnauthorized'
+        '403':
+          $ref: '#/components/responses/ErrorForbidden'
+        '404':
+          $ref: '#/components/responses/ErrorNotFound'
+        '409':
+          description: 状态、操作 ID 或发布证据冲突；data 含 errorCode，可选 currentSequence
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillErrorEnvelope'
+        '422':
+          description: Skill 业务校验未通过；不回显原始异常或端点
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillErrorEnvelope'
+        '503':
+          $ref: '#/components/responses/ErrorUnavailable'
   /api/v1/skills/reviews/prepare:
     post:
       tags: [Skill 管理]
@@ -2995,6 +3108,343 @@ components:
         errorCode:
           type: string
           nullable: true
+    SkillBranchClaim:
+      type: object
+      additionalProperties: false
+      required:
+      - branchId
+      - conditionRefs
+      - actionRefs
+      - checkRefs
+      - reason
+      properties:
+        branchId:
+          type: string
+        conditionRefs:
+          type: array
+          items:
+            type: string
+        actionRefs:
+          type: array
+          items:
+            type: string
+        checkRefs:
+          type: array
+          items:
+            type: string
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 2000
+    SkillJudgment:
+      type: object
+      additionalProperties: false
+      required:
+      - taskDecision
+      - historyDecision
+      - usageDecision
+      - applicability
+      - boundary
+      - violations
+      - reason
+      - eventRefs
+      - branches
+      properties:
+        taskDecision:
+          type: string
+          enum:
+          - repair_confirmed
+          - stop_confirmed
+          - failed
+          - needs_evidence
+        historyDecision:
+          type: string
+          enum:
+          - retain
+          - infra_explained
+        usageDecision:
+          type: string
+          enum:
+          - correct
+          - misused
+          - not_used
+          - unknown
+        applicability:
+          type: string
+          enum:
+          - in_scope
+          - out_of_scope
+          - unknown
+        boundary:
+          type: string
+          nullable: true
+          enum:
+          - not_applicable
+          - needs_evidence
+          - unresolved
+          - null
+        violations:
+          type: string
+          enum:
+          - none
+          - serious
+          - unknown
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 2000
+        eventRefs:
+          type: array
+          items:
+            type: string
+        branches:
+          type: array
+          maxItems: 100
+          items:
+            $ref: '#/components/schemas/SkillBranchClaim'
+    SkillAdjudicationRequest:
+      type: object
+      additionalProperties: false
+      required:
+      - projectId
+      - skillId
+      - revision
+      - expectedSequence
+      - operationId
+      - reason
+      - packageId
+      - packageHash
+      - judgment
+      properties:
+        projectId:
+          type: string
+        skillId:
+          type: string
+        revision:
+          type: string
+          pattern: ^[a-f0-9]{64}$
+        expectedSequence:
+          type: integer
+          minimum: 0
+        operationId:
+          type: string
+        reason:
+          type: string
+        packageId:
+          type: string
+          pattern: ^[a-f0-9]{64}$
+        packageHash:
+          type: string
+          pattern: ^[a-f0-9]{64}$
+        judgment:
+          $ref: '#/components/schemas/SkillJudgment'
+        supersedes:
+          type: string
+          pattern: ^[a-f0-9]{64}$
+          nullable: true
+    SkillAssessment:
+      type: object
+      additionalProperties: true
+      required:
+      - assessmentId
+      - validationId
+      - contentHash
+      - exportHash
+      - candidateSnapshot
+      - reportSha256
+      - eventsSha256
+      - coveragePlanHash
+      - caseId
+      - captureComplete
+      - loadVerified
+      - behaviorChanged
+      - originalStatus
+      - verification
+      - checks
+      - events
+      - branchCandidates
+      properties:
+        assessmentId:
+          type: string
+          pattern: ^[a-f0-9]{64}$
+        validationId:
+          type: string
+          pattern: ^[a-f0-9]{64}$
+        contentHash:
+          type: string
+          pattern: ^[a-f0-9]{64}$
+        exportHash:
+          type: string
+          pattern: ^[a-f0-9]{64}$
+        candidateSnapshot:
+          type: string
+          pattern: ^[a-f0-9]{64}$
+        reportSha256:
+          type: string
+          pattern: ^[a-f0-9]{64}$
+        eventsSha256:
+          type: string
+          pattern: ^[a-f0-9]{64}$
+        coveragePlanHash:
+          type: string
+          pattern: ^[a-f0-9]{64}$
+        caseId:
+          type: string
+        captureComplete:
+          type: boolean
+        loadVerified:
+          type: boolean
+        behaviorChanged:
+          type: boolean
+        originalStatus:
+          type: string
+        verification:
+          type: object
+          additionalProperties: false
+          required:
+          - status
+          - receiptSha256
+          - protocol
+          - matches
+          - sameFinalPatch
+          - posthoc
+          properties:
+            status:
+              type: string
+            receiptSha256:
+              type: string
+              pattern: ^[a-f0-9]{64}$
+            protocol:
+              type: string
+            matches:
+              type: boolean
+            sameFinalPatch:
+              type: boolean
+            posthoc:
+              type: boolean
+        checks:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required:
+            - name
+            - status
+            properties:
+              name:
+                type: string
+              status:
+                type: string
+        events:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required:
+            - id
+            - kind
+            - value
+            properties:
+              id:
+                type: string
+              kind:
+                type: string
+              value:
+                type: object
+                additionalProperties: true
+        branchCandidates:
+          type: array
+          items:
+            type: string
+    SkillAdjudicationPackage:
+      type: object
+      additionalProperties: false
+      required:
+      - kind
+      - projectId
+      - skillId
+      - revision
+      - sequence
+      - contentHash
+      - exportHash
+      - sourceWatermark
+      - assessmentId
+      - assessment
+      - validation
+      - activeAdjudicationIds
+      - actor
+      - preparedAt
+      - packageId
+      - packageHash
+      properties:
+        kind:
+          type: string
+          enum:
+          - adjudication
+        projectId:
+          type: string
+        skillId:
+          type: string
+        revision:
+          type: string
+          pattern: ^[a-f0-9]{64}$
+        sequence:
+          type: integer
+          minimum: 0
+        contentHash:
+          type: string
+          pattern: ^[a-f0-9]{64}$
+        exportHash:
+          type: string
+          pattern: ^[a-f0-9]{64}$
+          nullable: true
+        sourceWatermark:
+          type: array
+          items:
+            type: string
+        assessmentId:
+          type: string
+          pattern: ^[a-f0-9]{64}$
+        assessment:
+          $ref: '#/components/schemas/SkillAssessment'
+        validation:
+          type: object
+          additionalProperties: true
+        activeAdjudicationIds:
+          type: array
+          items:
+            type: string
+            pattern: ^[a-f0-9]{64}$
+        actor:
+          type: string
+        preparedAt:
+          type: string
+        packageId:
+          type: string
+          pattern: ^[a-f0-9]{64}$
+        packageHash:
+          type: string
+          pattern: ^[a-f0-9]{64}$
+    SkillAdjudicationResult:
+      type: object
+      additionalProperties: false
+      required:
+      - adjudicationId
+      - sequence
+      - state
+      - contribution
+      properties:
+        adjudicationId:
+          type: string
+          pattern: ^[a-f0-9]{64}$
+        sequence:
+          type: integer
+          minimum: 0
+        state:
+          type: string
+        contribution:
+          type: object
+          additionalProperties: true
     SkillReviewPackage:
       type: object
       required: [packageId, packageHash, sequence, skillId, revision, readiness]

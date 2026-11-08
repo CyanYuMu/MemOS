@@ -37,6 +37,8 @@ var skillRoutes = []skillRoute{
 	{path: "evaluations/start", action: "evaluate", capability: domain.CapProjectWrite, required: []string{"skillId", "revision", "caseId", "operationId"}},
 	{path: "jobs/detail", action: "job", capability: domain.CapProjectView, required: []string{"jobId"}},
 	{path: "reviews/prepare", action: "review_prepare", capability: domain.CapProjectManage, required: []string{"skillId", "revision"}},
+	{path: "adjudications/prepare", action: "adjudication_prepare", capability: domain.CapProjectManage, required: []string{"skillId", "revision", "assessmentId"}},
+	{path: "adjudications/submit", action: "adjudicate", capability: domain.CapProjectManage, required: []string{"skillId", "revision", "packageId", "packageHash", "expectedSequence", "operationId", "reason", "judgment"}, optional: []string{"supersedes"}},
 	{path: "reviews/decide", action: "review_decide", capability: domain.CapProjectManage, required: []string{"skillId", "revision", "expectedSequence", "operationId", "decision", "reason"}},
 	{path: "publish", action: "publish", capability: domain.CapProjectManage, required: []string{"skillId", "revision", "packageId", "packageHash", "expectedSequence", "operationId", "reason"}},
 	{path: "status", action: "status", capability: domain.CapProjectManage, required: []string{"skillId", "revision", "expectedSequence", "operationId", "action", "reason"}},
@@ -113,6 +115,12 @@ func validateSkillBody(spec skillRoute, body map[string]any) error {
 }
 
 func validateSkillField(field string, value any) error {
+	if field == "judgment" {
+		return validateSkillJudgment(value)
+	}
+	if field == "supersedes" && value == nil {
+		return nil
+	}
 	if field == "expectedSequence" {
 		return validateSkillSequence(value)
 	}
@@ -121,7 +129,7 @@ func validateSkillField(field string, value any) error {
 		return domain.Invalid("skill", "Skill 字段必须是非空文本")
 	}
 	switch field {
-	case "revision", "packageHash":
+	case "revision", "packageHash", "assessmentId", "supersedes":
 		if !skillDigest.MatchString(text) {
 			return domain.Invalid("skill", "Skill 版本与审阅包必须绑定 SHA-256")
 		}
