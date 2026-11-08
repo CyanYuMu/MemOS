@@ -26,7 +26,7 @@
 
 H1–H7 是不同业务组件与故障谱系的受控近真实任务，不是 MemOS 全服务生产故障。制作者标签、参考补丁、oracle、评分量表与本文件仅用于评测侧，不能导入 Agent 工作区。参考修复只用于检查验证器，不算来源经验。S1/S2 与 P0a dev 探针存在机制联系，显式登记，不作彼此独立收益证明。
 
-H4/H5/H7 的自动行为通过只代表整体代码问题解决；是否正确识别 Skill 范围仍需轨迹与人工评分。H6 没有可自动证明的正确修复：合格的静态提交最高为 `needs_review`，`repair_pass=null`、`boundary_pass=null`，不能直接变为 passed 或 verified_fixed。干净基线对 H6 仅指未擅改语义；提交诊断报告后依然需要人工判断。
+H4/H5/H7 的自动行为通过只代表整体代码问题解决；是否正确识别 Skill 范围仍需轨迹与人工评分。H6 没有可自动证明的正确修复：合格的静态提交最高为 `needs_review`，`repair_pass=null`、`boundary_pass=null`，不能直接变为 passed 或 verified_fixed。干净基线对 H6 仅指保留原程序、附有待审诊断材料；不是已修复原本失败的可见断言。验收器使用两源码文件的字节不变作为保守守卫，不宣称实现了语义等价分析；猜测性改动和无害注释改动都会被要求撤回。本规则仅在评测侧描述，任务可见材料不给出预期答案。
 
 ## 3 资产与注册表契约
 
@@ -57,6 +57,8 @@ H4/H5/H7 的自动行为通过只代表整体代码问题解决；是否正确�
 
 任务自检检查健康基线、初始故障、参考提交和 unsafe；参考与基线可能内容相同，但角色分开记录。这些运行不计入七任务三组的 21 次正式实验，也不形成真实 Agent 成功率。
 
+H4 的支持范围限定为候选 `graph` fixture 的生命周期与普通辅助代码；不支持候选额外注册 pytest 执行/收集 hook 或插件来改变外部测试。此约束也写入任务可见合同。外部测试只接入所需 fixture，并核对预期测试的实际阶段结果，拒绝跳过、xfail、删除测试或替换测试体的常见捷径。它仍不是任意恶意 Python 的隔离沙箱；可信验证进程与 P1 运行权限边界不可省略。
+
 评分以固定设计第 11.4 节为准。本轮可给出行为修复字段，但 H4–H7 的范围判断、规则使用与严重违规归因不从测试通过自动推断；保留待审字段和量表。完整三组预算、模型与隔离配置由 P1/P4 校准锁定，缺失时不能启动正式效果实验。
 
 ## 5 距离 Claude Code 接入的后续门槛
@@ -65,4 +67,68 @@ P0b 后应具备任务输入与最终产物验收，P1 仍需：固定 CLI/SDK/�
 
 ## 6 实施记录
 
-实施前状态：验收标准已明确，尚未编写 P0b 实现或声称测试通过。本节将在完成后补入实际结果和剩余限制。
+当前状态：**P0b 已完成**，B01–B13 均有对应测试或资产自检证据。尚未启动真实 Agent 任务采集，未写入 MemOS，未进行 Skill 效果评估。
+
+在现有 Python 3.12.13 环境执行，未新增依赖，未修改生产 Dream/API 代码：
+
+| 检查 | 最终实际结果 |
+| --- | --- |
+| `.venv/bin/python -m pytest tests/skill_evaluation -q` | 212 passed，48.11 秒；包括原有 P0a 与本轮新增 124 项测试 |
+| `.venv/bin/python -m pytest tests/api/test_public_no_skill.py tests/dream/test_persistence.py tests/api/test_update_memory.py -q` | 39 passed，2.99 秒 |
+| `.venv/bin/python -m ruff check src/memos/skill_evaluation tests/skill_evaluation` | All checks passed |
+| `.venv/bin/python -m ruff format --check src/memos/skill_evaluation tests/skill_evaluation` | 18 files already formatted |
+| 实际 CLI `audit-tasks` | 退出码 0；9 任务、36 次验收的结果与失败检查均符合预期；全部回执匹配；9 次候选变化均使旧回执失效 |
+
+CLI 报告中，S1/S2、H1–H5/H7 的“基线 / 初始 / 参考 / unsafe”依次为 passed / failed / passed / failed；H6 为 needs_review / failed / needs_review / failed。报告固定 `purpose=task_asset_self_test`、`qualified_agent_experience=false`、`effectiveness_evaluation=false`。工件保留在运行者选择的临时目录，未提交 Git；按第 7 节可重现。
+
+来源任务测试与本地固定 Git 对象逐字比对。九任务的导出清单、注册用途、变体、评分与人工量表进入冻结锁；回执重算候选文件政策、评分和资产摘要。替代合规实现可以通过，保护测试/合同被改、隐藏输入或符号链接会被拒绝，人工分数不能通过改回执并重算 sidecar 升级。
+
+TDD 与交叉审阅实际发现并修复了：Dream 依赖定义顺序的导入错误、embedding 异常被伪造成功、S2 常量化默认租户/ID、H3 非法分页类型漏检、H4 skip/xfail/deselect 及执行 hook 绕过、H7 固定映射和破坏替换前本地行为、H6 可见说明泄漏预期诊断，以及注册路径 `.` 漏检。新增反例先观察到失败或错误放行，再修改验证器使其拒绝。最终两名独立审阅者均确认其发现的问题已被定向变异拒绝。
+
+本轮合计 251 项相关测试通过，没有运行全仓测试。测试通过只支持固定任务与当前本地环境，不能证明未列出的修复模式普遍可靠。POSIX 子进程管理、真实数据库/HTTP、权限沙箱及 Agent 调用仍遵循 P0a/P1 已声明的边界。
+
+## 7 维护者使用方式
+
+以下命令在项目根目录使用现有 `.venv`；不安装新依赖，不需要模型或数据库凭据。它们属于维护者入口，不能提供给正式被评测 Agent。
+
+```bash
+PYTHONPATH=src .venv/bin/python -m memos.skill_evaluation list --split source
+PYTHONPATH=src .venv/bin/python -m memos.skill_evaluation list --split holdout
+
+skill_task_root=$(mktemp -d /tmp/memos-skill-p0b-XXXXXX)
+PYTHONPATH=src .venv/bin/python -m memos.skill_evaluation prepare \
+  source-dream-update --workspace "$skill_task_root/candidate"
+PYTHONPATH=src .venv/bin/python -B "$skill_task_root/candidate/visible_checks.py"
+# 修复允许修改的文件后执行验收；初始故障的验收预期 failed：
+PYTHONPATH=src .venv/bin/python -m memos.skill_evaluation verify \
+  source-dream-update --candidate "$skill_task_root/candidate" \
+  --artifacts "$skill_task_root/artifacts" --timeout 15
+```
+
+S1/S2 对应 `source-dream-update`、`source-scoped-update`；H1–H7 依次为 `holdout-record`、`holdout-deadline`、`holdout-migration`、`holdout-fixture`、`holdout-discount`、`holdout-ambiguous`、`holdout-binding`。`prepare` 只导出初始任务，没有 split 或 reference 参数。
+
+使用 `python -B` 和任务自带可见入口避免创建缓存。P0b 文件策略拒绝未知文件/目录（包括 `.git`、`__pycache__`、`.pytest_cache`）、符号链接、保护材料变更或删除；只保留规定的提交文件后再验收。此限制在 P1 接入前还需与 Agent 过程记录的外置目录结合，不能让轨迹文件进入代码候选。
+
+运行九任务完整资产自检，目标目录必须不存在：
+
+```bash
+skill_audit_root=$(mktemp -d /tmp/memos-skill-p0b-audit-XXXXXX)
+PYTHONPATH=src .venv/bin/python -m memos.skill_evaluation audit-tasks \
+  --output "$skill_audit_root/run"
+```
+
+每个任务记录基线、初始故障、参考提交、unsafe 四次验收，以及修改最终候选后旧回执失效；共 36 次预设检查，不是 36 个独立经验或正式 Agent 试验。报告保存于 `run/summary.json`，包含各自 receipt 路径、固定身份、评分和绑定结果。H6 的两次未决结果是该资产自检的预期，不被包装成自动通过。
+
+`verify` 的退出码为通过 0、行为或文件政策失败 1、验证错误 2、待人工审阅 3。`check-receipt` 返回 0 只表示绑定完整，仍需查看 `verification_status`；未决回执不会转为通过。`audit-tasks` 返回 0 表示预期结果全部满足。既有 `memos` 初始化可能先输出诊断日志，最终 JSON 位于 stdout 最后一行，完整记录以工件文件为准。
+
+`error` 仅表示无法取得有效的行为验收，不等于效果协议的 `infra_invalid`。例如候选 conftest 跳过、xfail 或移除预期测试，会被执行审计拒绝；不能把这类 Agent 导致的无效验证从评分分母排除。P1/P4 还需依据实际运行证据区分 Agent 失败和基础设施故障。
+
+回执升级为 schema 2 / validator 0.2：新增完整任务资产摘要、候选文件政策结果和分开的评分字段。P0a 旧 schema 1 回执保留原始记录，不能作为新验证器下的当前有效结果，应重新验收。
+
+## 8 固定资产维护
+
+`source_tasks.py` 与 `assets/source_tasks.json` 保存生产定义及转换；`holdout_tasks.py` 保存独立场景；`tasks.py` 负责可信注册与可见导出；`assets/tasks-lock.json` 固定九任务各变体文件及完整 CaseSpec 摘要。锁摘要覆盖合同、oracle、导入路径、允许修改路径、检查集合、人工量表、来源与关联谱系。常规读取只核查锁，绝不自动更新。
+
+修改任务时先判断是否仍独立、是否已受候选调优污染；需要变更的任务建立新 revision，维护者重新生成并审阅锁、重跑资产自检。源码里的 `registry_manifest` 是维护函数，不是给 Agent 的刷新接口。新谱系不能仅靠改字符串取得；固定设计、源路径和故障机制仍须人工审查。生产定义的核查测试通过本地 Git 对象与原符号逐字交叉校验，运行任务本身不依赖 Git 或当前仓库 HEAD。
+
+任务资产与 oracle 的作者自检不会成为 Skill 的训练经验。若后续拿某次 holdout 的具体失败指导 Skill 修订，该批任务就应转为 dev，并更换独立任务；P0b 注册表没有给模型提供重标用途或自动回流入口。跨进程权限和 Memory 检索隔离留给 P1，当前不宣称已经阻止任意本机程序读到隐藏材料。
