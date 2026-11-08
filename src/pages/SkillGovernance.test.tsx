@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
-import type { SkillAssessment, SkillAdjudicationPackage, SkillGovernanceState } from '../../shared/contract'
+import type { SkillAssessment, SkillAdjudicationPackage, SkillGovernanceState, SkillBranchAssessment } from '../../shared/contract'
 import { api, ApiError } from '../lib/api'
 import { SkillGovernance } from './SkillGovernance'
 
@@ -206,4 +206,122 @@ it('does not count an already healthy unchanged task as a repair', async () => {
   fireEvent.click(screen.getByLabelText('我已审阅证据，确认提交我的判断'))
   expect((screen.getByRole('button', { name: '提交我的裁决' }) as HTMLButtonElement).disabled).toBe(true)
   expect(api.skills.adjudicate).not.toHaveBeenCalled()
+})
+
+const branchAssessment: SkillBranchAssessment = {
+  ...assessment,
+  schemaVersion: 2,
+  collectorVersion: 'branch-review-1',
+  collectorDigest: hash('5'),
+  runId: 'run',
+  attemptId: 'attempt',
+  caseRevision: '1',
+  lineageId: 'independent-scoped',
+  split: 'holdout',
+  purpose: 'actual',
+  caseId: 'branch-scoped-table',
+  behaviorChanged: true,
+  originalStatus: 'passed',
+  verification: { ...assessment.verification, status: 'passed', protocol: 'branch-receipt-1' },
+  initialVerification: {
+    status: 'failed',
+    receiptSha256: hash('6'),
+    protocol: 'branch-receipt-1',
+    matches: true,
+    candidateSnapshot: hash('7'),
+  },
+  publicVerification: {
+    initialExitCode: 1,
+    finalExitCode: 0,
+    recordsVerified: true,
+    deliveriesVerified: true,
+    deliveryRefs: [
+      { checkIndex: 1, startedEvent: 'event-start', completedEvent: 'event-1' },
+      { checkIndex: 2, startedEvent: 'event-start-2', completedEvent: 'event-2' },
+    ],
+  },
+  outcome: 'repair_candidate',
+  batchId: hash('8'),
+  taskDigest: hash('9'),
+  branchCandidates: ['confirm_contract#3'],
+  events: [
+    ...assessment.events,
+    { id: 'event-start', kind: 'tool_started', value: { display: { tool_name: 'Read' } } },
+    { id: 'event-start-2', kind: 'tool_started', value: { display: { tool_name: 'mcp__memos_run__run_visible_checks' } } },
+    { id: 'event-2', kind: 'tool_completed', value: { display: {} } },
+    { id: 'rule-1', kind: 'rule_declaration', value: { display: { rule_id: 'confirm_contract', phase: 'select' } } },
+  ],
+}
+
+function mountBranch(value = branchAssessment) {
+  vi.mocked(api.skills.prepareAdjudication).mockResolvedValue({ ...packet, assessment: value })
+  return mount(true, vi.fn(), { ...data, assessments: [value] })
+}
+
+async function prepareRepair() {
+  fireEvent.click(screen.getByRole('button', { name: '准备人工裁决包' }))
+  await screen.findByText('固定裁决包')
+  fireEvent.change(screen.getByLabelText('任务判断'), { target: { value: 'repair_confirmed' } })
+  fireEvent.change(screen.getByLabelText('违规判断'), { target: { value: 'none' } })
+  fireEvent.click(screen.getByLabelText('引用事件 event-1'))
+  fireEvent.change(screen.getByLabelText('裁决理由'), { target: { value: 'Reviewed both states and received checks' } })
+  fireEvent.click(screen.getByLabelText('我已审阅证据，确认提交我的判断'))
+}
+
+it('shows initial/final and delivered public checks separately from historical rechecks', async () => {
+  mountBranch()
+  expect(screen.getByText('初始 / 最终隐藏验收')).toBeTruthy()
+  expect(screen.queryByText('原验收 / 当前复验')).toBeNull()
+  expect(screen.getByText('failed / passed')).toBeTruthy()
+  expect(screen.getByText('公开检查：1 → 0')).toBeTruthy()
+  expect(screen.getByText('执行工件已核验；工具返回已送达')).toBeTruthy()
+  expect(screen.getByText('待确认的修复')).toBeTruthy()
+  expect(screen.getByText(/候选分支不代表已覆盖/)).toBeTruthy()
+  await prepareRepair()
+  expect((screen.getByRole('option', { name: '合理停止' }) as HTMLOptionElement).disabled).toBe(true)
+  expect((screen.getByRole('button', { name: '提交我的裁决' }) as HTMLButtonElement).disabled).toBe(false)
+})
+
+it.each(['initial_pass', 'initial_unbound', 'public_failure', 'undelivered', 'unverified', 'incomplete'])(
+  'cannot confirm a branch repair with %s even when final hidden checks pass',
+  async (change) => {
+    const value = structuredClone(branchAssessment)
+    if (change === 'initial_pass') value.initialVerification.status = 'passed'
+    if (change === 'initial_unbound') value.initialVerification.matches = false
+    if (change === 'public_failure') value.publicVerification.finalExitCode = 1
+    if (change === 'undelivered') value.publicVerification.deliveriesVerified = false
+    if (change === 'unverified') value.publicVerification.recordsVerified = false
+    if (change === 'incomplete') value.outcome = 'incomplete'
+    mountBranch(value)
+    await prepareRepair()
+    expect((screen.getByRole('option', { name: '修复成立' }) as HTMLOptionElement).disabled).toBe(true)
+    expect((screen.getByRole('button', { name: '提交我的裁决' }) as HTMLButtonElement).disabled).toBe(true)
+    expect(api.skills.adjudicate).not.toHaveBeenCalled()
+  },
+)
+
+it('requires the selected branch rule declaration in addition to observation and action references', async () => {
+  mountBranch()
+  await prepareRepair()
+  fireEvent.change(screen.getByLabelText('规则使用'), { target: { value: 'correct' } })
+  fireEvent.change(screen.getByLabelText('适用范围判断'), { target: { value: 'in_scope' } })
+  fireEvent.click(screen.getByLabelText('计入分支 confirm_contract#3'))
+  function select(label: string, ids: string[]) {
+    const input = screen.getByLabelText(label) as HTMLSelectElement
+    for (const option of input.options) option.selected = ids.includes(option.value)
+    fireEvent.change(input)
+  }
+  select('confirm_contract#3 条件证据', ['event-1'])
+  select('confirm_contract#3 行动证据', ['event-start'])
+  select('confirm_contract#3 验收证据', ['diagnosis'])
+  fireEvent.change(screen.getByLabelText('confirm_contract#3 说明'), { target: { value: 'Observed defect, action and declared rule' } })
+  const submit = screen.getByRole('button', { name: '提交我的裁决' }) as HTMLButtonElement
+  expect(submit.disabled).toBe(true)
+  select('confirm_contract#3 行动证据', ['event-start', 'rule-1'])
+  expect(submit.disabled).toBe(false)
+  fireEvent.change(screen.getByLabelText('任务判断'), { target: { value: 'needs_evidence' } })
+  expect(submit.disabled).toBe(true)
+  fireEvent.change(screen.getByLabelText('任务判断'), { target: { value: 'repair_confirmed' } })
+  select('confirm_contract#3 条件证据', ['rule-1'])
+  expect(submit.disabled).toBe(true)
 })

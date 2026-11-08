@@ -18,6 +18,7 @@ const taskNames = { repair_confirmed: '修复成立', stop_confirmed: '合理停
 const usageNames = { correct: '正确使用', misused: '使用不当', not_used: '未使用', unknown: '不可判断' }
 const scopeNames = { in_scope: '范围内', out_of_scope: '范围外', unknown: '尚不明确' }
 const boundaryNames = { not_applicable: '不适用', needs_evidence: '缺少证据', unresolved: '无法解决' }
+const outcomeNames = { repair_candidate: '待确认的修复', failed: '修复未通过', incomplete: '事实尚不完整' }
 
 function Json({ value }: { value: unknown }) {
   return <pre className="skills-json">{JSON.stringify(value, null, 2)}</pre>
@@ -27,11 +28,13 @@ function Choice({
   label,
   value,
   options,
+  disabledOptions = [],
   onChange,
 }: {
   label: string
   value: string
   options: Record<string, string>
+  disabledOptions?: string[]
   onChange: (value: string) => void
 }) {
   return (
@@ -39,7 +42,7 @@ function Choice({
       {label}
       <select value={value} onChange={(event) => onChange(event.target.value)}>
         {Object.entries(options).map(([key, name]) => (
-          <option key={key} value={key}>
+          <option key={key} value={key} disabled={disabledOptions.includes(key)}>
             {name}
           </option>
         ))}
@@ -107,6 +110,7 @@ export function SkillGovernance({
     }
   }, [])
   const assessment = packet?.assessment ?? current.find((item) => item.assessmentId === selected)
+  const branchAssessment = assessment?.schemaVersion === 2 ? assessment : null
   const covered = data.coverage.filter((item) => item.status === 'covered').length
   function fail(cause: unknown) {
     setPacket(null)
@@ -176,20 +180,63 @@ export function SkillGovernance({
     }))
   }
   const proven =
-    assessment?.captureComplete && assessment.loadVerified && assessment.verification.matches && assessment.verification.sameFinalPatch
+    assessment?.captureComplete &&
+    assessment.loadVerified &&
+    assessment.verification.matches &&
+    assessment.verification.sameFinalPatch &&
+    (!branchAssessment ||
+      (branchAssessment.initialVerification.matches &&
+        branchAssessment.publicVerification.recordsVerified &&
+        branchAssessment.publicVerification.deliveriesVerified &&
+        branchAssessment.publicVerification.deliveryRefs.length >= 2))
+  const repairSupported =
+    proven &&
+    assessment?.verification.status === 'passed' &&
+    assessment.behaviorChanged &&
+    (!branchAssessment ||
+      (branchAssessment.outcome === 'repair_candidate' &&
+        branchAssessment.initialVerification.status === 'failed' &&
+        branchAssessment.publicVerification.initialExitCode === 1 &&
+        branchAssessment.publicVerification.finalExitCode === 0))
   const taskSupported =
     judgment.taskDecision === 'needs_evidence' ||
     judgment.taskDecision === 'failed' ||
     (proven &&
       judgment.violations === 'none' &&
       (judgment.taskDecision === 'repair_confirmed'
-        ? assessment?.verification.status === 'passed' && assessment.behaviorChanged && judgment.boundary === null
-        : assessment?.behaviorChanged === false &&
+        ? repairSupported && judgment.boundary === null
+        : !branchAssessment &&
+          assessment?.behaviorChanged === false &&
           ['passed', 'needs_review'].includes(assessment.verification.status) &&
           judgment.boundary !== null))
-  const branchComplete = judgment.branches.every(
-    (branch) => branch.reason.trim() && branch.conditionRefs.length && branch.actionRefs.length && branch.checkRefs.length,
-  )
+  const branchComplete = judgment.branches.every((branch) => {
+    if (!branch.reason.trim() || !branch.conditionRefs.length || !branch.actionRefs.length || !branch.checkRefs.length) return false
+    if (!branchAssessment) return true
+    const events = branchAssessment.events
+    const refs = [...branch.conditionRefs, ...branch.actionRefs]
+    const ruleId = branch.branchId.split('#')[0]
+    // A declaration records selected guidance; a tool observation and an actual
+    // action are still required separately before a branch can be submitted.
+    return (
+      judgment.taskDecision === 'repair_confirmed' &&
+      judgment.violations === 'none' &&
+      judgment.usageDecision === 'correct' &&
+      judgment.applicability === 'in_scope' &&
+      events.some((event) => branch.conditionRefs.includes(event.id) && event.kind === 'tool_completed') &&
+      events.some((event) => branch.actionRefs.includes(event.id) && ['tool_started', 'assistant_text'].includes(event.kind)) &&
+      events.some((event) => {
+        const display = event.value.display
+        return (
+          refs.includes(event.id) &&
+          event.kind === 'rule_declaration' &&
+          typeof display === 'object' &&
+          display !== null &&
+          'rule_id' in display &&
+          display.rule_id === ruleId
+        )
+      })
+    )
+  })
   const canSubmit =
     canManage &&
     !busy &&
@@ -197,6 +244,7 @@ export function SkillGovernance({
     confirmed &&
     !!judgment.reason.trim() &&
     taskSupported &&
+    (!branchAssessment || judgment.historyDecision === 'retain') &&
     branchComplete &&
     (judgment.taskDecision === 'needs_evidence' || judgment.eventRefs.length > 0)
   const previous = data.adjudications.filter(
@@ -264,11 +312,18 @@ export function SkillGovernance({
             <>
               <div className="skills-status-grid">
                 <div>
-                  <span>原验收 / 当前复验</span>
+                  <span>{branchAssessment ? '初始 / 最终隐藏验收' : '原验收 / 当前复验'}</span>
                   <strong>
-                    {assessment.originalStatus} / {assessment.verification.status}
+                    {branchAssessment ? branchAssessment.initialVerification.status : assessment.originalStatus} /{' '}
+                    {assessment.verification.status}
                   </strong>
-                  <small>{assessment.verification.posthoc ? '同一补丁事后复验，不增加样本' : '原协议核验'}</small>
+                  <small>
+                    {branchAssessment
+                      ? '分别绑定初始快照与最终补丁'
+                      : assessment.verification.posthoc
+                        ? '同一补丁事后复验，不增加样本'
+                        : '原协议核验'}
+                  </small>
                 </div>
                 <div>
                   <span>事实绑定</span>
@@ -278,8 +333,30 @@ export function SkillGovernance({
                 <div>
                   <span>可提交覆盖的分支</span>
                   <strong>{assessment.branchCandidates.length} 个</strong>
-                  <small>仍需事件及判据支持</small>
+                  <small>{branchAssessment ? '候选分支不代表已覆盖，仍需人工判断' : '仍需事件及判据支持'}</small>
                 </div>
+                {branchAssessment && (
+                  <>
+                    <div>
+                      <span>公开检查与实际送达</span>
+                      <strong>
+                        公开检查：{branchAssessment.publicVerification.initialExitCode ?? '未知'} →{' '}
+                        {branchAssessment.publicVerification.finalExitCode ?? '未知'}
+                      </strong>
+                      <small>
+                        {branchAssessment.publicVerification.recordsVerified ? '执行工件已核验' : '执行工件待核验'}；
+                        {branchAssessment.publicVerification.deliveriesVerified ? '工具返回已送达' : '工具送达未证实'}
+                      </small>
+                    </div>
+                    <div>
+                      <span>本次任务结果</span>
+                      <strong>{outcomeNames[branchAssessment.outcome]}</strong>
+                      <small>
+                        批次 {branchAssessment.batchId.slice(0, 12)} · {branchAssessment.publicVerification.deliveryRefs.length} 次送达记录
+                      </small>
+                    </div>
+                  </>
+                )}
               </div>
               <details>
                 <summary>固定身份与验收检查</summary>
@@ -291,6 +368,15 @@ export function SkillGovernance({
                     exportHash: assessment.exportHash,
                     reportSha256: assessment.reportSha256,
                     verification: assessment.verification,
+                    ...(branchAssessment
+                      ? {
+                          initialVerification: branchAssessment.initialVerification,
+                          publicVerification: branchAssessment.publicVerification,
+                          outcome: branchAssessment.outcome,
+                          batchId: branchAssessment.batchId,
+                          taskDigest: branchAssessment.taskDigest,
+                        }
+                      : {}),
                     checks: assessment.checks,
                   }}
                 />
@@ -319,12 +405,14 @@ export function SkillGovernance({
               label="任务判断"
               value={judgment.taskDecision}
               options={taskNames}
+              disabledOptions={branchAssessment ? ['stop_confirmed', ...(!repairSupported ? ['repair_confirmed'] : [])] : []}
               onChange={(value) => setJudgment((prior) => ({ ...prior, taskDecision: value as SkillJudgment['taskDecision'] }))}
             />
             <Choice
               label="历史异常"
               value={judgment.historyDecision}
               options={{ retain: '保留原判断', infra_explained: '验收器异常已有解释' }}
+              disabledOptions={branchAssessment ? ['infra_explained'] : []}
               onChange={(value) => setJudgment((prior) => ({ ...prior, historyDecision: value as SkillJudgment['historyDecision'] }))}
             />
             <Choice
@@ -352,7 +440,10 @@ export function SkillGovernance({
               onChange={(value) => setJudgment((prior) => ({ ...prior, violations: value as SkillJudgment['violations'] }))}
             />
           </div>
-          <p className="skills-muted">合理停止不会计为修复成功。以下是公开过程记录，不含私有推理；选择支撑此次判断的事件。</p>
+          <p className="skills-muted">
+            {branchAssessment ? '当前任务协议只支持核心修复判断，不能确认健康或合理停止。' : '合理停止不会计为修复成功。'}
+            以下是公开过程记录，不含私有推理；选择支撑此次判断的事件。
+          </p>
           <div className="skills-governance-events">
             {assessment.events.map((event) => (
               <div key={event.id}>
@@ -378,6 +469,11 @@ export function SkillGovernance({
             ))}
           </div>
           <h3>逐分支证据</h3>
+          {branchAssessment && (
+            <p className="skills-muted">
+              每个分支须在条件或行动证据中引用对应规则的声明，并另选工具观察及实际行动。规则声明本身不能证明条件成立或已经完成行动。
+            </p>
+          )}
           {!assessment.branchCandidates.length && <p>此任务尚无已登记的分支验证计划。可以审阅任务和异常，不能增加分支覆盖。</p>}
           {assessment.branchCandidates.map((id) => {
             const branch = judgment.branches.find((item) => item.branchId === id)

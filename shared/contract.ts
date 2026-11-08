@@ -129,7 +129,7 @@ export interface SkillJudgment {
   branches: SkillBranchClaim[]
 }
 
-export interface SkillAssessment {
+interface SkillAssessmentFields {
   assessmentId: string
   validationId: string
   caseId: string
@@ -155,6 +155,41 @@ export interface SkillAssessment {
   branchCandidates: string[]
   coveragePlanHash: string
 }
+
+export interface SkillLegacyAssessment extends SkillAssessmentFields {
+  schemaVersion?: 1
+}
+
+export interface SkillBranchAssessment extends SkillAssessmentFields {
+  schemaVersion: 2
+  collectorVersion: 'branch-review-1'
+  collectorDigest: string
+  runId: string
+  attemptId: string
+  caseRevision: string
+  lineageId: string
+  split: 'holdout'
+  purpose: 'actual' | 'management_test'
+  initialVerification: {
+    status: 'passed' | 'failed' | 'error'
+    receiptSha256: string
+    protocol: 'branch-receipt-1'
+    matches: boolean
+    candidateSnapshot: string
+  }
+  publicVerification: {
+    initialExitCode: number | null
+    finalExitCode: number | null
+    recordsVerified: boolean
+    deliveriesVerified: boolean
+    deliveryRefs: { checkIndex: number; startedEvent: string; completedEvent: string }[]
+  }
+  outcome: 'repair_candidate' | 'failed' | 'incomplete'
+  batchId: string
+  taskDigest: string
+}
+
+export type SkillAssessment = SkillLegacyAssessment | SkillBranchAssessment
 
 export interface SkillAdjudicationRecord {
   adjudicationId: string
