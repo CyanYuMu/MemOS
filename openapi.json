@@ -2590,6 +2590,343 @@
         "required": ["id", "createTime", "eventType", "status"],
         "type": "object"
       },
+      "SkillAdjudicationPackage": {
+        "additionalProperties": false,
+        "properties": {
+          "activeAdjudicationIds": {
+            "items": {
+              "pattern": "^[a-f0-9]{64}$",
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "actor": {
+            "type": "string"
+          },
+          "assessment": {
+            "$ref": "#/components/schemas/SkillAssessment"
+          },
+          "assessmentId": {
+            "pattern": "^[a-f0-9]{64}$",
+            "type": "string"
+          },
+          "contentHash": {
+            "pattern": "^[a-f0-9]{64}$",
+            "type": "string"
+          },
+          "exportHash": {
+            "nullable": true,
+            "pattern": "^[a-f0-9]{64}$",
+            "type": "string"
+          },
+          "kind": {
+            "enum": ["adjudication"],
+            "type": "string"
+          },
+          "packageHash": {
+            "pattern": "^[a-f0-9]{64}$",
+            "type": "string"
+          },
+          "packageId": {
+            "pattern": "^[a-f0-9]{64}$",
+            "type": "string"
+          },
+          "preparedAt": {
+            "type": "string"
+          },
+          "projectId": {
+            "type": "string"
+          },
+          "revision": {
+            "pattern": "^[a-f0-9]{64}$",
+            "type": "string"
+          },
+          "sequence": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "skillId": {
+            "type": "string"
+          },
+          "sourceWatermark": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "validation": {
+            "additionalProperties": true,
+            "type": "object"
+          }
+        },
+        "required": [
+          "kind",
+          "projectId",
+          "skillId",
+          "revision",
+          "sequence",
+          "contentHash",
+          "exportHash",
+          "sourceWatermark",
+          "assessmentId",
+          "assessment",
+          "validation",
+          "activeAdjudicationIds",
+          "actor",
+          "preparedAt",
+          "packageId",
+          "packageHash"
+        ],
+        "type": "object"
+      },
+      "SkillAdjudicationRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "expectedSequence": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "judgment": {
+            "$ref": "#/components/schemas/SkillJudgment"
+          },
+          "operationId": {
+            "type": "string"
+          },
+          "packageHash": {
+            "pattern": "^[a-f0-9]{64}$",
+            "type": "string"
+          },
+          "packageId": {
+            "pattern": "^[a-f0-9]{64}$",
+            "type": "string"
+          },
+          "projectId": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "revision": {
+            "pattern": "^[a-f0-9]{64}$",
+            "type": "string"
+          },
+          "skillId": {
+            "type": "string"
+          },
+          "supersedes": {
+            "nullable": true,
+            "pattern": "^[a-f0-9]{64}$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "projectId",
+          "skillId",
+          "revision",
+          "expectedSequence",
+          "operationId",
+          "reason",
+          "packageId",
+          "packageHash",
+          "judgment"
+        ],
+        "type": "object"
+      },
+      "SkillAdjudicationResult": {
+        "additionalProperties": false,
+        "properties": {
+          "adjudicationId": {
+            "pattern": "^[a-f0-9]{64}$",
+            "type": "string"
+          },
+          "contribution": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "sequence": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "state": {
+            "type": "string"
+          }
+        },
+        "required": ["adjudicationId", "sequence", "state", "contribution"],
+        "type": "object"
+      },
+      "SkillAssessment": {
+        "additionalProperties": true,
+        "properties": {
+          "assessmentId": {
+            "pattern": "^[a-f0-9]{64}$",
+            "type": "string"
+          },
+          "behaviorChanged": {
+            "type": "boolean"
+          },
+          "branchCandidates": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "candidateSnapshot": {
+            "pattern": "^[a-f0-9]{64}$",
+            "type": "string"
+          },
+          "captureComplete": {
+            "type": "boolean"
+          },
+          "caseId": {
+            "type": "string"
+          },
+          "checks": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "status": {
+                  "type": "string"
+                }
+              },
+              "required": ["name", "status"],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "contentHash": {
+            "pattern": "^[a-f0-9]{64}$",
+            "type": "string"
+          },
+          "coveragePlanHash": {
+            "pattern": "^[a-f0-9]{64}$",
+            "type": "string"
+          },
+          "events": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "kind": {
+                  "type": "string"
+                },
+                "value": {
+                  "additionalProperties": true,
+                  "type": "object"
+                }
+              },
+              "required": ["id", "kind", "value"],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "eventsSha256": {
+            "pattern": "^[a-f0-9]{64}$",
+            "type": "string"
+          },
+          "exportHash": {
+            "pattern": "^[a-f0-9]{64}$",
+            "type": "string"
+          },
+          "loadVerified": {
+            "type": "boolean"
+          },
+          "originalStatus": {
+            "type": "string"
+          },
+          "reportSha256": {
+            "pattern": "^[a-f0-9]{64}$",
+            "type": "string"
+          },
+          "validationId": {
+            "pattern": "^[a-f0-9]{64}$",
+            "type": "string"
+          },
+          "verification": {
+            "additionalProperties": false,
+            "properties": {
+              "matches": {
+                "type": "boolean"
+              },
+              "posthoc": {
+                "type": "boolean"
+              },
+              "protocol": {
+                "type": "string"
+              },
+              "receiptSha256": {
+                "pattern": "^[a-f0-9]{64}$",
+                "type": "string"
+              },
+              "sameFinalPatch": {
+                "type": "boolean"
+              },
+              "status": {
+                "type": "string"
+              }
+            },
+            "required": ["status", "receiptSha256", "protocol", "matches", "sameFinalPatch", "posthoc"],
+            "type": "object"
+          }
+        },
+        "required": [
+          "assessmentId",
+          "validationId",
+          "contentHash",
+          "exportHash",
+          "candidateSnapshot",
+          "reportSha256",
+          "eventsSha256",
+          "coveragePlanHash",
+          "caseId",
+          "captureComplete",
+          "loadVerified",
+          "behaviorChanged",
+          "originalStatus",
+          "verification",
+          "checks",
+          "events",
+          "branchCandidates"
+        ],
+        "type": "object"
+      },
+      "SkillBranchClaim": {
+        "additionalProperties": false,
+        "properties": {
+          "actionRefs": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "branchId": {
+            "type": "string"
+          },
+          "checkRefs": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "conditionRefs": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "reason": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": ["branchId", "conditionRefs", "actionRefs", "checkRefs", "reason"],
+        "type": "object"
+      },
       "SkillDetailData": {
         "properties": {
           "candidate": {
@@ -2999,6 +3336,66 @@
             "type": "string"
           }
         },
+        "type": "object"
+      },
+      "SkillJudgment": {
+        "additionalProperties": false,
+        "properties": {
+          "applicability": {
+            "enum": ["in_scope", "out_of_scope", "unknown"],
+            "type": "string"
+          },
+          "boundary": {
+            "enum": ["not_applicable", "needs_evidence", "unresolved", null],
+            "nullable": true,
+            "type": "string"
+          },
+          "branches": {
+            "items": {
+              "$ref": "#/components/schemas/SkillBranchClaim"
+            },
+            "maxItems": 100,
+            "type": "array"
+          },
+          "eventRefs": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "historyDecision": {
+            "enum": ["retain", "infra_explained"],
+            "type": "string"
+          },
+          "reason": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "taskDecision": {
+            "enum": ["repair_confirmed", "stop_confirmed", "failed", "needs_evidence"],
+            "type": "string"
+          },
+          "usageDecision": {
+            "enum": ["correct", "misused", "not_used", "unknown"],
+            "type": "string"
+          },
+          "violations": {
+            "enum": ["none", "serious", "unknown"],
+            "type": "string"
+          }
+        },
+        "required": [
+          "taskDecision",
+          "historyDecision",
+          "usageDecision",
+          "applicability",
+          "boundary",
+          "violations",
+          "reason",
+          "eventRefs",
+          "branches"
+        ],
         "type": "object"
       },
       "SkillListData": {
@@ -5614,6 +6011,180 @@
         },
         "summary": "订阅周期",
         "tags": ["账号"]
+      }
+    },
+    "/api/v1/skills/adjudications/prepare": {
+      "post": {
+        "description": "要求项目 manage；固定 assessmentId。仅读取宿主核验的证据，不接收路径或客户端验收报告。",
+        "operationId": "skill_adjudication_prepare",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "assessmentId": {
+                    "pattern": "^[a-f0-9]{64}$",
+                    "type": "string"
+                  },
+                  "projectId": {
+                    "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,299}$",
+                    "type": "string"
+                  },
+                  "revision": {
+                    "pattern": "^[a-f0-9]{64}$",
+                    "type": "string"
+                  },
+                  "skillId": {
+                    "pattern": "^[a-z0-9][a-z0-9-]{0,79}$",
+                    "type": "string"
+                  }
+                },
+                "required": ["projectId", "skillId", "revision", "assessmentId"],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Envelope"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/SkillAdjudicationPackage"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  ]
+                }
+              }
+            },
+            "description": "成功；candidate 保留规范 snake_case 正文"
+          },
+          "400": {
+            "$ref": "#/components/responses/ErrorBadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/ErrorUnauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/ErrorForbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/ErrorNotFound"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SkillErrorEnvelope"
+                }
+              }
+            },
+            "description": "状态、操作 ID 或发布证据冲突；data 含 errorCode，可选 currentSequence"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SkillErrorEnvelope"
+                }
+              }
+            },
+            "description": "Skill 业务校验未通过；不回显原始异常或端点"
+          },
+          "503": {
+            "$ref": "#/components/responses/ErrorUnavailable"
+          }
+        },
+        "summary": "冻结执行证据人工裁决包",
+        "tags": ["Skill 管理"]
+      }
+    },
+    "/api/v1/skills/adjudications/submit": {
+      "post": {
+        "description": "要求项目 manage；绑定包、版本和 sequence。纠正须显式 supersedes。不会自动发布，409 不自动重试。",
+        "operationId": "skill_adjudicate",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SkillAdjudicationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Envelope"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/SkillAdjudicationResult"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  ]
+                }
+              }
+            },
+            "description": "成功；candidate 保留规范 snake_case 正文"
+          },
+          "400": {
+            "$ref": "#/components/responses/ErrorBadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/ErrorUnauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/ErrorForbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/ErrorNotFound"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SkillErrorEnvelope"
+                }
+              }
+            },
+            "description": "状态、操作 ID 或发布证据冲突；data 含 errorCode，可选 currentSequence"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SkillErrorEnvelope"
+                }
+              }
+            },
+            "description": "Skill 业务校验未通过；不回显原始异常或端点"
+          },
+          "503": {
+            "$ref": "#/components/responses/ErrorUnavailable"
+          }
+        },
+        "summary": "追加人工裁决与逐分支证据判断",
+        "tags": ["Skill 管理"]
       }
     },
     "/api/v1/skills/challenges": {

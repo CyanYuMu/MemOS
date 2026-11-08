@@ -106,6 +106,92 @@ export interface SkillDetail {
   jobs: SkillJob[]
   releases: Record<string, unknown>[]
   caseOptions: { caseId: string; title: string }[]
+  governance?: SkillGovernanceState
+}
+
+export interface SkillBranchClaim {
+  branchId: string
+  conditionRefs: string[]
+  actionRefs: string[]
+  checkRefs: string[]
+  reason: string
+}
+
+export interface SkillJudgment {
+  taskDecision: 'repair_confirmed' | 'stop_confirmed' | 'failed' | 'needs_evidence'
+  historyDecision: 'retain' | 'infra_explained'
+  usageDecision: 'correct' | 'misused' | 'not_used' | 'unknown'
+  applicability: 'in_scope' | 'out_of_scope' | 'unknown'
+  boundary: 'not_applicable' | 'needs_evidence' | 'unresolved' | null
+  violations: 'none' | 'serious' | 'unknown'
+  reason: string
+  eventRefs: string[]
+  branches: SkillBranchClaim[]
+}
+
+export interface SkillAssessment {
+  assessmentId: string
+  validationId: string
+  caseId: string
+  contentHash: string
+  exportHash: string
+  candidateSnapshot: string
+  reportSha256: string
+  eventsSha256: string
+  captureComplete: boolean
+  loadVerified: boolean
+  behaviorChanged: boolean
+  originalStatus: 'passed' | 'failed' | 'error' | 'needs_review'
+  verification: {
+    status: 'passed' | 'failed' | 'error' | 'needs_review'
+    receiptSha256: string
+    protocol: string
+    matches: boolean
+    sameFinalPatch: boolean
+    posthoc: boolean
+  }
+  checks: { name: string; status: string }[]
+  events: { id: string; kind: string; value: Record<string, unknown> }[]
+  branchCandidates: string[]
+  coveragePlanHash: string
+}
+
+export interface SkillAdjudicationRecord {
+  adjudicationId: string
+  assessmentId: string
+  validationId: string
+  supersedes: string | null
+  actor: string
+  reason: string
+  decidedAt: string
+  contribution: Record<string, unknown>
+}
+
+export interface SkillGovernanceState {
+  assessments: SkillAssessment[]
+  currentAssessments: Record<string, string>
+  adjudications: SkillAdjudicationRecord[]
+  coverage: { branchId: string; status: 'covered' | 'missing'; adjudicationIds: string[] }[]
+  qualification: Record<string, unknown>
+}
+
+export interface SkillAdjudicationPackage {
+  kind: 'adjudication'
+  projectId: string
+  skillId: string
+  revision: string
+  sequence: number
+  contentHash: string
+  exportHash: string | null
+  sourceWatermark: string[]
+  assessmentId: string
+  assessment: SkillAssessment
+  validation: Record<string, unknown>
+  activeAdjudicationIds: string[]
+  actor: string
+  preparedAt: string
+  packageId: string
+  packageHash: string
 }
 
 export interface SkillReviewPackage {

@@ -2,6 +2,8 @@
 
 import { z } from 'zod'
 import { API_BASE } from './config'
+import { skillAdjudicationPackage, skillAdjudicationResult } from './skill-governance.contract'
+import type { SkillJudgment } from '../../shared/contract'
 import {
   skillDetail,
   skillEvidence,
@@ -421,6 +423,10 @@ export const api = {
       callValidated(skillJob, '/api/v1/skills/evaluations/start', { body }),
     job: (body: { projectId: string; jobId: string }) => callValidated(skillJob, '/api/v1/skills/jobs/detail', { body }),
     prepareReview: (body: SkillRef) => callValidated(skillReview, '/api/v1/skills/reviews/prepare', { body }),
+    prepareAdjudication: (body: SkillRef & { assessmentId: string }) =>
+      callValidated(skillAdjudicationPackage, '/api/v1/skills/adjudications/prepare', { body }),
+    adjudicate: (body: SkillMutation & { packageId: string; packageHash: string; judgment: SkillJudgment; supersedes: string | null }) =>
+      callValidated(skillAdjudicationResult, '/api/v1/skills/adjudications/submit', { body }),
     decide: (body: SkillMutation & { decision: 'needs_evidence' | 'block' }) =>
       call<SkillMutationResult>('/api/v1/skills/reviews/decide', { body }),
     publish: (body: SkillMutation & { packageId: string; packageHash: string }) =>

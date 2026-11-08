@@ -6175,3 +6175,53 @@ body:has(.memos-guide-step) .memos-log-close {
   margin-top: 4px;
   overflow-wrap: anywhere;
 }
+.skills-governance-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin: 0.8rem 0;
+}
+.skills-governance-field select,
+.skills-governance-field textarea {
+  padding: 0.65rem;
+  border: 1px solid var(--border, #d8dee8);
+  border-radius: 0.5rem;
+  background: var(--background, #fff);
+  color: inherit;
+  max-width: 100%;
+}
+.skills-governance-field textarea {
+  min-height: 6rem;
+}
+.skills-governance-form {
+  border-top: 1px solid var(--border, #d8dee8);
+  padding-top: 1rem;
+  margin-top: 1rem;
+}
+.skills-governance-events {
+  max-height: 26rem;
+  overflow: auto;
+  border: 1px solid var(--border, #d8dee8);
+  border-radius: 0.5rem;
+  padding: 0.8rem;
+}
+.skills-governance-events > div {
+  margin-bottom: 0.8rem;
+  overflow-wrap: anywhere;
+}
+.skills-governance-id {
+  display: block;
+  overflow-wrap: anywhere;
+}
+.skills-governance-table {
+  width: 100%;
+  text-align: left;
+  border-collapse: collapse;
+  margin: 1rem 0;
+}
+.skills-governance-table th,
+.skills-governance-table td {
+  border-bottom: 1px solid var(--border, #d8dee8);
+  padding: 0.6rem;
+  overflow-wrap: anywhere;
+}

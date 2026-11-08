@@ -14,6 +14,7 @@ import { useMeta, useProject, useProjectRole } from '../lib/store'
 import { PageHeader } from '../components/ui'
 import { Button } from '../components/ui/button'
 import { SkillExperiments } from './SkillExperiments'
+import { SkillGovernance } from './SkillGovernance'
 
 const states: Record<string, string> = {
   candidate: '候选',
@@ -384,6 +385,21 @@ function SkillWorkspace({
         </details>
       </section>
       <Evaluation detail={detail} reference={{ projectId, skillId, revision }} canWrite={canWrite} />
+      {detail.governance && (
+        <SkillGovernance
+          key={`governance-${management.sequence}`}
+          reference={{ projectId, skillId, revision }}
+          data={detail.governance}
+          sequence={management.sequence}
+          contentHash={candidate.content_hash}
+          exportHash={management.exportHash}
+          canManage={canManage}
+          onRefresh={() => {
+            refresh()
+            onChange()
+          }}
+        />
+      )}
       <Review
         key={management.sequence}
         detail={detail}

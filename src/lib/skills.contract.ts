@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { skillGovernance } from './skill-governance.contract'
 import type {
   SkillDetail,
   SkillJob,
@@ -101,6 +102,7 @@ export const skillDetail: z.ZodType<SkillDetail> = z.object({
   jobs: z.array(skillJob),
   releases: z.array(record),
   caseOptions: z.array(z.object({ caseId: z.string(), title: z.string() })),
+  governance: skillGovernance.optional(),
 })
 export const skillEvidence = z.object({ rule: skillRule, facts: z.array(record) })
 export const skillReview: z.ZodType<SkillReviewPackage> = z.object({
