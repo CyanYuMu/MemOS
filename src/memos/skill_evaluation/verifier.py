@@ -18,6 +18,7 @@ import tempfile
 import time
 import uuid
 
+from collections.abc import Callable
 from contextlib import suppress
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -226,6 +227,7 @@ def _assess(
         or not math.isfinite(execution["elapsed_seconds"])
         or execution["elapsed_seconds"] < 0
         or (execution["returncode"] is not None and type(execution["returncode"]) is not int)
+        or ("output_limited" in execution and type(execution["output_limited"]) is not bool)
         or type(unchanged) is not bool
     ):
         return "error", [], ["invalid_execution_record"]
@@ -237,6 +239,8 @@ def _assess(
         reasons.append("candidate_modified_during_verification")
     if execution.get("timed_out"):
         reasons.append("timeout")
+    if execution.get("output_limited"):
+        reasons.append("output_limit")
     if execution.get("background_processes"):
         reasons.append("unsettled_background_process")
     if not isinstance(report, dict) or not isinstance(report.get("checks"), list):
@@ -282,6 +286,7 @@ def verify_candidate(
     run_id: str | None = None,
     attempt_id: str | None = None,
     timeout: float = 10,
+    executor: Callable[[Path, Path, Path, Path, float], dict] | None = None,
 ) -> VerificationResult:
     """Verify one captured registered candidate without changing the original directory."""
     if not math.isfinite(timeout) or timeout <= 0:
@@ -311,7 +316,7 @@ def verify_candidate(
         policy_violations = candidate_policy_violations(case, restored)
         _set_writable(restored, False)
         try:
-            execution = _execute(oracle, restored, report_path, job, timeout)
+            execution = (executor or _execute)(oracle, restored, report_path, job, timeout)
             try:
                 unchanged = snapshot_fingerprint(restored) == snapshot.snapshot_id
             except (ValueError, OSError):
@@ -335,6 +340,8 @@ def verify_candidate(
     }
     if report_path.is_file():
         artifacts["report"] = _artifact(report_path, root)
+    if "isolation" in execution:
+        artifacts["isolation_profile"] = _artifact(job / "isolation.sb", root)
     receipt = {
         "schema_version": SCHEMA_VERSION,
         "validator_version": VALIDATOR_VERSION,
@@ -430,6 +437,28 @@ def check_receipt(receipt_path: Path, candidate: Path, artifact_root: Path) -> R
         ):
             raise ValueError("Missing required artifacts")
         contents = {key: _read_artifact(ref, root) for key, ref in references.items()}
+        if "isolation" in receipt["execution"]:
+            from memos.skill_adapter.verification import (
+                BACKEND,
+                OUTPUT_LIMIT,
+                REPORT_LIMIT,
+                implementation_digest,
+            )
+
+            isolation = receipt["execution"]["isolation"]
+            if not isinstance(isolation, dict):
+                raise ValueError("Invalid isolation metadata")
+            if isolation.get("profile_sha256") != _digest(contents.get("isolation_profile", b"")):
+                reasons.append("isolation_profile_mismatch")
+            if isolation.get("implementation_digest") != implementation_digest():
+                reasons.append("isolation_implementation_mismatch")
+            expected_isolation = {
+                "backend": BACKEND,
+                "output_limit_bytes": OUTPUT_LIMIT,
+                "report_limit_bytes": REPORT_LIMIT,
+            }
+            if any(isolation.get(key) != value for key, value in expected_isolation.items()):
+                reasons.append("isolation_policy_mismatch")
         if _digest(contents["oracle"]) != receipt["oracle_digest"]:
             reasons.append("oracle_artifact_mismatch")
         report = json.loads(contents["report"]) if "report" in contents else None
@@ -460,6 +489,9 @@ def check_receipt(receipt_path: Path, candidate: Path, artifact_root: Path) -> R
             "oracle_artifact_mismatch",
             "workspace_policy_mismatch",
             "scoring_mismatch",
+            "isolation_profile_mismatch",
+            "isolation_implementation_mismatch",
+            "isolation_policy_mismatch",
         }
         & set(reasons)
     )
