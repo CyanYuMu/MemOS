@@ -108,6 +108,7 @@ beforeEach(() => {
     ],
     total: 1,
   })
+  vi.spyOn(api.skills, 'experiments').mockResolvedValue({ items: [], total: 0 })
   vi.spyOn(api.skills, 'detail').mockResolvedValue(detail())
   vi.spyOn(api.skills, 'evaluate').mockResolvedValue({ jobId: 'job-1', status: 'queued' })
   vi.spyOn(api.skills, 'job').mockResolvedValue({

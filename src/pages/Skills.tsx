@@ -13,6 +13,7 @@ import type {
 import { useMeta, useProject, useProjectRole } from '../lib/store'
 import { PageHeader } from '../components/ui'
 import { Button } from '../components/ui/button'
+import { SkillExperiments } from './SkillExperiments'
 
 const states: Record<string, string> = {
   candidate: '候选',
@@ -234,6 +235,7 @@ function SkillsProject({ projectId, canWrite, canManage }: { projectId: string; 
           </div>
         )}
       </div>
+      <SkillExperiments projectId={projectId} canWrite={canWrite} />
     </>
   )
 }

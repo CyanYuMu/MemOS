@@ -152,6 +152,56 @@ export interface SkillLoadPreview {
   [key: string]: unknown
 }
 
+/* ------------------------------------------------------------ P4 固定三组实验 */
+export type SkillExperimentGroup = 'none' | 'raw_memory' | 'skill'
+export interface SkillExperimentSummary {
+  experimentId: string
+  skillId: string
+  revision: string
+  manifestHash: string
+  status: 'frozen' | 'running' | 'completed' | 'interrupted'
+  planned: number
+  completed: number
+}
+export interface SkillExperimentRow {
+  cellId: string
+  caseId: string
+  group: SkillExperimentGroup
+  status: 'queued' | 'running' | 'passed' | 'failed' | 'unknown' | 'infra_invalid'
+  assessmentKind: 'repair' | 'boundary_repair' | 'manual_boundary'
+  repairPass: number | null
+  boundaryPass: number | null
+  branchSupported: boolean | null
+  criticalViolation: boolean | null
+  manualReview: 'pending'
+  taskAccepted: boolean
+  receiptVerified: boolean
+  loading: string
+  capture: string
+  elapsedSeconds: number | null
+  reportedCostUsd: number | null
+  toolCalls: number | null
+  failureReasons: string[]
+}
+export interface SkillExperimentGroupScore {
+  group: SkillExperimentGroup
+  primaryRepair: { passed: number; denominator: number; planned: number }
+  boundary: { taskSolved: number; planned: number; pendingReview: number }
+  unknown: number
+  infraInvalid: number
+  elapsedSeconds: number | null
+  reportedCostUsd: number | null
+  costUnknown: number
+}
+export interface SkillExperimentDetail extends SkillExperimentSummary {
+  groups: SkillExperimentGroup[]
+  budget: { timeoutSeconds: number; maxTurns: number; maxBudgetUsd: number; contextBytes: number }
+  rows: SkillExperimentRow[]
+  summary: { groups: SkillExperimentGroupScore[]; completePairs: number }
+  publication: 'not_approved'
+  limitations: string[]
+}
+
 /* ------------------------------------------------------------ 项目 */
 
 export interface Project {

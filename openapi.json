@@ -2676,6 +2676,292 @@
         },
         "type": "object"
       },
+      "SkillExperimentDetail": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/SkillExperimentSummary"
+          },
+          {
+            "properties": {
+              "budget": {
+                "properties": {
+                  "contextBytes": {
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  "maxBudgetUsd": {
+                    "minimum": 0,
+                    "type": "number"
+                  },
+                  "maxTurns": {
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  "timeoutSeconds": {
+                    "minimum": 1,
+                    "type": "number"
+                  }
+                },
+                "required": ["timeoutSeconds", "maxTurns", "maxBudgetUsd", "contextBytes"],
+                "type": "object"
+              },
+              "groups": {
+                "items": {
+                  "enum": ["none", "raw_memory", "skill"],
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "limitations": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "publication": {
+                "enum": ["not_approved"],
+                "type": "string"
+              },
+              "rows": {
+                "items": {
+                  "$ref": "#/components/schemas/SkillExperimentRow"
+                },
+                "type": "array"
+              },
+              "summary": {
+                "properties": {
+                  "completePairs": {
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  "groups": {
+                    "items": {
+                      "$ref": "#/components/schemas/SkillExperimentGroupScore"
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": ["groups", "completePairs"],
+                "type": "object"
+              }
+            },
+            "required": ["groups", "budget", "rows", "summary", "publication", "limitations"],
+            "type": "object"
+          }
+        ]
+      },
+      "SkillExperimentGroupScore": {
+        "properties": {
+          "boundary": {
+            "properties": {
+              "pendingReview": {
+                "minimum": 0,
+                "type": "integer"
+              },
+              "planned": {
+                "minimum": 0,
+                "type": "integer"
+              },
+              "taskSolved": {
+                "minimum": 0,
+                "type": "integer"
+              }
+            },
+            "required": ["taskSolved", "planned", "pendingReview"],
+            "type": "object"
+          },
+          "costUnknown": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "elapsedSeconds": {
+            "minimum": 0,
+            "nullable": true,
+            "type": "number"
+          },
+          "group": {
+            "enum": ["none", "raw_memory", "skill"],
+            "type": "string"
+          },
+          "infraInvalid": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "primaryRepair": {
+            "properties": {
+              "denominator": {
+                "minimum": 0,
+                "type": "integer"
+              },
+              "passed": {
+                "minimum": 0,
+                "type": "integer"
+              },
+              "planned": {
+                "minimum": 0,
+                "type": "integer"
+              }
+            },
+            "required": ["passed", "denominator", "planned"],
+            "type": "object"
+          },
+          "reportedCostUsd": {
+            "minimum": 0,
+            "nullable": true,
+            "type": "number"
+          },
+          "unknown": {
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": ["group", "primaryRepair", "boundary", "unknown", "infraInvalid", "elapsedSeconds", "reportedCostUsd", "costUnknown"],
+        "type": "object"
+      },
+      "SkillExperimentList": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/SkillExperimentSummary"
+            },
+            "type": "array"
+          },
+          "total": {
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": ["items", "total"],
+        "type": "object"
+      },
+      "SkillExperimentRow": {
+        "properties": {
+          "assessmentKind": {
+            "enum": ["repair", "boundary_repair", "manual_boundary"],
+            "type": "string"
+          },
+          "boundaryPass": {
+            "enum": [0, 1],
+            "nullable": true,
+            "type": "integer"
+          },
+          "branchSupported": {
+            "nullable": true,
+            "type": "boolean"
+          },
+          "capture": {
+            "type": "string"
+          },
+          "caseId": {
+            "type": "string"
+          },
+          "cellId": {
+            "type": "string"
+          },
+          "criticalViolation": {
+            "nullable": true,
+            "type": "boolean"
+          },
+          "elapsedSeconds": {
+            "minimum": 0,
+            "nullable": true,
+            "type": "number"
+          },
+          "failureReasons": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "group": {
+            "enum": ["none", "raw_memory", "skill"],
+            "type": "string"
+          },
+          "loading": {
+            "type": "string"
+          },
+          "manualReview": {
+            "enum": ["pending"],
+            "type": "string"
+          },
+          "receiptVerified": {
+            "type": "boolean"
+          },
+          "repairPass": {
+            "enum": [0, 1],
+            "nullable": true,
+            "type": "integer"
+          },
+          "reportedCostUsd": {
+            "minimum": 0,
+            "nullable": true,
+            "type": "number"
+          },
+          "status": {
+            "enum": ["queued", "running", "passed", "failed", "unknown", "infra_invalid"],
+            "type": "string"
+          },
+          "taskAccepted": {
+            "type": "boolean"
+          },
+          "toolCalls": {
+            "minimum": 0,
+            "nullable": true,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "cellId",
+          "caseId",
+          "group",
+          "status",
+          "assessmentKind",
+          "repairPass",
+          "boundaryPass",
+          "branchSupported",
+          "criticalViolation",
+          "manualReview",
+          "taskAccepted",
+          "receiptVerified",
+          "loading",
+          "capture",
+          "elapsedSeconds",
+          "reportedCostUsd",
+          "toolCalls",
+          "failureReasons"
+        ],
+        "type": "object"
+      },
+      "SkillExperimentSummary": {
+        "properties": {
+          "completed": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "experimentId": {
+            "type": "string"
+          },
+          "manifestHash": {
+            "type": "string"
+          },
+          "planned": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "revision": {
+            "type": "string"
+          },
+          "skillId": {
+            "type": "string"
+          },
+          "status": {
+            "enum": ["frozen", "running", "completed", "interrupted"],
+            "type": "string"
+          }
+        },
+        "required": ["experimentId", "skillId", "revision", "manifestHash", "status", "planned", "completed"],
+        "type": "object"
+      },
       "SkillJobData": {
         "properties": {
           "caseId": {
@@ -5725,6 +6011,273 @@
           }
         },
         "summary": "查看规则来源证据",
+        "tags": ["Skill 管理"]
+      }
+    },
+    "/api/v1/skills/experiments/detail": {
+      "post": {
+        "description": "显式项目身份，要求 view 能力。只接受宿主登记的 experimentId，不接受路径、代码、模型配置或报告上传。",
+        "operationId": "skill_experiment_detail",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "experimentId": {
+                    "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,299}$",
+                    "type": "string"
+                  },
+                  "projectId": {
+                    "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,299}$",
+                    "type": "string"
+                  }
+                },
+                "required": ["projectId", "experimentId"],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Envelope"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/SkillExperimentDetail"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  ]
+                }
+              }
+            },
+            "description": "成功；完成不等于发布批准，人工评分仍可待审"
+          },
+          "400": {
+            "$ref": "#/components/responses/ErrorBadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/ErrorUnauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/ErrorForbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/ErrorNotFound"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SkillErrorEnvelope"
+                }
+              }
+            },
+            "description": "实验冲突或校验失败；不自动重试开始"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SkillErrorEnvelope"
+                }
+              }
+            },
+            "description": "实验冲突或校验失败；不自动重试开始"
+          },
+          "503": {
+            "$ref": "#/components/responses/ErrorUnavailable"
+          }
+        },
+        "summary": "读取实验进度与分层评分",
+        "tags": ["Skill 管理"]
+      }
+    },
+    "/api/v1/skills/experiments/list": {
+      "post": {
+        "description": "显式项目身份，要求 view 能力。只接受宿主登记的 experimentId，不接受路径、代码、模型配置或报告上传。",
+        "operationId": "skill_experiments_list",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "projectId": {
+                    "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,299}$",
+                    "type": "string"
+                  }
+                },
+                "required": ["projectId"],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Envelope"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/SkillExperimentList"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  ]
+                }
+              }
+            },
+            "description": "成功；完成不等于发布批准，人工评分仍可待审"
+          },
+          "400": {
+            "$ref": "#/components/responses/ErrorBadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/ErrorUnauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/ErrorForbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/ErrorNotFound"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SkillErrorEnvelope"
+                }
+              }
+            },
+            "description": "实验冲突或校验失败；不自动重试开始"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SkillErrorEnvelope"
+                }
+              }
+            },
+            "description": "实验冲突或校验失败；不自动重试开始"
+          },
+          "503": {
+            "$ref": "#/components/responses/ErrorUnavailable"
+          }
+        },
+        "summary": "列出冻结三组实验",
+        "tags": ["Skill 管理"]
+      }
+    },
+    "/api/v1/skills/experiments/start": {
+      "post": {
+        "description": "显式项目身份，要求 write 能力。只接受宿主登记的 experimentId，不接受路径、代码、模型配置或报告上传。",
+        "operationId": "skill_experiment_start",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "experimentId": {
+                    "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,299}$",
+                    "type": "string"
+                  },
+                  "operationId": {
+                    "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$",
+                    "type": "string"
+                  },
+                  "projectId": {
+                    "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,299}$",
+                    "type": "string"
+                  }
+                },
+                "required": ["projectId", "experimentId", "operationId"],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Envelope"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/SkillExperimentSummary"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  ]
+                }
+              }
+            },
+            "description": "成功；完成不等于发布批准，人工评分仍可待审"
+          },
+          "400": {
+            "$ref": "#/components/responses/ErrorBadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/ErrorUnauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/ErrorForbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/ErrorNotFound"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SkillErrorEnvelope"
+                }
+              }
+            },
+            "description": "实验冲突或校验失败；不自动重试开始"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SkillErrorEnvelope"
+                }
+              }
+            },
+            "description": "实验冲突或校验失败；不自动重试开始"
+          },
+          "503": {
+            "$ref": "#/components/responses/ErrorUnavailable"
+          }
+        },
+        "summary": "异步开始已登记固定实验",
         "tags": ["Skill 管理"]
       }
     },

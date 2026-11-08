@@ -2,7 +2,16 @@
 
 import { z } from 'zod'
 import { API_BASE } from './config'
-import { skillDetail, skillEvidence, skillJob, skillList, skillReview } from './skills.contract'
+import {
+  skillDetail,
+  skillEvidence,
+  skillJob,
+  skillList,
+  skillReview,
+  skillExperimentList,
+  skillExperimentDetail,
+  skillExperimentSummary,
+} from './skills.contract'
 import type { TKey } from './i18n'
 import type {
   Account,
@@ -400,6 +409,11 @@ export interface LocalMemoryListQuery {
 export const api = {
   /** 权限与发布事务由服务器裁定；这些写请求从不自动重试。 */
   skills: {
+    experiments: (body: { projectId: string }) => callValidated(skillExperimentList, '/api/v1/skills/experiments/list', { body }),
+    experiment: (body: { projectId: string; experimentId: string }) =>
+      callValidated(skillExperimentDetail, '/api/v1/skills/experiments/detail', { body }),
+    startExperiment: (body: { projectId: string; experimentId: string; operationId: string }) =>
+      callValidated(skillExperimentSummary, '/api/v1/skills/experiments/start', { body }),
     list: (body: { projectId: string; query?: string }) => callValidated(skillList, '/api/v1/skills/list', { body }),
     detail: (body: SkillRef) => callValidated(skillDetail, '/api/v1/skills/detail', { body }),
     evidence: (body: SkillRef & { ruleId: string }) => callValidated(skillEvidence, '/api/v1/skills/evidence', { body }),

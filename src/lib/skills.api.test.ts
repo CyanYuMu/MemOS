@@ -83,3 +83,30 @@ it.each([
   expect(body.filePath).toBeUndefined()
   expect(body.capability).toBeUndefined()
 })
+
+it.each([
+  ['experiments/list', () => api.skills.experiments({ projectId: 'project-a' })],
+  ['experiments/detail', () => api.skills.experiment({ projectId: 'project-a', experimentId: 'experiment-1' })],
+  ['experiments/start', () => api.skills.startExperiment({ projectId: 'project-a', experimentId: 'experiment-1', operationId: 'start-1' })],
+] as const)('实验端点 %s 保留项目与固定 ID，错误不触发自动重试', async (route, run) => {
+  const fetcher = vi.fn().mockResolvedValue(new Response(JSON.stringify({ code: 40900, message: '实验已在执行' }), { status: 409 }))
+  vi.stubGlobal('fetch', fetcher)
+  await expect(run()).rejects.toBeInstanceOf(ApiError)
+  expect(fetcher).toHaveBeenCalledTimes(1)
+  const [path, options] = fetcher.mock.calls[0]
+  expect(path).toBe(`/api/v1/skills/${route}`)
+  const body = JSON.parse(options.body as string)
+  expect(body.projectId).toBe('project-a')
+  expect(body.path).toBeUndefined()
+  expect(body.report).toBeUndefined()
+})
+it('实验列表不能把缺失的冻结摘要默认为当前版本', async () => {
+  const data = {
+    items: [
+      { experimentId: 'experiment-1', skillId: 'fixture-repair', revision: 'a'.repeat(64), status: 'frozen', planned: 21, completed: 0 },
+    ],
+    total: 1,
+  }
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({ code: 0, data }))))
+  await expect(api.skills.experiments({ projectId: 'project-a' })).rejects.toMatchObject({ msg: { key: 'error.contract' } })
+})

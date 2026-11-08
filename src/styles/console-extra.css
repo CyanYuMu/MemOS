@@ -6112,3 +6112,66 @@ body:has(.memos-guide-step) .memos-log-close {
     font-size: 20px;
   }
 }
+
+/* P4 固定实验：窄屏保留完整评分列，使用横向滚动。 */
+.skills-experiments {
+  margin-top: 24px;
+}
+.skills-experiments h2 {
+  font-size: 20px;
+  font-weight: 600;
+}
+.skills-experiment-select {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin: 18px 0;
+}
+.skills-experiment-select select {
+  min-width: 0;
+  max-width: 100%;
+  border: 1px solid var(--color-border, #d7dde5);
+  border-radius: 6px;
+  padding: 8px;
+  background: transparent;
+}
+.skills-experiment-identities {
+  margin: 16px 0;
+}
+.skills-experiment-identities dt {
+  margin-top: 10px;
+  color: #6b7280;
+  font-size: 12px;
+}
+.skills-experiment-identities dd {
+  overflow-wrap: anywhere;
+  font-size: 12px;
+}
+.skills-table-scroll {
+  overflow-x: auto;
+  margin: 18px 0;
+}
+.skills-experiment-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 760px;
+  font-size: 13px;
+}
+.skills-experiment-table caption {
+  text-align: left;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+.skills-experiment-table th,
+.skills-experiment-table td {
+  text-align: left;
+  vertical-align: top;
+  padding: 10px 12px;
+  border-bottom: 1px solid #e5e7eb;
+}
+.skills-experiment-table small {
+  display: block;
+  color: #6b7280;
+  margin-top: 4px;
+  overflow-wrap: anywhere;
+}

@@ -1,5 +1,13 @@
 import { z } from 'zod'
-import type { SkillDetail, SkillJob, SkillReviewPackage, SkillRule, SkillSummary } from '../../shared/contract'
+import type {
+  SkillDetail,
+  SkillJob,
+  SkillReviewPackage,
+  SkillRule,
+  SkillSummary,
+  SkillExperimentSummary,
+  SkillExperimentDetail,
+} from '../../shared/contract'
 
 const texts = z.array(z.string())
 const record = z.record(z.string(), z.unknown())
@@ -111,4 +119,63 @@ export const skillReview: z.ZodType<SkillReviewPackage> = z.object({
   actor: z.string().optional(),
   preparedAt: z.string().optional(),
   reviewChecklist: z.array(z.object({ ruleId: z.string(), branchCount: z.number().int().nonnegative(), coveredBranches: texts })),
+})
+
+const count = z.number().int().nonnegative()
+const amount = z.number().nonnegative().nullable()
+const group = z.enum(['none', 'raw_memory', 'skill'])
+const experimentFields = {
+  experimentId: z.string(),
+  skillId: z.string(),
+  revision: z.string(),
+  manifestHash: z.string(),
+  status: z.enum(['frozen', 'running', 'completed', 'interrupted']),
+  planned: count,
+  completed: count,
+}
+export const skillExperimentSummary: z.ZodType<SkillExperimentSummary> = z.object(experimentFields)
+export const skillExperimentList = z.object({ items: z.array(skillExperimentSummary), total: count })
+export const skillExperimentDetail: z.ZodType<SkillExperimentDetail> = z.object({
+  ...experimentFields,
+  groups: z.array(group),
+  budget: z.object({ timeoutSeconds: z.number().positive(), maxTurns: count, maxBudgetUsd: z.number().positive(), contextBytes: count }),
+  rows: z.array(
+    z.object({
+      cellId: z.string(),
+      caseId: z.string(),
+      group,
+      status: z.enum(['queued', 'running', 'passed', 'failed', 'unknown', 'infra_invalid']),
+      assessmentKind: z.enum(['repair', 'boundary_repair', 'manual_boundary']),
+      repairPass: z.union([z.literal(0), z.literal(1)]).nullable(),
+      boundaryPass: z.union([z.literal(0), z.literal(1)]).nullable(),
+      branchSupported: z.boolean().nullable(),
+      criticalViolation: z.boolean().nullable(),
+      manualReview: z.literal('pending'),
+      taskAccepted: z.boolean(),
+      receiptVerified: z.boolean(),
+      loading: z.string(),
+      capture: z.string(),
+      elapsedSeconds: amount,
+      reportedCostUsd: amount,
+      toolCalls: count.nullable(),
+      failureReasons: texts,
+    }),
+  ),
+  summary: z.object({
+    groups: z.array(
+      z.object({
+        group,
+        primaryRepair: z.object({ passed: count, denominator: count, planned: count }),
+        boundary: z.object({ taskSolved: count, planned: count, pendingReview: count }),
+        unknown: count,
+        infraInvalid: count,
+        elapsedSeconds: amount,
+        reportedCostUsd: amount,
+        costUnknown: count,
+      }),
+    ),
+    completePairs: count,
+  }),
+  publication: z.literal('not_approved'),
+  limitations: texts,
 })
