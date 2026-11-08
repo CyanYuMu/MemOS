@@ -23,6 +23,9 @@ _KEY = {"projectId", "skillId", "revision"}
 _MUTATION = _KEY | {"expectedSequence", "operationId", "reason"}
 # Required fields and the capability checked before dispatching a command.
 COMMANDS = {
+    "experiments_list": ({"projectId"}, "view"),
+    "experiment_detail": ({"projectId", "experimentId"}, "view"),
+    "experiment_start": ({"projectId", "experimentId", "operationId"}, "write"),
     "list": ({"projectId"}, "view"),
     "detail": (_KEY, "view"),
     "evidence": (_KEY | {"ruleId"}, "view"),
@@ -76,6 +79,8 @@ def _validate(action, body):
         operation(body["operationId"])
     if "packageHash" in body:
         digest(body["packageHash"])
+    if "experimentId" in body:
+        digest(body["experimentId"])
     if action == "review_decide":
         require(body["decision"] in {"needs_evidence", "block"})
     if action == "status":

@@ -536,7 +536,12 @@ def _validate_generation(generation: dict, packet: dict, proposal: dict) -> None
     # This lazy import shares the generator's public projection without importing
     # the optional provider SDK or making a request. All providers must satisfy
     # the same content checks; test fixtures receive no provenance exemption.
-    from memos.skill_drafting.generation import assert_public_json, build_messages
+    from memos.skill_drafting.generation import (
+        REVISION_BUDGET_PROFILE,
+        assert_public_json,
+        build_messages,
+        request_identity,
+    )
 
     _keys(
         generation,
@@ -557,10 +562,14 @@ def _validate_generation(generation: dict, packet: dict, proposal: dict) -> None
             "usage",
             "usage_status",
             "elapsed_seconds",
-        },
+        }
+        | ({"revision_context"} if "revision_context" in generation else set())
+        | ({"request_sha256"} if "request_sha256" in generation else set()),
         "generation_fields",
     )
     _require(generation["provider"] == "openai_compatible_json", "unsupported_generation_provider")
+    if "revision_context" in generation:
+        _require(isinstance(generation["revision_context"], dict), "invalid_revision_context")
     for key in ("provider", "requested_model", "reported_model", "sdk_version"):
         _text(generation.get(key), limit=300)
     for key in ("prompt_sha256", "schema_sha256", "response_sha256", "service_identity"):
@@ -577,18 +586,32 @@ def _validate_generation(generation: dict, packet: dict, proposal: dict) -> None
         "invalid_generation_elapsed",
     )
     parameters = generation["parameters"]
+    profile = parameters.get("budget_profile") if isinstance(parameters, dict) else None
     _keys(
         parameters,
-        {"timeout_seconds", "max_tokens", "temperature", "max_retries", "tools"},
+        {"timeout_seconds", "max_tokens", "temperature", "max_retries", "tools"}
+        | ({"budget_profile"} if profile is not None else set()),
         "generation_parameter_fields",
     )
+    _require(profile in (None, REVISION_BUDGET_PROFILE), "invalid_generation_budget_profile")
+    _require(
+        (profile is not None) == ("request_sha256" in generation)
+        and (profile is None or isinstance(generation.get("revision_context"), dict)),
+        "invalid_generation_budget_profile",
+    )
+    if profile is not None:
+        _require(
+            generation["request_sha256"] == request_identity(generation),
+            "generation_request_mismatch",
+        )
     timeout = parameters["timeout_seconds"]
     _require(
         type(timeout) in (int, float) and math.isfinite(timeout) and 0 < timeout <= 300,
         "invalid_generation_timeout",
     )
     _require(
-        type(parameters["max_tokens"]) is int and 1 <= parameters["max_tokens"] <= 16000,
+        type(parameters["max_tokens"]) is int
+        and 1 <= parameters["max_tokens"] <= (32000 if profile else 16000),
         "invalid_generation_token_limit",
     )
     _require(
@@ -602,8 +625,13 @@ def _validate_generation(generation: dict, packet: dict, proposal: dict) -> None
     usage = generation["usage"]
     _require(
         isinstance(usage, dict)
-        and set(usage) <= {"prompt_tokens", "completion_tokens", "total_tokens"}
-        and all(type(value) is int and value >= 0 for value in usage.values()),
+        and set(usage) <= {"prompt_tokens", "completion_tokens", "total_tokens", "reasoning_tokens"}
+        and all(type(value) is int and value >= 0 for value in usage.values())
+        and (
+            "reasoning_tokens" not in usage
+            or "completion_tokens" not in usage
+            or usage["reasoning_tokens"] <= usage["completion_tokens"]
+        ),
         "invalid_generation_usage",
     )
     _require(
@@ -632,7 +660,7 @@ def _validate_generation(generation: dict, packet: dict, proposal: dict) -> None
     _require(
         hash_json(generation["messages"])
         == generation["prompt_sha256"]
-        == hash_json(build_messages(packet)),
+        == hash_json(build_messages(packet, revision_context=generation.get("revision_context"))),
         "generation_prompt_mismatch",
     )
     response = generation["response_content"]

@@ -41,7 +41,15 @@ def read_config(path: Path) -> dict:
     require(isinstance(value["projects"], list) and 0 < len(value["projects"]) <= 20)
     seen, graph_projects = set(), set()
     for project in value["projects"]:
-        require(set(project) == {"projectId", "graphProject", "candidates"})
+        require(
+            {"projectId", "graphProject", "candidates"}
+            <= set(project)
+            <= {"projectId", "graphProject", "candidates", "experiments"}
+        )
+        experiments = project.get("experiments", [])
+        require(isinstance(experiments, list) and len(experiments) <= 20)
+        require(all(isinstance(path, str) and Path(path).is_absolute() for path in experiments))
+        require(len(set(experiments)) == len(experiments))
         require(
             isinstance(project["projectId"], str)
             and project["projectId"]
@@ -203,9 +211,13 @@ def build_service(config):
                         reason="Bind the fixed host projection; prior validation records remain immutable.",
                     )
             projects[setting["projectId"]] = Project(repo, sources)
-        return SkillService(
+        service = SkillService(
             projects, Path(config["artifactsRoot"]), run_config, runtime["providerEnvironment"]
         )
+        service.configure_experiments(
+            {p["projectId"]: p.get("experiments", []) for p in config["projects"]}
+        )
+        return service
     except Exception:
         for repo in repositories:
             repo.close()

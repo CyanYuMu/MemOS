@@ -68,8 +68,110 @@ class SkillService:
         )
         self._lock = threading.RLock()
         self._active = {}
+        self.experiments = None
+
+    def configure_experiments(self, registrations):
+        from memos.skill_experiments.controller import ExperimentController
+
+        self.experiments = ExperimentController(
+            registrations,
+            self.runtime_config,
+            self.provider,
+            executor=self.executor,
+            authorize=self._experiment_authorize,
+            on_validation=self._experiment_validation,
+        )
+
+    def _experiment_authorize(self, project_id, manifest):
+        from memos.skill_drafting.domain import hash_json
+
+        project = self._project(project_id)
+        detail = project.repository.get_revision(manifest["skillId"], manifest["revision"])
+        packet = self._sources(project, detail)
+        require(
+            sorted(packet["watermark"]) == manifest["sourceWatermark"],
+            "source_watermark_changed",
+            409,
+        )
+        require(
+            detail["candidate"]["content_hash"] == manifest["contentHash"]
+            and export_identity(detail["candidate"]) == manifest["projection"],
+            "artifact_mismatch",
+            409,
+        )
+        require(
+            detail["management"]["state"] not in {"blocked", "paused", "withdrawn"},
+            "not_ready",
+            422,
+        )
+        return hash_json(
+            {
+                k: detail["management"].get(k)
+                for k in ("state", "sequence", "exportHash", "challenges")
+            }
+        )
+
+    def _experiment_validation(self, project_id, manifest, row, output):
+        from memos.skill_experiments.manifest import read_json, sha
+
+        report = read_json(output / "report.json")
+        context = report["run_context"]
+        status = row["status"] if row["status"] in {"passed", "failed"} else "unknown"
+        accepted = row["taskAccepted"] is True and row["receiptVerified"] is True
+        validation = {
+            "kind": "independent_task",
+            "status": status,
+            "contentHash": manifest["contentHash"],
+            "exportHash": manifest["projection"]["exportHash"],
+            "caseId": row["caseId"],
+            "caseRevision": context["case_revision"],
+            "lineageId": context["lineage_id"],
+            "split": "holdout",
+            "runId": context["run_id"],
+            "attemptId": context["attempt_id"],
+            "taskResult": {
+                "status": "passed"
+                if accepted
+                else "failed"
+                if report.get("task_status") == "failed"
+                else "unknown",
+                "accepted": accepted,
+                "receiptMatches": row["receiptVerified"],
+            },
+            "skillUsage": {
+                "loading": "verified" if row["loading"] == "verified" else "unknown",
+                "capture": row["capture"]
+                if row["capture"] in {"complete", "partial"}
+                else "unknown",
+                "usageReview": "unreviewed",
+                "declaredRuleIds": row.get("declaredRuleIds", []),
+                "endedAdmission": "allowed",
+            },
+            "receiptVerified": row["receiptVerified"],
+            "loadVerified": row["loading"] == "verified",
+            "branchCoverage": [],
+            "boundaryCoverage": [],
+            "purpose": "actual",
+            "scope": {
+                "caseIds": [c["caseId"] for c in manifest["cases"]],
+                "agent": "claude_code",
+                "mode": "controlled_task",
+            },
+        }
+        if row["receiptVerified"]:
+            receipt = Path(report["receipt"])
+            validation["receipt"] = {"uri": receipt.as_uri(), "sha256": sha(receipt)}
+        self._project(project_id).repository.record_validation(
+            manifest["skillId"],
+            manifest["revision"],
+            report=validation,
+            actor="host_independent_experiment",
+            operation_id="experiment-" + manifest["experimentId"][:32] + "-" + row["caseId"],
+        )
 
     def close(self):
+        if self.experiments is not None:
+            self.experiments.close()
         self.executor.shutdown(wait=True)
         for project in self.projects.values():
             project.repository.close()
@@ -109,6 +211,19 @@ class SkillService:
     def call(self, action, body, actor):
         project = self._project(body["projectId"])
         repo = project.repository
+        if action in {"experiments_list", "experiment_detail", "experiment_start"}:
+            if self.experiments is None and action == "experiments_list":
+                return {"items": [], "total": 0}
+            require(self.experiments is not None, "experiment_not_found", 404)
+            if action == "experiments_list":
+                return self.experiments.list(body["projectId"])
+            if action == "experiment_detail":
+                return self.experiments.detail(body["projectId"], body["experimentId"])
+            with self._lock:
+                require(not self._active, "busy", 409)
+                return self.experiments.start(
+                    body["projectId"], body["experimentId"], body["operationId"], actor
+                )
         if action == "list":
             return public(repo.list_candidates(body.get("query", "")))
         if action == "job":
@@ -227,6 +342,7 @@ class SkillService:
                 require(previous == payload, "operation_conflict", 409)
                 return public(job)
             require(not self._active, "busy", 409)
+            require(self.experiments is None or not self.experiments.busy, "busy", 409)
             job = project.repository.create_job(
                 skill_id,
                 revision,
