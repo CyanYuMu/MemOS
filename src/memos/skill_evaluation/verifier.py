@@ -1,4 +1,4 @@
-"""Execute trusted dev oracles against sealed candidates and bind their results.
+"""Execute trusted task oracles against sealed candidates and bind their results.
 
 This is a local verification harness, not a security sandbox for hostile Python.
 Receipts assume the collector and artifact directory are trusted.
@@ -25,12 +25,18 @@ from importlib.metadata import distributions
 from pathlib import Path
 from typing import Any
 
-from memos.skill_evaluation.cases import CaseSpec, get_case
+from memos.skill_evaluation.cases import CaseSpec
 from memos.skill_evaluation.snapshots import SnapshotStore, snapshot_fingerprint
+from memos.skill_evaluation.tasks import (
+    candidate_policy_violations,
+    case_digest,
+    get_case,
+    score_result,
+)
 
 
-VALIDATOR_VERSION = "0.1"
-SCHEMA_VERSION = 1
+VALIDATOR_VERSION = "0.2"
+SCHEMA_VERSION = 2
 
 
 @dataclass(frozen=True)
@@ -61,7 +67,7 @@ def _validator_digest() -> str:
         _json_bytes(
             {
                 name: _digest((directory / name).read_bytes())
-                for name in ("verifier.py", "snapshots.py")
+                for name in ("verifier.py", "snapshots.py", "tasks.py", "cases.py")
             }
         )
     )
@@ -92,6 +98,10 @@ def _case_identity(case: CaseSpec) -> dict[str, str]:
         "split": case.split,
         "lineage_id": case.lineage_id,
     }
+
+
+def _initial_origin(case: CaseSpec) -> str:
+    return "registered_dev_fixture" if case.split == "dev" else f"registered_{case.split}_task"
 
 
 def _write_json(path: Path, value: Any) -> None:
@@ -198,7 +208,12 @@ def _execute(oracle: Path, candidate: Path, report: Path, job: Path, timeout: fl
 
 
 def _assess(
-    case: CaseSpec, report: Any, execution: dict, candidate: Path, unchanged: bool
+    case: CaseSpec,
+    report: Any,
+    execution: dict,
+    candidate: Path,
+    unchanged: bool,
+    policy_violations: list[str],
 ) -> tuple[str, list, list[str]]:
     reasons = []
     if (
@@ -240,17 +255,23 @@ def _assess(
     if len(names) != len(set(names)) or set(names) != set(case.required_checks):
         reasons.append("incomplete_check_set")
     imports = report.get("imported_files", {})
-    if not isinstance(imports, dict) or set(imports) != {"caller", "fake_graph"}:
+    if not isinstance(imports, dict) or set(imports) != set(case.imported_modules):
         reasons.append("missing_import_identity")
     else:
         for name, path in imports.items():
-            if not isinstance(path, str) or Path(path) != candidate / f"{name}.py":
+            if not isinstance(path, str) or Path(path) != candidate / case.imported_modules[name]:
                 reasons.append("wrong_import_identity")
     statuses = {check["status"] for check in checks}
     expected = "error" if "error" in statuses else "failed" if "failed" in statuses else "passed"
     if execution.get("returncode") != {"passed": 0, "failed": 1, "error": 2}[expected]:
         reasons.append("exit_report_mismatch")
-    return ("error" if reasons else expected), checks, reasons
+    if reasons or expected == "error":
+        return "error", checks, reasons
+    if policy_violations:
+        return "failed", checks, [f"workspace_policy:{reason}" for reason in policy_violations]
+    if expected == "passed" and case.assessment_kind == "manual_boundary":
+        return "needs_review", checks, []
+    return expected, checks, []
 
 
 def verify_candidate(
@@ -262,7 +283,7 @@ def verify_candidate(
     attempt_id: str | None = None,
     timeout: float = 10,
 ) -> VerificationResult:
-    """Verify one captured dev candidate without changing the original directory."""
+    """Verify one captured registered candidate without changing the original directory."""
     if not math.isfinite(timeout) or timeout <= 0:
         raise ValueError("timeout must be finite and positive")
     case = get_case(case_id)
@@ -287,6 +308,7 @@ def verify_candidate(
         _initial_tree(case, work / "initial")
         initial = store.capture(work / "initial")
         restored = store.restore(snapshot.snapshot_id, work / "candidate")
+        policy_violations = candidate_policy_violations(case, restored)
         _set_writable(restored, False)
         try:
             execution = _execute(oracle, restored, report_path, job, timeout)
@@ -298,7 +320,9 @@ def verify_candidate(
                 report = json.loads(report_path.read_text(encoding="utf-8"))
             except (ValueError, OSError):
                 report = None
-            status, checks, reasons = _assess(case, report, execution, restored, unchanged)
+            status, checks, reasons = _assess(
+                case, report, execution, restored, unchanged, policy_violations
+            )
             executed_root = str(restored)
         finally:
             _set_writable(restored, True)
@@ -319,7 +343,8 @@ def verify_candidate(
         "run_id": run_id,
         "attempt_id": attempt_id,
         "initial_snapshot": initial.snapshot_id,
-        "initial_snapshot_origin": "registered_dev_fixture",
+        "initial_snapshot_origin": _initial_origin(case),
+        "asset_digest": case_digest(case),
         "candidate_snapshot": snapshot.snapshot_id,
         "contract_digest": _digest(case.contract.encode()),
         "oracle_digest": _digest(case.oracle_source.encode()),
@@ -327,6 +352,7 @@ def verify_candidate(
         "environment_digest": _digest(_json_bytes(environment)),
         "executed_candidate_root": executed_root,
         "candidate_unchanged": unchanged,
+        "workspace_policy_violations": policy_violations,
         "started_at": started,
         "finished_at": datetime.now(timezone.utc).isoformat(),
         "execution": execution,
@@ -335,6 +361,7 @@ def verify_candidate(
         "reasons": reasons,
         "artifacts": artifacts,
         "qualified_agent_experience": False,
+        "scoring": score_result(case, status),
     }
     receipt_path = job / "receipt.json"
     _write_json(receipt_path, receipt)
@@ -368,7 +395,8 @@ def check_receipt(receipt_path: Path, candidate: Path, artifact_root: Path) -> R
             "contract_digest": _digest(case.contract.encode()),
             "oracle_digest": _digest(case.oracle_source.encode()),
             "environment_digest": _digest(_json_bytes(_environment())),
-            "initial_snapshot_origin": "registered_dev_fixture",
+            "initial_snapshot_origin": _initial_origin(case),
+            "asset_digest": case_digest(case),
             "qualified_agent_experience": False,
         }
         for key, value in expected.items():
@@ -390,6 +418,10 @@ def check_receipt(receipt_path: Path, candidate: Path, artifact_root: Path) -> R
             _initial_tree(case, initial)
             if snapshot_fingerprint(initial) != receipt["initial_snapshot"]:
                 reasons.append("initial_snapshot_mismatch")
+            sealed = store.restore(receipt["candidate_snapshot"], Path(temporary) / "candidate")
+            policy_violations = candidate_policy_violations(case, sealed)
+            if policy_violations != receipt["workspace_policy_violations"]:
+                reasons.append("workspace_policy_mismatch")
         if snapshot_fingerprint(Path(candidate)) != receipt["candidate_snapshot"]:
             reasons.append("candidate_mismatch")
         references = receipt["artifacts"]
@@ -407,6 +439,7 @@ def check_receipt(receipt_path: Path, candidate: Path, artifact_root: Path) -> R
             receipt["execution"],
             Path(receipt["executed_candidate_root"]),
             receipt["candidate_unchanged"],
+            policy_violations,
         )
         if (actual_status, checks, actual_reasons) != (
             status,
@@ -414,6 +447,8 @@ def check_receipt(receipt_path: Path, candidate: Path, artifact_root: Path) -> R
             receipt["reasons"],
         ):
             reasons.append("result_mismatch")
+        if receipt.get("scoring") != score_result(case, actual_status):
+            reasons.append("scoring_mismatch")
     except (OSError, ValueError, KeyError, TypeError) as error:
         invalid = True
         reasons.append(f"invalid_receipt: {error}")
@@ -423,6 +458,8 @@ def check_receipt(receipt_path: Path, candidate: Path, artifact_root: Path) -> R
             "run_attempt_mismatch",
             "environment_integrity_mismatch",
             "oracle_artifact_mismatch",
+            "workspace_policy_mismatch",
+            "scoring_mismatch",
         }
         & set(reasons)
     )

@@ -6,7 +6,7 @@ import shutil
 
 from pathlib import Path
 
-from memos.skill_evaluation.cases import list_cases, materialize_case
+from memos.skill_evaluation.tasks import case_digest, get_case, list_cases, materialize_case
 from memos.skill_evaluation.verifier import check_receipt, verify_candidate
 
 
@@ -14,19 +14,21 @@ def _emit(value: dict) -> None:
     print(json.dumps(value, ensure_ascii=False, sort_keys=True))
 
 
-def _demo(output: Path) -> tuple[int, dict]:
+def _demo(output: Path, *, registered_tasks: bool = False) -> tuple[int, dict]:
     output = output.resolve()
     output.mkdir(parents=True, exist_ok=False)
     artifacts = output / "artifacts"
     cases = []
-    for case in list_cases():
+    specs = list_cases("source") + list_cases("holdout") if registered_tasks else list_cases()
+    for case in specs:
         results = []
         reference_receipt = None
         reference_candidate = None
+        acceptable = "needs_review" if case.assessment_kind == "manual_boundary" else "passed"
         for label, variant, expected in (
-            ("baseline", "reference", "passed"),
+            ("baseline", "baseline", acceptable),
             ("initial", "initial", "failed"),
-            ("reference", "reference", "passed"),
+            ("reference", "reference", acceptable),
             ("unsafe", "unsafe", "failed"),
         ):
             candidate = materialize_case(
@@ -45,6 +47,7 @@ def _demo(output: Path) -> tuple[int, dict]:
                     "expected_checks_satisfied": correct_failure,
                     "receipt_matches": binding.matches,
                     "receipt": str(result.receipt_path),
+                    "scoring": receipt["scoring"],
                 }
             )
             if label == "reference":
@@ -58,6 +61,9 @@ def _demo(output: Path) -> tuple[int, dict]:
         cases.append(
             {
                 "case_id": case.case_id,
+                "split": case.split,
+                "lineage_id": case.lineage_id,
+                "asset_digest": case_digest(case),
                 "results": results,
                 "changed_candidate_rejected": not stale.matches,
             }
@@ -74,7 +80,8 @@ def _demo(output: Path) -> tuple[int, dict]:
     )
     report = {
         "schema_version": 1,
-        "purpose": "verifier_self_test",
+        "purpose": "task_asset_self_test" if registered_tasks else "verifier_self_test",
+        "effectiveness_evaluation": False,
         "qualified_agent_experience": False,
         "success": success,
         "cases": cases,
@@ -94,7 +101,8 @@ def _demo(output: Path) -> tuple[int, dict]:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Skill 原型的离线任务与补丁验收")
     commands = parser.add_subparsers(dest="command", required=True)
-    commands.add_parser("list", help="列出公开 dev 合同探针")
+    listing = commands.add_parser("list", help="维护者列出固定用途的任务")
+    listing.add_argument("--split", choices=("dev", "source", "holdout", "all"), default="dev")
     prepare = commands.add_parser("prepare", help="创建初始故障任务目录")
     prepare.add_argument("case_id")
     prepare.add_argument("--workspace", type=Path, required=True)
@@ -109,6 +117,8 @@ def main(argv: list[str] | None = None) -> int:
     receipt.add_argument("--artifacts", type=Path, required=True)
     demo = commands.add_parser("demo", help="运行基线、故障、正确修复和错误修复自检")
     demo.add_argument("--output", type=Path, required=True)
+    audit = commands.add_parser("audit-tasks", help="维护者检查九个固定任务资产，不作效果实验")
+    audit.add_argument("--output", type=Path, required=True)
     args = parser.parse_args(argv)
     try:
         if args.command == "list":
@@ -121,19 +131,29 @@ def main(argv: list[str] | None = None) -> int:
                             "split": case.split,
                             "description": case.description,
                         }
-                        for case in list_cases()
+                        for case in list_cases(args.split)
                     ]
                 }
             )
         elif args.command == "prepare":
             workspace = materialize_case(args.case_id, args.workspace)
-            _emit({"case_id": args.case_id, "split": "dev", "workspace": str(workspace.resolve())})
+            case = get_case(args.case_id)
+            _emit(
+                {
+                    "case_id": args.case_id,
+                    "split": case.split,
+                    "revision": case.revision,
+                    "lineage_id": case.lineage_id,
+                    "asset_digest": case_digest(case),
+                    "workspace": str(workspace.resolve()),
+                }
+            )
         elif args.command == "verify":
             result = verify_candidate(
                 args.case_id, args.candidate, args.artifacts, timeout=args.timeout
             )
             _emit({"status": result.status, "receipt": str(result.receipt_path)})
-            return {"passed": 0, "failed": 1, "error": 2}[result.status]
+            return {"passed": 0, "failed": 1, "error": 2, "needs_review": 3}[result.status]
         elif args.command == "check-receipt":
             check = check_receipt(args.receipt, args.candidate, args.artifacts)
             _emit(
@@ -147,6 +167,10 @@ def main(argv: list[str] | None = None) -> int:
             return 0 if check.matches else 2 if check.invalid else 1
         elif args.command == "demo":
             code, summary = _demo(args.output)
+            _emit(summary)
+            return code
+        elif args.command == "audit-tasks":
+            code, summary = _demo(args.output, registered_tasks=True)
             _emit(summary)
             return code
     except (OSError, ValueError) as error:

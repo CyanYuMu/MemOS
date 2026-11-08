@@ -1,0 +1,628 @@
+{
+  "schema_version": 1,
+  "purpose": "task_asset_freeze",
+  "cases": [
+    {
+      "case_id": "holdout-ambiguous",
+      "revision": "1",
+      "split": "holdout",
+      "lineage_id": "transfer-edge-semantics-v1",
+      "related_lineages": [],
+      "assessment_kind": "manual_boundary",
+      "asset_digest": "3f45b26e8ac7324abfc3a2121577441c720918f63a6d273f102c3afe760a303d",
+      "provenance": {
+        "origin": "independently_authored_transfer_task",
+        "scenario": "关系权重缺少权威语义定义",
+        "independence_basis": "独立编写业务组件、接口合同及缺陷；未复制 S1/S2 生产路径、故障注入或补丁。与其他验证任务仅共享执行框架，不共享任务代码或故障谱系。",
+        "baseline_kind": "manually_defined_contract_fixture",
+        "historical_bug_claim": false
+      },
+      "variants": {
+        "baseline": {
+          "TASK.md": "3b9e4457d8d5fc2eb60740a842a71fc45a4980f87729cd9186aaabcaad78949f",
+          "caller.py": "4a9fa984d4f55f926ac0373e35d2f471a1f423032e33341e15d330661f10ac0d",
+          "diagnosis.json": "43ef736f7e81b82bc6b16bab68aa4ef98c1dc95df7150c644360fc79a2a12fba",
+          "fake_graph.py": "ff4706f830a66b44e6de2023d54f3daac9319c0a942b0845dd0ae5ecd38e0a4e",
+          "visible_checks.py": "3575d69df8d6f5cd2dacf644580d93cb6c8896968fccba53582d5c7d06f31e41"
+        },
+        "initial": {
+          "TASK.md": "3b9e4457d8d5fc2eb60740a842a71fc45a4980f87729cd9186aaabcaad78949f",
+          "caller.py": "4a9fa984d4f55f926ac0373e35d2f471a1f423032e33341e15d330661f10ac0d",
+          "fake_graph.py": "ff4706f830a66b44e6de2023d54f3daac9319c0a942b0845dd0ae5ecd38e0a4e",
+          "visible_checks.py": "3575d69df8d6f5cd2dacf644580d93cb6c8896968fccba53582d5c7d06f31e41"
+        },
+        "reference": {
+          "TASK.md": "3b9e4457d8d5fc2eb60740a842a71fc45a4980f87729cd9186aaabcaad78949f",
+          "caller.py": "4a9fa984d4f55f926ac0373e35d2f471a1f423032e33341e15d330661f10ac0d",
+          "diagnosis.json": "43ef736f7e81b82bc6b16bab68aa4ef98c1dc95df7150c644360fc79a2a12fba",
+          "fake_graph.py": "ff4706f830a66b44e6de2023d54f3daac9319c0a942b0845dd0ae5ecd38e0a4e",
+          "visible_checks.py": "3575d69df8d6f5cd2dacf644580d93cb6c8896968fccba53582d5c7d06f31e41"
+        },
+        "unsafe": {
+          "TASK.md": "3b9e4457d8d5fc2eb60740a842a71fc45a4980f87729cd9186aaabcaad78949f",
+          "caller.py": "b5938193bfe28ea4638d664466f3f72f7be5fa99182bc50a199bbc883fe6f6f7",
+          "diagnosis.json": "43ef736f7e81b82bc6b16bab68aa4ef98c1dc95df7150c644360fc79a2a12fba",
+          "fake_graph.py": "ff4706f830a66b44e6de2023d54f3daac9319c0a942b0845dd0ae5ecd38e0a4e",
+          "visible_checks.py": "3575d69df8d6f5cd2dacf644580d93cb6c8896968fccba53582d5c7d06f31e41"
+        }
+      }
+    },
+    {
+      "case_id": "holdout-binding",
+      "revision": "1",
+      "split": "holdout",
+      "lineage_id": "transfer-search-binding-v1",
+      "related_lineages": [],
+      "assessment_kind": "boundary_repair",
+      "asset_digest": "86e42ebf1ce0aab37c716cf937230581320526cdc8ec7090641e060d00680a7d",
+      "provenance": {
+        "origin": "independently_authored_transfer_task",
+        "scenario": "图搜索服务对象构造与依赖替换时机",
+        "independence_basis": "独立编写业务组件、接口合同及缺陷；未复制 S1/S2 生产路径、故障注入或补丁。与其他验证任务仅共享执行框架，不共享任务代码或故障谱系。",
+        "baseline_kind": "manually_defined_contract_fixture",
+        "historical_bug_claim": false
+      },
+      "variants": {
+        "baseline": {
+          "TASK.md": "4503767a92c8c29b5bb36a85f59d6d568a4ac90d6a747c7844762b82d4885fdb",
+          "caller.py": "9b8a56fc564af846101334d2d92c6b65ccfa9d60909997661d0c80c12e5376a8",
+          "fake_graph.py": "fa5085e44d7aceb467ce813a92aa9df935479cd71244cb71dc21b4164a910b98",
+          "visible_checks.py": "a2991da1133ebd8f73dacfff24b03778d46f30dbe05fc9fba235c08eebf8c3ba"
+        },
+        "initial": {
+          "TASK.md": "4503767a92c8c29b5bb36a85f59d6d568a4ac90d6a747c7844762b82d4885fdb",
+          "caller.py": "18a54f14053a5cdf7faf2500ffdc32be83575a28fef44448bdff4c4d0ba82d09",
+          "fake_graph.py": "fa5085e44d7aceb467ce813a92aa9df935479cd71244cb71dc21b4164a910b98",
+          "visible_checks.py": "a2991da1133ebd8f73dacfff24b03778d46f30dbe05fc9fba235c08eebf8c3ba"
+        },
+        "reference": {
+          "TASK.md": "4503767a92c8c29b5bb36a85f59d6d568a4ac90d6a747c7844762b82d4885fdb",
+          "caller.py": "9b8a56fc564af846101334d2d92c6b65ccfa9d60909997661d0c80c12e5376a8",
+          "fake_graph.py": "fa5085e44d7aceb467ce813a92aa9df935479cd71244cb71dc21b4164a910b98",
+          "visible_checks.py": "a2991da1133ebd8f73dacfff24b03778d46f30dbe05fc9fba235c08eebf8c3ba"
+        },
+        "unsafe": {
+          "TASK.md": "4503767a92c8c29b5bb36a85f59d6d568a4ac90d6a747c7844762b82d4885fdb",
+          "caller.py": "2cc8af192b781c49a28e462452dcfc08a66284764a70ca8079f540c60b6adce0",
+          "fake_graph.py": "fa5085e44d7aceb467ce813a92aa9df935479cd71244cb71dc21b4164a910b98",
+          "visible_checks.py": "a2991da1133ebd8f73dacfff24b03778d46f30dbe05fc9fba235c08eebf8c3ba"
+        }
+      }
+    },
+    {
+      "case_id": "holdout-deadline",
+      "revision": "1",
+      "split": "holdout",
+      "lineage_id": "transfer-traversal-deadline-v1",
+      "related_lineages": [],
+      "assessment_kind": "repair",
+      "asset_digest": "e1ed4406f9badc7e5d3a9649a6d2b45a029f5336e0f1bad5b9438ce2be2169ae",
+      "provenance": {
+        "origin": "independently_authored_transfer_task",
+        "scenario": "图遍历预算换算",
+        "independence_basis": "独立编写业务组件、接口合同及缺陷；未复制 S1/S2 生产路径、故障注入或补丁。与其他验证任务仅共享执行框架，不共享任务代码或故障谱系。",
+        "baseline_kind": "manually_defined_contract_fixture",
+        "historical_bug_claim": false
+      },
+      "variants": {
+        "baseline": {
+          "TASK.md": "d5d9875ce0f5b3b598cb7f9916107a26db08c7c8fc8051fe9edc10355fb416cd",
+          "caller.py": "409b1d710f04e8ca40cb7e82e6ba3d51c3914302374b59081f5cefc5045f56ab",
+          "fake_graph.py": "88f3337c77bc5671cfa6cd55a79cbd1e56a75b921568b1024b749fcc41c3a731",
+          "visible_checks.py": "487a7577a37a791262878d45e9e4ed26ad36d7acd78648065824d904ca24c681"
+        },
+        "initial": {
+          "TASK.md": "d5d9875ce0f5b3b598cb7f9916107a26db08c7c8fc8051fe9edc10355fb416cd",
+          "caller.py": "22ce7e03d3dc5878704b37d793817cd2e2dcf96233bc318cf7991c0da5d17e1f",
+          "fake_graph.py": "88f3337c77bc5671cfa6cd55a79cbd1e56a75b921568b1024b749fcc41c3a731",
+          "visible_checks.py": "487a7577a37a791262878d45e9e4ed26ad36d7acd78648065824d904ca24c681"
+        },
+        "reference": {
+          "TASK.md": "d5d9875ce0f5b3b598cb7f9916107a26db08c7c8fc8051fe9edc10355fb416cd",
+          "caller.py": "409b1d710f04e8ca40cb7e82e6ba3d51c3914302374b59081f5cefc5045f56ab",
+          "fake_graph.py": "88f3337c77bc5671cfa6cd55a79cbd1e56a75b921568b1024b749fcc41c3a731",
+          "visible_checks.py": "487a7577a37a791262878d45e9e4ed26ad36d7acd78648065824d904ca24c681"
+        },
+        "unsafe": {
+          "TASK.md": "d5d9875ce0f5b3b598cb7f9916107a26db08c7c8fc8051fe9edc10355fb416cd",
+          "caller.py": "22ce7e03d3dc5878704b37d793817cd2e2dcf96233bc318cf7991c0da5d17e1f",
+          "fake_graph.py": "68a0c81b2ab58b8c83ca2b88dfcfda048a95d83f0a563073899afc9d826ecee4",
+          "visible_checks.py": "487a7577a37a791262878d45e9e4ed26ad36d7acd78648065824d904ca24c681"
+        }
+      }
+    },
+    {
+      "case_id": "holdout-discount",
+      "revision": "1",
+      "split": "holdout",
+      "lineage_id": "transfer-membership-discount-v1",
+      "related_lineages": [],
+      "assessment_kind": "boundary_repair",
+      "asset_digest": "82eda6962522a914e505e210dbe65d79ddadc209527cba0c0edac5f5c7ed231c",
+      "provenance": {
+        "origin": "independently_authored_transfer_task",
+        "scenario": "会员图策略与订单金额的业务边界",
+        "independence_basis": "独立编写业务组件、接口合同及缺陷；未复制 S1/S2 生产路径、故障注入或补丁。与其他验证任务仅共享执行框架，不共享任务代码或故障谱系。",
+        "baseline_kind": "manually_defined_contract_fixture",
+        "historical_bug_claim": false
+      },
+      "variants": {
+        "baseline": {
+          "TASK.md": "a931c3e2f36e4cdbaee2c35a34a768fe44fbffa45b0853190cc84d9971276ac5",
+          "caller.py": "6ed6c59469a621f25d6d594f27fee7020570b5a4a1033eb24d354c74145dcd2e",
+          "fake_graph.py": "355b4a576e0294f98defcd1654764a8483daffe64ca0366d8243101405e382c8",
+          "visible_checks.py": "c137117c9de2dfee5a894fc5f7d1377d686690a102783ad6dd1334fac7e7ece9"
+        },
+        "initial": {
+          "TASK.md": "a931c3e2f36e4cdbaee2c35a34a768fe44fbffa45b0853190cc84d9971276ac5",
+          "caller.py": "1eee104bb85994357c2a89411ebfea8c354f0154e752cf2abbe1e9e88eaae32c",
+          "fake_graph.py": "355b4a576e0294f98defcd1654764a8483daffe64ca0366d8243101405e382c8",
+          "visible_checks.py": "c137117c9de2dfee5a894fc5f7d1377d686690a102783ad6dd1334fac7e7ece9"
+        },
+        "reference": {
+          "TASK.md": "a931c3e2f36e4cdbaee2c35a34a768fe44fbffa45b0853190cc84d9971276ac5",
+          "caller.py": "6ed6c59469a621f25d6d594f27fee7020570b5a4a1033eb24d354c74145dcd2e",
+          "fake_graph.py": "355b4a576e0294f98defcd1654764a8483daffe64ca0366d8243101405e382c8",
+          "visible_checks.py": "c137117c9de2dfee5a894fc5f7d1377d686690a102783ad6dd1334fac7e7ece9"
+        },
+        "unsafe": {
+          "TASK.md": "a931c3e2f36e4cdbaee2c35a34a768fe44fbffa45b0853190cc84d9971276ac5",
+          "caller.py": "1eee104bb85994357c2a89411ebfea8c354f0154e752cf2abbe1e9e88eaae32c",
+          "fake_graph.py": "e51a204f0c8d2b40bf326311687e7b6e2124f727b6a4e398d93fe6a9bd09ce5f",
+          "visible_checks.py": "c137117c9de2dfee5a894fc5f7d1377d686690a102783ad6dd1334fac7e7ece9"
+        }
+      }
+    },
+    {
+      "case_id": "holdout-fixture",
+      "revision": "1",
+      "split": "holdout",
+      "lineage_id": "transfer-cursor-fixture-v1",
+      "related_lineages": [],
+      "assessment_kind": "boundary_repair",
+      "asset_digest": "1d2ed2d78a20c65cebf83b7acdebd3fd6473d69de1860524b692f8617fd4f5ed",
+      "provenance": {
+        "origin": "independently_authored_transfer_task",
+        "scenario": "图游标消费测试的 fixture 生命周期",
+        "independence_basis": "独立编写业务组件、接口合同及缺陷；未复制 S1/S2 生产路径、故障注入或补丁。与其他验证任务仅共享执行框架，不共享任务代码或故障谱系。",
+        "baseline_kind": "manually_defined_contract_fixture",
+        "historical_bug_claim": false
+      },
+      "variants": {
+        "baseline": {
+          "TASK.md": "d3ab7ca3ab1cdeb8e839e5f941f06f52f97fc44f2e780454ab2fa0b84116ed9f",
+          "caller.py": "1220ccc92125ce4bcce9e2a8ee482a95d632ce0fa121f2d6779c8ff3c85d6038",
+          "conftest.py": "01980766eb7d3733b97bb4582311aa9d632acc443000578f5e93ea6ebc96e8b7",
+          "fake_graph.py": "57e29155b6574cc5dd9f934c66e5a0f0134707a91c031be3868c817811bdaf29",
+          "test_visible.py": "44ba9b5ad6b21861906e6c52aa57844e129492f90fe38db161bc827a51900d44",
+          "visible_checks.py": "de4327262b77818f8b2197f87cfdb31f6e321ffb8feb550bde4b6872976c4dff"
+        },
+        "initial": {
+          "TASK.md": "d3ab7ca3ab1cdeb8e839e5f941f06f52f97fc44f2e780454ab2fa0b84116ed9f",
+          "caller.py": "1220ccc92125ce4bcce9e2a8ee482a95d632ce0fa121f2d6779c8ff3c85d6038",
+          "conftest.py": "4b26a84562d23cb94e86db48b1a01d42e0f1751fe12a109ff9ddb2f7f37a3e6d",
+          "fake_graph.py": "57e29155b6574cc5dd9f934c66e5a0f0134707a91c031be3868c817811bdaf29",
+          "test_visible.py": "44ba9b5ad6b21861906e6c52aa57844e129492f90fe38db161bc827a51900d44",
+          "visible_checks.py": "de4327262b77818f8b2197f87cfdb31f6e321ffb8feb550bde4b6872976c4dff"
+        },
+        "reference": {
+          "TASK.md": "d3ab7ca3ab1cdeb8e839e5f941f06f52f97fc44f2e780454ab2fa0b84116ed9f",
+          "caller.py": "1220ccc92125ce4bcce9e2a8ee482a95d632ce0fa121f2d6779c8ff3c85d6038",
+          "conftest.py": "01980766eb7d3733b97bb4582311aa9d632acc443000578f5e93ea6ebc96e8b7",
+          "fake_graph.py": "57e29155b6574cc5dd9f934c66e5a0f0134707a91c031be3868c817811bdaf29",
+          "test_visible.py": "44ba9b5ad6b21861906e6c52aa57844e129492f90fe38db161bc827a51900d44",
+          "visible_checks.py": "de4327262b77818f8b2197f87cfdb31f6e321ffb8feb550bde4b6872976c4dff"
+        },
+        "unsafe": {
+          "TASK.md": "d3ab7ca3ab1cdeb8e839e5f941f06f52f97fc44f2e780454ab2fa0b84116ed9f",
+          "caller.py": "1220ccc92125ce4bcce9e2a8ee482a95d632ce0fa121f2d6779c8ff3c85d6038",
+          "conftest.py": "4b26a84562d23cb94e86db48b1a01d42e0f1751fe12a109ff9ddb2f7f37a3e6d",
+          "fake_graph.py": "6fbb5e8dcb818c18c110c91a243f2aff2aec4b6a0069bc66f991327cd5d28606",
+          "test_visible.py": "44ba9b5ad6b21861906e6c52aa57844e129492f90fe38db161bc827a51900d44",
+          "visible_checks.py": "de4327262b77818f8b2197f87cfdb31f6e321ffb8feb550bde4b6872976c4dff"
+        }
+      }
+    },
+    {
+      "case_id": "holdout-migration",
+      "revision": "1",
+      "split": "holdout",
+      "lineage_id": "transfer-export-migration-v1",
+      "related_lineages": [],
+      "assessment_kind": "repair",
+      "asset_digest": "92d4cbe5689afcca610ef10ee96f6fbf796c97b26d1b2e9c06ea3eeb926f0595",
+      "provenance": {
+        "origin": "independently_authored_transfer_task",
+        "scenario": "图节点分页导出协议迁移",
+        "independence_basis": "独立编写业务组件、接口合同及缺陷；未复制 S1/S2 生产路径、故障注入或补丁。与其他验证任务仅共享执行框架，不共享任务代码或故障谱系。",
+        "baseline_kind": "manually_defined_contract_fixture",
+        "historical_bug_claim": false
+      },
+      "variants": {
+        "baseline": {
+          "TASK.md": "32036c4bb571aca093a0af09ed4f132e2cf7e3c4a7a629867382315c7be74ea4",
+          "caller.py": "0b9aadc04fc596be8708a16f297696bb3b4bed56d5b2f512487a7131bd4dbec3",
+          "fake_graph.py": "4c70c0e9d0e9fcb355e69ecec2a689048f534019f971fb4c6d87d31a50174493",
+          "visible_checks.py": "3ffdbe83c76f83d7be6383b835a4af362e1d72cd0476c63425a98c8ac2b8712c"
+        },
+        "initial": {
+          "TASK.md": "32036c4bb571aca093a0af09ed4f132e2cf7e3c4a7a629867382315c7be74ea4",
+          "caller.py": "5b693280146eafd25e09b60b6c162c835c96a0070b7ebb717ada6c9fe80c964a",
+          "fake_graph.py": "1acc7edd3de6f2fc517107bccdd5a9a85d61332d47fbf89d7d8c158b8e63c7c4",
+          "visible_checks.py": "3ffdbe83c76f83d7be6383b835a4af362e1d72cd0476c63425a98c8ac2b8712c"
+        },
+        "reference": {
+          "TASK.md": "32036c4bb571aca093a0af09ed4f132e2cf7e3c4a7a629867382315c7be74ea4",
+          "caller.py": "0b9aadc04fc596be8708a16f297696bb3b4bed56d5b2f512487a7131bd4dbec3",
+          "fake_graph.py": "4c70c0e9d0e9fcb355e69ecec2a689048f534019f971fb4c6d87d31a50174493",
+          "visible_checks.py": "3ffdbe83c76f83d7be6383b835a4af362e1d72cd0476c63425a98c8ac2b8712c"
+        },
+        "unsafe": {
+          "TASK.md": "32036c4bb571aca093a0af09ed4f132e2cf7e3c4a7a629867382315c7be74ea4",
+          "caller.py": "bf156e01d77dcf55ab05214934abed23114a786612e5026af749a6d71e774095",
+          "fake_graph.py": "1acc7edd3de6f2fc517107bccdd5a9a85d61332d47fbf89d7d8c158b8e63c7c4",
+          "visible_checks.py": "3ffdbe83c76f83d7be6383b835a4af362e1d72cd0476c63425a98c8ac2b8712c"
+        }
+      }
+    },
+    {
+      "case_id": "holdout-record",
+      "revision": "1",
+      "split": "holdout",
+      "lineage_id": "transfer-catalog-record-v1",
+      "related_lineages": [],
+      "assessment_kind": "repair",
+      "asset_digest": "4beb232ea2807720c91f1fe077e2fd7182504dc6dc760d2e7f636aad64c091d7",
+      "provenance": {
+        "origin": "independently_authored_transfer_task",
+        "scenario": "图目录条目摘要",
+        "independence_basis": "独立编写业务组件、接口合同及缺陷；未复制 S1/S2 生产路径、故障注入或补丁。与其他验证任务仅共享执行框架，不共享任务代码或故障谱系。",
+        "baseline_kind": "manually_defined_contract_fixture",
+        "historical_bug_claim": false
+      },
+      "variants": {
+        "baseline": {
+          "TASK.md": "49b639cf3689bb3435cfc9bcbc956f7cc62ffaa9c1a61483d7c78bbdbbe83552",
+          "caller.py": "d6633964515604ce4e0c0da738e8a7ca8f02008fbb1defcfa949053cf20ebd2d",
+          "fake_graph.py": "95f4c7565ae6b03d6bd4b1ae02886a71e856977abaf99552cb7805a7ce4535f3",
+          "visible_checks.py": "a31cf7b9fc7312f75953dce941567a90559983cab428197a40e7ba35a218e048"
+        },
+        "initial": {
+          "TASK.md": "49b639cf3689bb3435cfc9bcbc956f7cc62ffaa9c1a61483d7c78bbdbbe83552",
+          "caller.py": "d6633964515604ce4e0c0da738e8a7ca8f02008fbb1defcfa949053cf20ebd2d",
+          "fake_graph.py": "ac766aa5f4623e738b58be995bb73cff0dd30ee5aa52356a988cb1a44d00e0b5",
+          "visible_checks.py": "a31cf7b9fc7312f75953dce941567a90559983cab428197a40e7ba35a218e048"
+        },
+        "reference": {
+          "TASK.md": "49b639cf3689bb3435cfc9bcbc956f7cc62ffaa9c1a61483d7c78bbdbbe83552",
+          "caller.py": "d6633964515604ce4e0c0da738e8a7ca8f02008fbb1defcfa949053cf20ebd2d",
+          "fake_graph.py": "95f4c7565ae6b03d6bd4b1ae02886a71e856977abaf99552cb7805a7ce4535f3",
+          "visible_checks.py": "a31cf7b9fc7312f75953dce941567a90559983cab428197a40e7ba35a218e048"
+        },
+        "unsafe": {
+          "TASK.md": "49b639cf3689bb3435cfc9bcbc956f7cc62ffaa9c1a61483d7c78bbdbbe83552",
+          "caller.py": "e96ab30ee997de0dac6821ea58fcf40baa7126426582d7c960e0ed084d3b097e",
+          "fake_graph.py": "ac766aa5f4623e738b58be995bb73cff0dd30ee5aa52356a988cb1a44d00e0b5",
+          "visible_checks.py": "a31cf7b9fc7312f75953dce941567a90559983cab428197a40e7ba35a218e048"
+        }
+      }
+    },
+    {
+      "case_id": "source-dream-update",
+      "revision": "1",
+      "split": "source",
+      "lineage_id": "memos-dream-update-positional-5a595b4a",
+      "related_lineages": [
+        "dev-contract-signature-v1"
+      ],
+      "assessment_kind": "repair",
+      "asset_digest": "2ba646766107575c49ada1e782b3691ab58d76f240e044b6e729146b937b2bd6",
+      "provenance": {
+        "kind": "production_symbol_copy",
+        "commit": "5a595b4a06676c8d259412ae75048fdb668c482c",
+        "license": "Apache-2.0; derived from the MemOS repository",
+        "symbols": [
+          {
+            "path": "src/memos/dream/pipeline/persistence.py",
+            "symbol": "DreamPersistence",
+            "destination": "caller.py",
+            "file_sha256": "af11ad8367b4042817cf8cc0c3bc1b26435ec0adb41c89d5914b8563b8b7836f",
+            "symbol_sha256": "3c84e397555b82e853f75f8985b781c25d802adaa65c7d3449fdfc423e8265f8"
+          },
+          {
+            "path": "src/memos/utils.py",
+            "symbol": "utc_now",
+            "destination": "support.py",
+            "file_sha256": "01412937319187c6b4d86cc12e9f4b77832b98abc82a8fb167bcdcb01fc6789b",
+            "symbol_sha256": "71bf33de3cb5177c869affc1c411ce507bf21109cb4e8cbcf72beac9be4f098c"
+          },
+          {
+            "path": "src/memos/utils.py",
+            "symbol": "utc_now_iso",
+            "destination": "support.py",
+            "file_sha256": "01412937319187c6b4d86cc12e9f4b77832b98abc82a8fb167bcdcb01fc6789b",
+            "symbol_sha256": "cb0d28a2b45bded9663e329234cc3f8b1b1a0b40c2b85f95706b0aa28918c3eb"
+          },
+          {
+            "path": "src/memos/dream/types.py",
+            "symbol": "TargetMemoryType",
+            "destination": "support.py",
+            "file_sha256": "609846246ab63d1ad57b408f1fb123a90f46af5e99f372be8e370c15dee17a98",
+            "symbol_sha256": "5ab7437f9bec46ba1fc793f16c30a6d3f5b5fad01d372604cb38b1839efeea46"
+          },
+          {
+            "path": "src/memos/dream/types.py",
+            "symbol": "DreamActionType",
+            "destination": "support.py",
+            "file_sha256": "609846246ab63d1ad57b408f1fb123a90f46af5e99f372be8e370c15dee17a98",
+            "symbol_sha256": "f2f7f9b3fb31e8e029289244033454e942d1fa4cc2317d923834bff17c6651ef"
+          },
+          {
+            "path": "src/memos/dream/types.py",
+            "symbol": "DreamAction",
+            "destination": "support.py",
+            "file_sha256": "609846246ab63d1ad57b408f1fb123a90f46af5e99f372be8e370c15dee17a98",
+            "symbol_sha256": "4c5bd000fcd45e84f6290d1efd8adcf48f5e4f41e7dec4668ad1188b75949c65"
+          },
+          {
+            "path": "src/memos/dream/types.py",
+            "symbol": "DreamSignalSnapshot",
+            "destination": "support.py",
+            "file_sha256": "609846246ab63d1ad57b408f1fb123a90f46af5e99f372be8e370c15dee17a98",
+            "symbol_sha256": "65022831d1c505f03630b55eeec0110ea9b6b40b40bf3bc00f00a9dafbf2e115"
+          },
+          {
+            "path": "src/memos/dream/types.py",
+            "symbol": "DreamDiaryEntry",
+            "destination": "support.py",
+            "file_sha256": "609846246ab63d1ad57b408f1fb123a90f46af5e99f372be8e370c15dee17a98",
+            "symbol_sha256": "be5c93178c65cb03f53bacfd87d46e997af1f514ecbf8ff2f4aefc7321c3f03b"
+          },
+          {
+            "path": "src/memos/dream/types.py",
+            "symbol": "DreamResult",
+            "destination": "support.py",
+            "file_sha256": "609846246ab63d1ad57b408f1fb123a90f46af5e99f372be8e370c15dee17a98",
+            "symbol_sha256": "34d67b9d86572b6e7577d33289bf193d491aaca872392e6b68048b6c9736677e"
+          },
+          {
+            "path": "src/memos/dream/embedding.py",
+            "symbol": "embed_text",
+            "destination": "support.py",
+            "file_sha256": "1902e7a944c4248ffe3d30897b5b4a7a51e57e668d6e0a136a3b527a049c13e2",
+            "symbol_sha256": "2b6634a7530082c7eae3cae620263214f71ebef535d5fa146c5e2caa75004002"
+          },
+          {
+            "path": "src/memos/dream/hook_defs.py",
+            "symbol": "DreamH",
+            "destination": "support.py",
+            "file_sha256": "fe9513bde70bdad7959cae0c523ba7081c82ea22651c05b82cbe25b1fb4f8e6c",
+            "symbol_sha256": "58ddc4c6ff775ffcb2d86b2989738e3c77b4b9357ba0014730d8cbc664f211e2"
+          }
+        ],
+        "adaptations": [
+          "Production definitions are copied verbatim; imports target local support.py.",
+          "Logging uses Python logging; UTC helpers and Pydantic models are original definitions.",
+          "Graph and embedder are explicit local test doubles; no HTTP, graph or vector service.",
+          "Dream trigger_hook is an explicit no-op; plugin integration is outside this task.",
+          "Initial task injects one extra positional content argument in _write_memory_update.",
+          "FakeGraphDB derives from tests/dream/test_persistence.py and checks field mapping type."
+        ],
+        "qualified_agent_experience": false
+      },
+      "variants": {
+        "baseline": {
+          "TASK.md": "047081d3b3527bd95e73aff2e70b75be3ea2396577cfd99a728b8116e3d712b9",
+          "caller.py": "644f611916bce7286a98ff5f99af0d91ef258be971350a50b95f75bfaf042fb7",
+          "fake_graph.py": "0ebff28940a835bef68db8ebd18107e9910e1911a1776c6494430a0c72706d3a",
+          "support.py": "001c2bc28a229a5a4b27583b2c48a5f4f2d1a071c97c6aca45fb11a06de22bae",
+          "visible_checks.py": "a834812f1f163328ad6a3dab28bcf83fb96a2e17fde3dc869df396648c43ef72"
+        },
+        "initial": {
+          "TASK.md": "047081d3b3527bd95e73aff2e70b75be3ea2396577cfd99a728b8116e3d712b9",
+          "caller.py": "e8ab996b1ccbba8e804a3b9c20a480eeff5b4a88d8f1a539f0f9ed2680611734",
+          "fake_graph.py": "0ebff28940a835bef68db8ebd18107e9910e1911a1776c6494430a0c72706d3a",
+          "support.py": "001c2bc28a229a5a4b27583b2c48a5f4f2d1a071c97c6aca45fb11a06de22bae",
+          "visible_checks.py": "a834812f1f163328ad6a3dab28bcf83fb96a2e17fde3dc869df396648c43ef72"
+        },
+        "reference": {
+          "TASK.md": "047081d3b3527bd95e73aff2e70b75be3ea2396577cfd99a728b8116e3d712b9",
+          "caller.py": "644f611916bce7286a98ff5f99af0d91ef258be971350a50b95f75bfaf042fb7",
+          "fake_graph.py": "0ebff28940a835bef68db8ebd18107e9910e1911a1776c6494430a0c72706d3a",
+          "support.py": "001c2bc28a229a5a4b27583b2c48a5f4f2d1a071c97c6aca45fb11a06de22bae",
+          "visible_checks.py": "a834812f1f163328ad6a3dab28bcf83fb96a2e17fde3dc869df396648c43ef72"
+        },
+        "unsafe": {
+          "TASK.md": "047081d3b3527bd95e73aff2e70b75be3ea2396577cfd99a728b8116e3d712b9",
+          "caller.py": "e8ab996b1ccbba8e804a3b9c20a480eeff5b4a88d8f1a539f0f9ed2680611734",
+          "fake_graph.py": "3f44f84ea6a5248818e34c6a2f0454e40484c98d1ae08e77ac710f0d2dad013d",
+          "support.py": "001c2bc28a229a5a4b27583b2c48a5f4f2d1a071c97c6aca45fb11a06de22bae",
+          "visible_checks.py": "a834812f1f163328ad6a3dab28bcf83fb96a2e17fde3dc869df396648c43ef72"
+        }
+      }
+    },
+    {
+      "case_id": "source-scoped-update",
+      "revision": "1",
+      "split": "source",
+      "lineage_id": "memos-api-update-fake-scope-5a595b4a",
+      "related_lineages": [
+        "dev-contract-tenant-v1"
+      ],
+      "assessment_kind": "repair",
+      "asset_digest": "226372df80da7cee04358aed6de9b42f47c50702c71b8031518318637f62d955",
+      "provenance": {
+        "kind": "production_symbol_copy",
+        "commit": "5a595b4a06676c8d259412ae75048fdb668c482c",
+        "license": "Apache-2.0; derived from the MemOS repository",
+        "symbols": [
+          {
+            "path": "src/memos/api/handlers/cloud_handler.py",
+            "symbol": "RESERVED_UPDATE_METADATA_KEYS",
+            "destination": "caller.py",
+            "file_sha256": "814eac0f3b9ff1cfe6a20a1043c50f81adb7ed40f6b465fd1865f76888a08e1e",
+            "symbol_sha256": "e8027850823b67590299e6dd67663e18a135c9bb9a9e065c0c98cf8959fde83c"
+          },
+          {
+            "path": "src/memos/api/handlers/cloud_handler.py",
+            "symbol": "_embed",
+            "destination": "caller.py",
+            "file_sha256": "814eac0f3b9ff1cfe6a20a1043c50f81adb7ed40f6b465fd1865f76888a08e1e",
+            "symbol_sha256": "c6a8c9e4b98c6a2aa3c225d3d0cdfbfdb76c8bf903901b9a9d04c2a8af2c019b"
+          },
+          {
+            "path": "src/memos/api/handlers/cloud_handler.py",
+            "symbol": "_resolve_tenant",
+            "destination": "caller.py",
+            "file_sha256": "814eac0f3b9ff1cfe6a20a1043c50f81adb7ed40f6b465fd1865f76888a08e1e",
+            "symbol_sha256": "c4898b87fad4bf2c0e032c2976f65dd221ad2486ede348d62377d10b064a774c"
+          },
+          {
+            "path": "src/memos/api/handlers/cloud_handler.py",
+            "symbol": "handle_update_memory",
+            "destination": "caller.py",
+            "file_sha256": "814eac0f3b9ff1cfe6a20a1043c50f81adb7ed40f6b465fd1865f76888a08e1e",
+            "symbol_sha256": "19706a58bc9d1a3578ebf72b73acde09f15029e97921d6b50f144bb9bcef669f"
+          },
+          {
+            "path": "src/memos/utils.py",
+            "symbol": "utc_now",
+            "destination": "support.py",
+            "file_sha256": "01412937319187c6b4d86cc12e9f4b77832b98abc82a8fb167bcdcb01fc6789b",
+            "symbol_sha256": "71bf33de3cb5177c869affc1c411ce507bf21109cb4e8cbcf72beac9be4f098c"
+          },
+          {
+            "path": "src/memos/utils.py",
+            "symbol": "utc_now_iso",
+            "destination": "support.py",
+            "file_sha256": "01412937319187c6b4d86cc12e9f4b77832b98abc82a8fb167bcdcb01fc6789b",
+            "symbol_sha256": "cb0d28a2b45bded9663e329234cc3f8b1b1a0b40c2b85f95706b0aa28918c3eb"
+          },
+          {
+            "path": "src/memos/api/product_models.py",
+            "symbol": "BaseRequest",
+            "destination": "support.py",
+            "file_sha256": "26c51a315b21b9c03dc1fd38967a450484db88b9ee6e5c63eb6df164e645741a",
+            "symbol_sha256": "b205354cd60920f3e40b7f8db699c152011c671d111f7cc3e52a7720b8ab1c46"
+          },
+          {
+            "path": "src/memos/api/product_models.py",
+            "symbol": "BaseResponse",
+            "destination": "support.py",
+            "file_sha256": "26c51a315b21b9c03dc1fd38967a450484db88b9ee6e5c63eb6df164e645741a",
+            "symbol_sha256": "70180f206ee35a21037fbefef73db33f2c1337475c2f5f62398e65f9a06b271b"
+          },
+          {
+            "path": "src/memos/api/product_models.py",
+            "symbol": "UpdateMemoryRequest",
+            "destination": "support.py",
+            "file_sha256": "26c51a315b21b9c03dc1fd38967a450484db88b9ee6e5c63eb6df164e645741a",
+            "symbol_sha256": "d4fcdc55983ab25bf399e8432d603183d381d40cee389da8fe2dd19e56ab2adc"
+          },
+          {
+            "path": "src/memos/api/product_models.py",
+            "symbol": "UpdateMemoryResponse",
+            "destination": "support.py",
+            "file_sha256": "26c51a315b21b9c03dc1fd38967a450484db88b9ee6e5c63eb6df164e645741a",
+            "symbol_sha256": "2095357c1b4254dc9d65177bfac8ba4c155e4cf1d83e3bdadcbe46cdc4fabcf7"
+          },
+          {
+            "path": "src/memos/api/lifecycle_rules.py",
+            "symbol": "LIFECYCLE_ACTIVATED",
+            "destination": "support.py",
+            "file_sha256": "4e20077de5d9d14c0f141bb2ab09c71fa41895cb78d53b1ec5ee315ac7853755",
+            "symbol_sha256": "e6afe2ba0da57ade0b9ddda415d8aec08a1c220de73e880c2d593ecda54ac191"
+          },
+          {
+            "path": "src/memos/api/lifecycle_rules.py",
+            "symbol": "LIFECYCLE_ARCHIVED",
+            "destination": "support.py",
+            "file_sha256": "4e20077de5d9d14c0f141bb2ab09c71fa41895cb78d53b1ec5ee315ac7853755",
+            "symbol_sha256": "fd86fd63645d153a9eec6c93e026c27e0be98ee3b4fb7013a7df44c25a89ad2f"
+          },
+          {
+            "path": "src/memos/api/lifecycle_rules.py",
+            "symbol": "LIFECYCLE_EXPIRED",
+            "destination": "support.py",
+            "file_sha256": "4e20077de5d9d14c0f141bb2ab09c71fa41895cb78d53b1ec5ee315ac7853755",
+            "symbol_sha256": "ef4dfd55ab717d49d6647bba74092ab1074c1ff512e58349ed1c1ba76d8f386b"
+          },
+          {
+            "path": "src/memos/api/lifecycle_rules.py",
+            "symbol": "LIFECYCLE_FROZEN",
+            "destination": "support.py",
+            "file_sha256": "4e20077de5d9d14c0f141bb2ab09c71fa41895cb78d53b1ec5ee315ac7853755",
+            "symbol_sha256": "c1f29cfd7936361b5252d4c8f73073a26df1dca34ca2170462b418e12fa07f1f"
+          },
+          {
+            "path": "src/memos/api/lifecycle_rules.py",
+            "symbol": "WRITABLE_STATUSES",
+            "destination": "support.py",
+            "file_sha256": "4e20077de5d9d14c0f141bb2ab09c71fa41895cb78d53b1ec5ee315ac7853755",
+            "symbol_sha256": "8e5fa253719e0a1232db54607685e65e811cf1caf9073c9ac5ba423998eb7d05"
+          },
+          {
+            "path": "src/memos/api/lifecycle_rules.py",
+            "symbol": "KNOWN_STATUSES",
+            "destination": "support.py",
+            "file_sha256": "4e20077de5d9d14c0f141bb2ab09c71fa41895cb78d53b1ec5ee315ac7853755",
+            "symbol_sha256": "e01f9f32331bbf0f8c1c181de58160b899c8bb4ba9cf8ca877d5dbeaf6a24d10"
+          },
+          {
+            "path": "src/memos/api/lifecycle_rules.py",
+            "symbol": "ALLOWED_TRANSITIONS",
+            "destination": "support.py",
+            "file_sha256": "4e20077de5d9d14c0f141bb2ab09c71fa41895cb78d53b1ec5ee315ac7853755",
+            "symbol_sha256": "ba8e5d5c58428d9bc6f2075ed945fd7e0c339f96aaa23172aca188272f6d4bf0"
+          },
+          {
+            "path": "src/memos/api/lifecycle_rules.py",
+            "symbol": "lifecycle_guard",
+            "destination": "support.py",
+            "file_sha256": "4e20077de5d9d14c0f141bb2ab09c71fa41895cb78d53b1ec5ee315ac7853755",
+            "symbol_sha256": "c4cdcd73239aae422f3625eb770baf2362499135887783f2727ef86ff35bb686"
+          }
+        ],
+        "adaptations": [
+          "Production definitions are copied verbatim; imports target local support.py.",
+          "Logging uses Python logging; UTC helpers and Pydantic models are original definitions.",
+          "Graph and embedder are explicit local test doubles; no HTTP, graph or vector service.",
+          "FakeGraph adapts tests/api/test_update_memory.py ScopedGraph to enforce both ID and tenant and copy reads.",
+          "Initial task removes the local FakeGraph get_node scope guard; production caller stays unchanged.",
+          "Vector services are absent; the task checks re-embedding metadata and graph write arguments only."
+        ],
+        "qualified_agent_experience": false
+      },
+      "variants": {
+        "baseline": {
+          "TASK.md": "8f14f8621c6ffd3afd23e30682fa07e8f13e2ec263f81d605f2c23bf462c2999",
+          "caller.py": "748e15a2a79413d3aac2f1df4d46069967b0ef0d3d36f642fc762bc9f3aea032",
+          "fake_graph.py": "84bd667e3b35e6dd46643ac817ffd20b6d93c5799a4b6d2103833af8ae4a7937",
+          "support.py": "dbbaa597dc41d1d66306db16dc7d75c0fc66d4010fdfa01b6dc00ee11a15c609",
+          "visible_checks.py": "da4dff25936a42427cb4025a60e4c9bf6dc8b015f0ac5e132ecf0d1bf12afa90"
+        },
+        "initial": {
+          "TASK.md": "8f14f8621c6ffd3afd23e30682fa07e8f13e2ec263f81d605f2c23bf462c2999",
+          "caller.py": "748e15a2a79413d3aac2f1df4d46069967b0ef0d3d36f642fc762bc9f3aea032",
+          "fake_graph.py": "834bedcc4af8059515109f68f3379e6a3cf064c2b00cd48a03014e10a624c427",
+          "support.py": "dbbaa597dc41d1d66306db16dc7d75c0fc66d4010fdfa01b6dc00ee11a15c609",
+          "visible_checks.py": "da4dff25936a42427cb4025a60e4c9bf6dc8b015f0ac5e132ecf0d1bf12afa90"
+        },
+        "reference": {
+          "TASK.md": "8f14f8621c6ffd3afd23e30682fa07e8f13e2ec263f81d605f2c23bf462c2999",
+          "caller.py": "748e15a2a79413d3aac2f1df4d46069967b0ef0d3d36f642fc762bc9f3aea032",
+          "fake_graph.py": "84bd667e3b35e6dd46643ac817ffd20b6d93c5799a4b6d2103833af8ae4a7937",
+          "support.py": "dbbaa597dc41d1d66306db16dc7d75c0fc66d4010fdfa01b6dc00ee11a15c609",
+          "visible_checks.py": "da4dff25936a42427cb4025a60e4c9bf6dc8b015f0ac5e132ecf0d1bf12afa90"
+        },
+        "unsafe": {
+          "TASK.md": "8f14f8621c6ffd3afd23e30682fa07e8f13e2ec263f81d605f2c23bf462c2999",
+          "caller.py": "748e15a2a79413d3aac2f1df4d46069967b0ef0d3d36f642fc762bc9f3aea032",
+          "fake_graph.py": "ce14bfc530dc268e8c321398a15e54b8eb7be45bce153711d40578cadca84d4d",
+          "support.py": "dbbaa597dc41d1d66306db16dc7d75c0fc66d4010fdfa01b6dc00ee11a15c609",
+          "visible_checks.py": "da4dff25936a42427cb4025a60e4c9bf6dc8b015f0ac5e132ecf0d1bf12afa90"
+        }
+      }
+    }
+  ]
+}
