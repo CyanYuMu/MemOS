@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from textwrap import dedent
 
@@ -21,6 +21,15 @@ class CaseSpec:
     oracle_source: str
     required_checks: tuple[str, ...]
     expected_failure_checks: dict[str, tuple[str, ...]]
+    baseline_files: dict[str, str] | None = None
+    imported_modules: dict[str, str] = field(
+        default_factory=lambda: {"caller": "caller.py", "fake_graph": "fake_graph.py"}
+    )
+    editable_paths: tuple[str, ...] = ()
+    provenance: dict = field(default_factory=dict)
+    assessment_kind: str = "repair"
+    manual_rubric: tuple[str, ...] = ()
+    related_lineages: tuple[str, ...] = ()
 
 
 def _source(value: str) -> str:

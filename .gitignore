@@ -184,6 +184,10 @@ venv.bak/
 # but do not ignore docs/openapi.json
 !docs/openapi.json
 
+# Fixed, reviewed Skill task assets (never runtime traces or credentials).
+!src/memos/skill_evaluation/assets/source_tasks.json
+!src/memos/skill_evaluation/assets/tasks-lock.json
+
 # hot-patch Deployment patch：deploy/soc/hotpatch/apply.sh 读它，之前被 *.json 规则
 # 挡住，一直没进版本控制。deploy/ 下目前只有这一个 json，所以精确放行这一个文件。
 !deploy/soc/hotpatch/deploy-patch.json
