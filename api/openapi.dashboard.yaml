@@ -2466,8 +2466,395 @@ paths:
                 $ref: '#/components/schemas/SkillErrorEnvelope'
         '503':
           $ref: '#/components/responses/ErrorUnavailable'
+  /api/v1/skills/experiments/list:
+    post:
+      tags:
+      - Skill 管理
+      operationId: skill_experiments_list
+      summary: 列出冻结三组实验
+      description: 显式项目身份，要求 view 能力。只接受宿主登记的 experimentId，不接受路径、代码、模型配置或报告上传。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - projectId
+              properties:
+                projectId:
+                  type: string
+                  pattern: ^[A-Za-z0-9][A-Za-z0-9._:-]{0,299}$
+              additionalProperties: false
+      responses:
+        '200':
+          description: 成功；完成不等于发布批准，人工评分仍可待审
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/Envelope'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/SkillExperimentList'
+        '400':
+          $ref: '#/components/responses/ErrorBadRequest'
+        '401':
+          $ref: '#/components/responses/ErrorUnauthorized'
+        '403':
+          $ref: '#/components/responses/ErrorForbidden'
+        '404':
+          $ref: '#/components/responses/ErrorNotFound'
+        '503':
+          $ref: '#/components/responses/ErrorUnavailable'
+        '409':
+          description: 实验冲突或校验失败；不自动重试开始
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillErrorEnvelope'
+        '422':
+          description: 实验冲突或校验失败；不自动重试开始
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillErrorEnvelope'
+  /api/v1/skills/experiments/detail:
+    post:
+      tags:
+      - Skill 管理
+      operationId: skill_experiment_detail
+      summary: 读取实验进度与分层评分
+      description: 显式项目身份，要求 view 能力。只接受宿主登记的 experimentId，不接受路径、代码、模型配置或报告上传。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - projectId
+              - experimentId
+              properties:
+                projectId:
+                  type: string
+                  pattern: ^[A-Za-z0-9][A-Za-z0-9._:-]{0,299}$
+                experimentId:
+                  type: string
+                  pattern: ^[A-Za-z0-9][A-Za-z0-9._:-]{0,299}$
+              additionalProperties: false
+      responses:
+        '200':
+          description: 成功；完成不等于发布批准，人工评分仍可待审
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/Envelope'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/SkillExperimentDetail'
+        '400':
+          $ref: '#/components/responses/ErrorBadRequest'
+        '401':
+          $ref: '#/components/responses/ErrorUnauthorized'
+        '403':
+          $ref: '#/components/responses/ErrorForbidden'
+        '404':
+          $ref: '#/components/responses/ErrorNotFound'
+        '503':
+          $ref: '#/components/responses/ErrorUnavailable'
+        '409':
+          description: 实验冲突或校验失败；不自动重试开始
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillErrorEnvelope'
+        '422':
+          description: 实验冲突或校验失败；不自动重试开始
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillErrorEnvelope'
+  /api/v1/skills/experiments/start:
+    post:
+      tags:
+      - Skill 管理
+      operationId: skill_experiment_start
+      summary: 异步开始已登记固定实验
+      description: 显式项目身份，要求 write 能力。只接受宿主登记的 experimentId，不接受路径、代码、模型配置或报告上传。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - projectId
+              - experimentId
+              - operationId
+              properties:
+                projectId:
+                  type: string
+                  pattern: ^[A-Za-z0-9][A-Za-z0-9._:-]{0,299}$
+                experimentId:
+                  type: string
+                  pattern: ^[A-Za-z0-9][A-Za-z0-9._:-]{0,299}$
+                operationId:
+                  type: string
+                  pattern: ^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$
+              additionalProperties: false
+      responses:
+        '200':
+          description: 成功；完成不等于发布批准，人工评分仍可待审
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/Envelope'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/SkillExperimentSummary'
+        '400':
+          $ref: '#/components/responses/ErrorBadRequest'
+        '401':
+          $ref: '#/components/responses/ErrorUnauthorized'
+        '403':
+          $ref: '#/components/responses/ErrorForbidden'
+        '404':
+          $ref: '#/components/responses/ErrorNotFound'
+        '503':
+          $ref: '#/components/responses/ErrorUnavailable'
+        '409':
+          description: 实验冲突或校验失败；不自动重试开始
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillErrorEnvelope'
+        '422':
+          description: 实验冲突或校验失败；不自动重试开始
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillErrorEnvelope'
 components:
   schemas:
+    SkillExperimentSummary:
+      type: object
+      required:
+      - experimentId
+      - skillId
+      - revision
+      - manifestHash
+      - status
+      - planned
+      - completed
+      properties:
+        experimentId: &id001
+          type: string
+        skillId: *id001
+        revision: *id001
+        manifestHash: *id001
+        status:
+          type: string
+          enum:
+          - frozen
+          - running
+          - completed
+          - interrupted
+        planned: &id002
+          type: integer
+          minimum: 0
+        completed: *id002
+    SkillExperimentRow:
+      type: object
+      required:
+      - cellId
+      - caseId
+      - group
+      - status
+      - assessmentKind
+      - repairPass
+      - boundaryPass
+      - branchSupported
+      - criticalViolation
+      - manualReview
+      - taskAccepted
+      - receiptVerified
+      - loading
+      - capture
+      - elapsedSeconds
+      - reportedCostUsd
+      - toolCalls
+      - failureReasons
+      properties:
+        cellId: *id001
+        caseId: *id001
+        group: &id005
+          type: string
+          enum:
+          - none
+          - raw_memory
+          - skill
+        status:
+          type: string
+          enum:
+          - queued
+          - running
+          - passed
+          - failed
+          - unknown
+          - infra_invalid
+        assessmentKind:
+          type: string
+          enum:
+          - repair
+          - boundary_repair
+          - manual_boundary
+        repairPass:
+          type: integer
+          enum:
+          - 0
+          - 1
+          nullable: true
+        boundaryPass:
+          type: integer
+          enum:
+          - 0
+          - 1
+          nullable: true
+        branchSupported:
+          type: boolean
+          nullable: true
+        criticalViolation:
+          type: boolean
+          nullable: true
+        manualReview:
+          type: string
+          enum:
+          - pending
+        taskAccepted: &id003
+          type: boolean
+        receiptVerified: *id003
+        loading: *id001
+        capture: *id001
+        elapsedSeconds: &id004
+          type: number
+          minimum: 0
+          nullable: true
+        reportedCostUsd: *id004
+        toolCalls:
+          type: integer
+          minimum: 0
+          nullable: true
+        failureReasons:
+          type: array
+          items: *id001
+    SkillExperimentGroupScore:
+      type: object
+      required:
+      - group
+      - primaryRepair
+      - boundary
+      - unknown
+      - infraInvalid
+      - elapsedSeconds
+      - reportedCostUsd
+      - costUnknown
+      properties:
+        group: *id005
+        primaryRepair:
+          type: object
+          required:
+          - passed
+          - denominator
+          - planned
+          properties:
+            passed: *id002
+            denominator: *id002
+            planned: *id002
+        boundary:
+          type: object
+          required:
+          - taskSolved
+          - planned
+          - pendingReview
+          properties:
+            taskSolved: *id002
+            planned: *id002
+            pendingReview: *id002
+        unknown: *id002
+        infraInvalid: *id002
+        elapsedSeconds: *id004
+        reportedCostUsd: *id004
+        costUnknown: *id002
+    SkillExperimentDetail:
+      allOf:
+      - $ref: '#/components/schemas/SkillExperimentSummary'
+      - type: object
+        required:
+        - groups
+        - budget
+        - rows
+        - summary
+        - publication
+        - limitations
+        properties:
+          groups:
+            type: array
+            items: *id005
+          budget:
+            type: object
+            required:
+            - timeoutSeconds
+            - maxTurns
+            - maxBudgetUsd
+            - contextBytes
+            properties:
+              timeoutSeconds:
+                type: number
+                minimum: 1
+              maxTurns: *id002
+              maxBudgetUsd:
+                type: number
+                minimum: 0
+              contextBytes: *id002
+          rows:
+            type: array
+            items:
+              $ref: '#/components/schemas/SkillExperimentRow'
+          summary:
+            type: object
+            required:
+            - groups
+            - completePairs
+            properties:
+              groups:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SkillExperimentGroupScore'
+              completePairs: *id002
+          publication:
+            type: string
+            enum:
+            - not_approved
+          limitations:
+            type: array
+            items: *id001
+    SkillExperimentList:
+      type: object
+      required:
+      - items
+      - total
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/SkillExperimentSummary'
+        total: *id002
     SkillErrorEnvelope:
       allOf:
         - $ref: '#/components/schemas/ErrorEnvelope'

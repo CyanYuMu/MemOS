@@ -56,6 +56,9 @@ func TestSkillRoutesCapabilities(t *testing.T) {
 		write        bool
 	}{
 		{"list", "list", false},
+		{"experiments/list", "experiments_list", false},
+		{"experiments/detail", "experiment_detail", false},
+		{"experiments/start", "experiment_start", true},
 		{"detail", "detail", false},
 		{"evidence", "evidence", false},
 		{"jobs/detail", "job", false},
@@ -93,6 +96,9 @@ func TestSkillRoutesRejectUnknownAndInvalidInput(t *testing.T) {
 	for _, entry := range []struct{ path, body string }{
 		{"list", `{"projectId":"cube-a","actor":"forged"}`},
 		{"list", `{"projectId":"cube-a","path":"/tmp/oracle"}`},
+		{"experiments/start", `{"projectId":"cube-a","experimentId":"experiment-1","operationId":"op-1","path":"/tmp/oracle"}`},
+		{"experiments/start", `{"projectId":"cube-a","experimentId":"experiment-1","operationId":"op-1","report":{"status":"passed"}}`},
+		{"experiments/detail", `{"projectId":"cube-a"}`},
 		{"detail", `{"projectId":"cube-a","skillId":"x","revision":"latest"}`},
 		{"evaluations/start", strings.ReplaceAll(skillTestBody("evaluate"), `"operationId":"op-1"`, `"operationId":""`)},
 		{"status", strings.ReplaceAll(skillTestBody("status"), `"expectedSequence":0`, `"expectedSequence":1.5`)},
@@ -125,8 +131,14 @@ func TestSkillUnavailableAndConflict(t *testing.T) {
 
 func skillTestBody(action string) string {
 	base := `"projectId":"cube-a"`
-	if action == "list" {
+	if action == "list" || action == "experiments_list" {
 		return "{" + base + "}"
+	}
+	if action == "experiment_detail" {
+		return "{" + base + `,"experimentId":"experiment-1"}`
+	}
+	if action == "experiment_start" {
+		return "{" + base + `,"experimentId":"experiment-1","operationId":"op-1"}`
 	}
 	if action == "job" {
 		return "{" + base + `,"jobId":"job-1"}`

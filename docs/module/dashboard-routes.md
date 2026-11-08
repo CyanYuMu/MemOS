@@ -202,3 +202,9 @@ memories与记忆详情同形，真实记忆详情补充memoryKey/memoryType/sta
 验收以路由权限矩阵、跨项目与客户端身份伪造拒绝、未知字段拒绝、安全错误信封和 OpenAPI 双向覆盖为准。
 
 P3 控制面验证记录：Go 1.27.3；2026-11-08 首轮完整 `make check` 通过（格式、lint 零问题、vet、全库 race/乱序测试、tidy 差异检查、文档、部署检查和二进制构建）。新增测试覆盖真实 SQLite 会话到 HTTP 上游的权限/身份传递、409 不重试、重定向不泄漏凭据、畸形/超大响应、严格项目来源、请求字段和审计脱敏。Go 测试中的上游数据是显式测试夹具，不能作为真实候选的独立评测或人工发布证明。
+
+### P4 固定实验接入
+
+新增 `experiments/list`、`experiments/detail`（view）与 `experiments/start`（write），映射上游 `experiments_list`、`experiment_detail`、`experiment_start`。清单只接受 projectId，详情增加 experimentId，开始再增加 operationId；不接收任务路径、模型参数或客户端评分报告。实验 ID 进入安全操作审计，身份和项目仍由会话决定。异步开始只返回已登记实验的状态，读取进度与报告不授予发布资格。
+
+三组固定为 none/raw_memory/skill。OpenAPI 描述冻结身份、预算、21 单元进度、分层自动评分、未知费用及 pending 人工判断；7 个独立任务不能被展开运行数替代。发布事务沿用 P3，实验 completed 不等于发布批准。新增路由在真实 SQLite 会话与 HTTP 代理测试中验证 viewer 只读、editor 开始、跨项目拒绝和伪造身份不透传。

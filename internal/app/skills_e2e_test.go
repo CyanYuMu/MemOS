@@ -57,12 +57,19 @@ func TestE2ESkillManagementCapabilities(t *testing.T) {
 	}
 	expect(t, "foreign project", alice.post("/api/v1/skills/list", `{"projectId":"cube-b"}`), http.StatusForbidden)
 	expect(t, "explicit project", alice.post("/api/v1/skills/list", `{}`), http.StatusBadRequest)
+
+	expect(t, "viewer experiments", alice.post("/api/v1/skills/experiments/list", `{"projectId":"cube-a"}`), http.StatusOK)
+	expect(t, "viewer experiment detail", alice.post("/api/v1/skills/experiments/detail", `{"projectId":"cube-a","experimentId":"experiment-1"}`), http.StatusOK)
+	experiment := `{"projectId":"cube-a","experimentId":"experiment-1","operationId":"start-1"}`
+	expect(t, "viewer cannot start experiment", alice.post("/api/v1/skills/experiments/start", experiment), http.StatusForbidden)
+	expect(t, "editor start experiment", bob.post("/api/v1/skills/experiments/start", experiment), http.StatusOK)
+	expect(t, "foreign experiment", alice.post("/api/v1/skills/experiments/detail", `{"projectId":"cube-b","experimentId":"experiment-1"}`), http.StatusForbidden)
 	mu.Lock()
 	defer mu.Unlock()
-	if len(calls) != 4 {
+	if len(calls) != 7 {
 		t.Fatalf("calls=%v: authorization failed or mutation retried", calls)
 	}
-	for i, want := range []struct{ actor, capability string }{{"alice", "view"}, {"bob", "write"}, {"carol", "manage"}, {"carol", "manage"}} {
+	for i, want := range []struct{ actor, capability string }{{"alice", "view"}, {"bob", "write"}, {"carol", "manage"}, {"carol", "manage"}, {"alice", "view"}, {"alice", "view"}, {"bob", "write"}} {
 		if calls[i]["actor"] != want.actor || calls[i]["capability"] != want.capability {
 			t.Fatalf("call %d=%v", i, calls[i])
 		}

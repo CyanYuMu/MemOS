@@ -28,6 +28,9 @@ type skillRoute struct {
 }
 
 var skillRoutes = []skillRoute{
+	{path: "experiments/list", action: "experiments_list", capability: domain.CapProjectView},
+	{path: "experiments/detail", action: "experiment_detail", capability: domain.CapProjectView, required: []string{"experimentId"}},
+	{path: "experiments/start", action: "experiment_start", capability: domain.CapProjectWrite, required: []string{"experimentId", "operationId"}},
 	{path: "list", action: "list", capability: domain.CapProjectView, optional: []string{"query"}},
 	{path: "detail", action: "detail", capability: domain.CapProjectView, required: []string{"skillId", "revision"}},
 	{path: "evidence", action: "evidence", capability: domain.CapProjectView, required: []string{"skillId", "revision", "ruleId"}},
@@ -145,7 +148,7 @@ func validateSkillField(field string, value any) error {
 func skillAuditInput(body map[string]any) map[string]any {
 	// 审阅理由、候选正文和证据内容不进入控制面审计。
 	result := make(map[string]any)
-	for _, key := range []string{"projectId", "skillId", "revision", "caseId", "operationId", "expectedSequence", "decision", "action", "packageId", "packageHash"} {
+	for _, key := range []string{"projectId", "skillId", "revision", "caseId", "experimentId", "operationId", "expectedSequence", "decision", "action", "packageId", "packageHash"} {
 		if value, ok := body[key]; ok && validateSkillField(key, value) == nil {
 			result[key] = value
 		}

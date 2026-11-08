@@ -254,3 +254,5 @@ Implementation validation: goal5-history-before.log reproduced the two frontend 
 ### P3 独立 Skill 服务
 
 `SkillGateway.Call(ctx, domain.SkillCall)` 对固定 action 集合发出单次 POST `/v1/skills/{action}`，不与 Memory 客户端共享配置。仅服务端注入 Bearer 服务凭据与 X-Skill-Actor/Capability/Project，且 payload.projectId 必须和可信项目一致。禁止跟随重定向；30 秒超时、8 MiB 响应上限，无自动重试。上游 `{data:...}` 原样放回控制台 data；错误仅保留安全错误码和 currentSequence，私有 message/details/端点不透传。服务凭据 401 转 503，避免把服务器配置问题误报为浏览器会话过期。
+
+P4 将 `experiments_list`、`experiment_detail`、`experiment_start` 加入同一固定白名单，保持单次请求、可信身份头与安全错误投影。不接受由浏览器指定实验目录或导入报告；三组编排及持久状态仍由 Python 权威服务负责。
