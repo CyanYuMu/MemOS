@@ -56,3 +56,58 @@ def test_complete_calibration_reused_without_model_call(tmp_path, monkeypatch):
         module.subprocess, "run", lambda *_args, **_kw: pytest.fail("must reuse fixed receipts")
     )
     module.ensure_calibration(Path("config"), Path("candidate"), tmp_path)
+
+
+def test_explicit_reassessment_reverifies_without_rewriting_original_or_calling_model(
+    tmp_path, monkeypatch
+):
+    from memos.skill_experiments import __main__ as cli
+    from memos.skill_experiments import calibration as reassessment_module
+    from memos.skill_management import config as service_config
+
+    module = launcher()
+    original = json.dumps(
+        {"results": [{"group": g, "status": "unknown"} for g in ["none", "raw_memory", "skill"]]}
+    )
+    (tmp_path / "summary.json").write_text(original)
+    calls = []
+    fixed_config = object()
+    monkeypatch.setattr(service_config, "read_config", lambda _: {})
+    monkeypatch.setattr(cli, "runtime", lambda _: fixed_config)
+    monkeypatch.setattr(
+        reassessment_module,
+        "verify_reassessment",
+        lambda *args: calls.append(args) or {"recordId": "a" * 64},
+    )
+    monkeypatch.setattr(
+        module.subprocess, "run", lambda *a, **k: pytest.fail("must not repeat model call")
+    )
+    record = tmp_path / "reassessment.json"
+    module.ensure_calibration(Path("config"), Path("candidate"), tmp_path, reassessment=record)
+    assert calls == [(record, tmp_path, Path("candidate"), fixed_config)]
+    assert (tmp_path / "summary.json").read_text() == original
+
+
+def test_invalid_explicit_reassessment_does_not_fall_back_or_rerun(tmp_path, monkeypatch):
+    from memos.skill_experiments import __main__ as cli
+    from memos.skill_experiments import calibration as reassessment_module
+    from memos.skill_management import config as service_config
+
+    module = launcher()
+    monkeypatch.setattr(service_config, "read_config", lambda _: {})
+    monkeypatch.setattr(cli, "runtime", lambda _: object())
+    monkeypatch.setattr(
+        reassessment_module,
+        "verify_reassessment",
+        lambda *args: (_ for _ in ()).throw(ValueError("binding changed")),
+    )
+    monkeypatch.setattr(
+        module.subprocess, "run", lambda *a, **k: pytest.fail("must not repeat model call")
+    )
+    with pytest.raises(ValueError, match="calibration_needs_review"):
+        module.ensure_calibration(
+            Path("config"),
+            Path("candidate"),
+            tmp_path / "absent",
+            reassessment=tmp_path / "bad.json",
+        )

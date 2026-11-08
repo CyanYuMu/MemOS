@@ -12,7 +12,27 @@ import sys
 from pathlib import Path
 
 
-def ensure_calibration(config: Path, candidate: Path, directory: Path) -> None:
+def ensure_calibration(
+    config: Path, candidate: Path, directory: Path, *, reassessment: Path | None = None
+) -> None:
+    if reassessment is not None:
+        from memos.skill_experiments.__main__ import runtime
+        from memos.skill_experiments.calibration import verify_reassessment
+        from memos.skill_management.config import read_config
+
+        try:
+            verified = verify_reassessment(
+                reassessment, directory, candidate, runtime(read_config(config))
+            )
+        except Exception:
+            raise ValueError("calibration_needs_review") from None
+        print(
+            "[preparation] 已重新核验独立校准重评 "
+            + verified["recordId"]
+            + "；原始 summary 和三次模型记录保持不变。",
+            flush=True,
+        )
+        return
     if directory.exists():
         summary = directory / "summary.json"
         if not summary.is_file():
@@ -66,7 +86,12 @@ def main():
     candidate, calibration, experiment = (
         Path(prep[k]).resolve() for k in ("candidate", "calibration", "experiment")
     )
-    ensure_calibration(service_path, candidate, calibration)
+    reassessment = (
+        Path(prep["calibrationReassessment"]).resolve()
+        if prep.get("calibrationReassessment") is not None
+        else None
+    )
+    ensure_calibration(service_path, candidate, calibration, reassessment=reassessment)
     if experiment.exists():
         manifest = load_experiment(experiment, runtime(service))
     else:

@@ -6,15 +6,17 @@ import hashlib
 import json
 import math
 import re
+import tempfile
 
 from pathlib import Path
 
-from memos.skill_evaluation.tasks import case_digest, get_case
+from memos.skill_evaluation.snapshots import SnapshotStore, snapshot_fingerprint
+from memos.skill_evaluation.tasks import case_digest, get_case, materialize_case
 from memos.skill_evaluation.verifier import check_receipt
 
 
 GROUPS = ("none", "raw_memory", "skill")
-SCORING_VERSION = "p4.1"
+SCORING_VERSION = "p4.2"
 
 
 def _read(path: Path) -> dict:
@@ -34,6 +36,25 @@ def _number(value):
     return value if type(value) in {int, float} and math.isfinite(value) and value >= 0 else None
 
 
+def _agent_initial_matches(root: Path, report: dict, case) -> bool:
+    """Bind the complete Agent export separately from the verifier's initial tree.
+
+    Dev exports add TASK.md outside CaseSpec.initial_files. The existing verifier
+    intentionally hashes only its authoritative initial tree, so those two
+    snapshot IDs have different meanings and need separate verification.
+    """
+    initial_id = report.get("initial_snapshot")
+    if initial_id != report.get("run_context", {}).get("initial_snapshot"):
+        return False
+    snapshots = root / "snapshots"
+    if snapshots.is_symlink():
+        return False
+    SnapshotStore(snapshots).verify(initial_id)
+    with tempfile.TemporaryDirectory(prefix="memos-p4-initial-binding-") as temporary:
+        expected = materialize_case(case.case_id, Path(temporary) / "initial")
+        return snapshot_fingerprint(expected) == initial_id
+
+
 def _bound_receipt(root: Path, report: dict, case) -> tuple[bool, dict | None]:
     """The report's success bit cannot stand in for a fresh receipt binding check."""
     try:
@@ -51,7 +72,7 @@ def _bound_receipt(root: Path, report: dict, case) -> tuple[bool, dict | None]:
             or receipt.get("case", {}).get("case_id") != case.case_id
             or receipt.get("run_id") != context.get("run_id")
             or receipt.get("attempt_id") != context.get("attempt_id")
-            or receipt.get("initial_snapshot") != report.get("initial_snapshot")
+            or not _agent_initial_matches(root, report, case)
             or receipt.get("candidate_snapshot") != report.get("candidate_snapshot")
         ):
             return False, receipt

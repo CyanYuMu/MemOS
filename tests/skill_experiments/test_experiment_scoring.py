@@ -5,6 +5,7 @@ import json
 
 import pytest
 
+from memos.skill_evaluation.snapshots import SnapshotStore
 from memos.skill_evaluation.tasks import case_digest, get_case, materialize_case
 from memos.skill_evaluation.verifier import verify_candidate
 from memos.skill_experiments.scoring import aggregate, score_run
@@ -12,6 +13,8 @@ from memos.skill_experiments.scoring import aggregate, score_run
 
 def report_fixture(tmp_path, *, case_id="holdout-record", variant="reference", group="none"):
     case = get_case(case_id)
+    initial = materialize_case(case_id, tmp_path / "initial", "initial")
+    initial_id = SnapshotStore(tmp_path / "snapshots").capture(initial).snapshot_id
     candidate = materialize_case(case_id, tmp_path / "candidate", variant)
     result = verify_candidate(
         case_id, candidate, tmp_path / "validation", run_id="run", attempt_id="attempt"
@@ -30,8 +33,9 @@ def report_fixture(tmp_path, *, case_id="holdout-record", variant="reference", g
             "run_id": "run",
             "attempt_id": "attempt",
             "split": case.split,
+            "initial_snapshot": initial_id,
         },
-        "initial_snapshot": receipt["initial_snapshot"],
+        "initial_snapshot": initial_id,
         "candidate_snapshot": receipt["candidate_snapshot"],
         "receipt": str(result.receipt_path),
         "receipt_sha256": hashlib.sha256(result.receipt_path.read_bytes()).hexdigest(),
@@ -182,3 +186,38 @@ def test_aggregate_keeps_unknown_denominator_and_unknown_cost():
     assert none["reportedCostUsd"] is None and none["knownCostSubtotalUsd"] == pytest.approx(0.3)
     assert none["unknownCostCount"] == 2
     assert summary["completePairedTasks"] == 0
+
+
+def test_dev_full_agent_package_differs_from_verifier_initial_but_both_are_verified(tmp_path):
+    p, report, case = report_fixture(tmp_path, case_id="dev-tenant-isolation")
+    receipt = json.loads((tmp_path / "validation/runs/run/attempt/receipt.json").read_text())
+    assert report["initial_snapshot"] != receipt["initial_snapshot"]
+    score = score_run(p, group="none", expected_case_digest=case_digest(case))
+    assert score["status"] == "passed" and score["receiptVerified"] is True
+    assert score["scoringVersion"] == "p4.2"
+
+
+@pytest.mark.parametrize(
+    "mutation", ["context", "corrupt_task", "different_valid_package", "missing_snapshot"]
+)
+@pytest.mark.parametrize("case_id", ["dev-tenant-isolation", "holdout-record"])
+def test_agent_initial_package_and_context_cannot_be_replaced(tmp_path, mutation, case_id):
+    p, report, case = report_fixture(tmp_path, case_id=case_id)
+    if mutation == "context":
+        report["run_context"]["initial_snapshot"] = "0" * 64
+    elif mutation == "corrupt_task":
+        task = tmp_path / "snapshots" / report["initial_snapshot"] / "tree/TASK.md"
+        task.write_text("Changed instructions after capture")
+    elif mutation == "different_valid_package":
+        task = tmp_path / "initial/TASK.md"
+        task.write_text("Different instructions before the Agent began")
+        other = SnapshotStore(tmp_path / "snapshots").capture(tmp_path / "initial").snapshot_id
+        report["initial_snapshot"] = other
+        report["run_context"]["initial_snapshot"] = other
+    else:
+        report["initial_snapshot"] = "0" * 64
+        report["run_context"]["initial_snapshot"] = "0" * 64
+    write(p, report)
+    score = score_run(p, group="none", expected_case_digest=case_digest(case))
+    assert score["status"] == "unknown" and score["repairPass"] == 0
+    assert score["receiptVerified"] is False
