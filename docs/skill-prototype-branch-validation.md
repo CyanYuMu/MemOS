@@ -73,3 +73,14 @@
 4. **A4d 人工覆盖判断**：每条分支绑定条件观察、实际动作/退出和对应检查。页面显示已覆盖与仍缺项；存在误用、冲突或来源缺口时不得发布。再进入 42-B。
 
 A4a 的完成条件是可信任务资产，而非分支覆盖完成；A4c 的运行完成也不等于 A4d 审阅通过。进入 P5 仍需 [42-A/B 的完整门槛](skill-prototype-governance.md#7-阶段验收与进入-p5-的门槛)。
+
+## 6 A4a 首批核心资产实施记录
+
+在 `codex/skill-prototype-branch-validation` 分支，基于治理阶段和上述合同提交后实现独立 registry、资产锁、只导出初始工作区的物化函数、隔离自检及 CLI。当前只有两个核心任务；组合/健康/停止和工具故障任务尚未完成。
+
+- `branch-scoped-table`：多行 ID 表与独立版本更新 client，初始缺陷是读取漏校验租户；参考修复恢复正确范围，错误修复总是返回空。检查同时要求合法更新、深复制、版本历史、owner/lifecycle 防护和 embedding 失败不写入。
+- `branch-dream-journal`：独立字典动作解释器与有状态日志，初始 UPDATE 把字段转换成键值对列表，宽松 fake 隐藏了错误；参考修复恢复字典参数和拒绝能力，错误修复用可变位置参数继续接受非法输入。检查保留空内容、CREATE/ARCHIVE/MERGE 和拒绝后的状态。
+
+`python -m memos.skill_branch_validation list` 查看固定资产；`audit --output /private/new-directory` 对两题各执行 initial/reference/unsafe。实际终端自检六个单元全部符合预期：两份 reference 通过，四份初始/错误解失败。13 项测试通过，包括真实无 fork/无网络执行、公开检查初始失败/参考通过、资产锁被改时拒绝读取。原 P4 registry 与 P4.1 资格文件未改动。
+
+输出明确标记 `purpose=branch_asset_selftest`、`qualifiedAgentExperience=false`、`branchCoverage=[]`、模型调用与人工批准为 0。此批是合同驱动的新案例，不是随机生产任务，不证明整个 Skill 已通过或出现效果收益。后续新执行协议仍需单独资格验证后才能调用 Claude；不能拿此 selftest 摘要代替运行准入。
