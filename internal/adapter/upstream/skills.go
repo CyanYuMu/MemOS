@@ -73,7 +73,7 @@ func (g *SkillGateway) Call(ctx context.Context, call domain.SkillCall) (json.Ra
 
 func validateSkillCall(call domain.SkillCall) error {
 	switch call.Action {
-	case "list", "detail", "evidence", "evaluate", "job", "review_prepare", "review_decide", "publish", "status", "challenge", "load_preview", "experiments_list", "experiment_detail", "experiment_start", "adjudication_prepare", "adjudicate":
+	case "list", "detail", "evidence", "evaluate", "job", "review_prepare", "review_decide", "publish", "status", "challenge", "load_preview", "experiments_list", "experiment_detail", "experiment_start", "adjudication_prepare", "adjudicate", "impact_scan", "impact_prepare", "impact_review", "challenge_resolve":
 	default:
 		return domain.Invalid("skill", "未知 Skill 操作")
 	}

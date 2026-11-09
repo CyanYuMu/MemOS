@@ -39,3 +39,7 @@ Python 仓库 `docs/skill-prototype-delivery.md`、`docs/skill-prototype-lifecyc
 ## 实现记录
 
 2026-11-09：先冻结开发边界；实际结果在实现结束后追加。
+
+同日 D2：新增 `/lifecycle/scan|prepare|review` 与 `/challenges/resolve`，对应 `impact_scan|impact_prepare|impact_review|challenge_resolve`；OpenAPI 的请求、响应及前端派生 JSON 同步。摘要数组拒绝重复及非摘要，decision 校验按具体 action 隔离；旧审阅接口不能借新枚举执行恢复。健康确认与未解决确认仅扩展传输枚举，实际事实资格仍由数据面判断。
+
+验证：新路由先因 404、裁决枚举先因拒绝而 RED；实现后 dashboard/upstream 包全部通过。`make check` 完成格式、lint（0 issues）、vet、全库 race 乱序测试、tidy、文档、容器配置和构建。新增上游测试确认四命令冲突时均仅调用一次，记录安全错误不泄露上游细节。真实服务演示由主代理继续。

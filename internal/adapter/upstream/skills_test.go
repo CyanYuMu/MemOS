@@ -117,3 +117,24 @@ func TestSkillGatewayRejectsUntrustedMetadata(t *testing.T) {
 		t.Fatalf("untrusted requests reached upstream: %d", calls)
 	}
 }
+
+func TestLifecycleGatewayOnlyCallsFixedActionOnce(t *testing.T) {
+	for _, action := range []string{"impact_scan", "impact_prepare", "impact_review", "challenge_resolve"} {
+		t.Run(action, func(t *testing.T) {
+			calls := 0
+			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				calls++
+				if r.URL.Path != "/v1/skills/"+action || r.Header.Get("X-Skill-Actor") != "reviewer" || r.Header.Get("X-Skill-Capability") != "manage" {
+					t.Errorf("untrusted routing %s", r.URL.Path)
+				}
+				w.WriteHeader(http.StatusConflict)
+				_, _ = w.Write([]byte(`{"error":{"code":"lifecycle_changed","details":{"currentSequence":8}}}`))
+			}))
+			defer srv.Close()
+			_, err := NewSkillGateway(srv.URL, "test-only").Call(context.Background(), domain.SkillCall{Action: action, Actor: "reviewer", Capability: "manage", ProjectID: "cube-a", Payload: map[string]any{"projectId": "cube-a"}})
+			if err == nil || calls != 1 {
+				t.Fatalf("calls=%d error=%v", calls, err)
+			}
+		})
+	}
+}

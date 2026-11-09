@@ -2753,6 +2753,194 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SkillErrorEnvelope'
+  /api/v1/skills/lifecycle/scan:
+    post:
+      tags:
+      - Skill 管理
+      operationId: skill_impact_scan
+      summary: 实际检查来源与工具
+      description: 要求项目 manage；actor 来自会话。只接受固定版本、包和摘要引用，不接受路径、命令或客户端观察。恢复须新验证；替代须健康已发布版本，不自动重绑依赖。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SkillImpactScanRequest'
+      responses:
+        '200':
+          description: 成功，返回当前固定投影
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/Envelope'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/SkillImpactScanResult'
+        '400':
+          $ref: '#/components/responses/ErrorBadRequest'
+        '401':
+          $ref: '#/components/responses/ErrorUnauthorized'
+        '403':
+          $ref: '#/components/responses/ErrorForbidden'
+        '404':
+          $ref: '#/components/responses/ErrorNotFound'
+        '503':
+          $ref: '#/components/responses/ErrorUnavailable'
+        '409':
+          description: 安全错误码与可选当前序号；不自动重试
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillErrorEnvelope'
+        '422':
+          description: 安全错误码与可选当前序号；不自动重试
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillErrorEnvelope'
+  /api/v1/skills/lifecycle/prepare:
+    post:
+      tags:
+      - Skill 管理
+      operationId: skill_impact_prepare
+      summary: 冻结生命周期与挑战审阅包
+      description: 要求项目 manage；actor 来自会话。只接受固定版本、包和摘要引用，不接受路径、命令或客户端观察。恢复须新验证；替代须健康已发布版本，不自动重绑依赖。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SkillImpactPrepareRequest'
+      responses:
+        '200':
+          description: 成功，返回当前固定投影
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/Envelope'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/SkillLifecyclePackage'
+        '400':
+          $ref: '#/components/responses/ErrorBadRequest'
+        '401':
+          $ref: '#/components/responses/ErrorUnauthorized'
+        '403':
+          $ref: '#/components/responses/ErrorForbidden'
+        '404':
+          $ref: '#/components/responses/ErrorNotFound'
+        '503':
+          $ref: '#/components/responses/ErrorUnavailable'
+        '409':
+          description: 安全错误码与可选当前序号；不自动重试
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillErrorEnvelope'
+        '422':
+          description: 安全错误码与可选当前序号；不自动重试
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillErrorEnvelope'
+  /api/v1/skills/lifecycle/review:
+    post:
+      tags:
+      - Skill 管理
+      operationId: skill_impact_review
+      summary: 提交恢复、保留或版本替代决定
+      description: 要求项目 manage；actor 来自会话。只接受固定版本、包和摘要引用，不接受路径、命令或客户端观察。恢复须新验证；替代须健康已发布版本，不自动重绑依赖。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SkillImpactReviewRequest'
+      responses:
+        '200':
+          description: 成功，返回当前固定投影
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/Envelope'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/SkillLifecycleMutationResult'
+        '400':
+          $ref: '#/components/responses/ErrorBadRequest'
+        '401':
+          $ref: '#/components/responses/ErrorUnauthorized'
+        '403':
+          $ref: '#/components/responses/ErrorForbidden'
+        '404':
+          $ref: '#/components/responses/ErrorNotFound'
+        '503':
+          $ref: '#/components/responses/ErrorUnavailable'
+        '409':
+          description: 安全错误码与可选当前序号；不自动重试
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillErrorEnvelope'
+        '422':
+          description: 安全错误码与可选当前序号；不自动重试
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillErrorEnvelope'
+  /api/v1/skills/challenges/resolve:
+    post:
+      tags:
+      - Skill 管理
+      operationId: skill_challenge_resolve
+      summary: 追加历史挑战处置
+      description: 要求项目 manage；actor 来自会话。只接受固定版本、包和摘要引用，不接受路径、命令或客户端观察。恢复须新验证；替代须健康已发布版本，不自动重绑依赖。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SkillChallengeResolveRequest'
+      responses:
+        '200':
+          description: 成功，返回当前固定投影
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/Envelope'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/SkillLifecycleMutationResult'
+        '400':
+          $ref: '#/components/responses/ErrorBadRequest'
+        '401':
+          $ref: '#/components/responses/ErrorUnauthorized'
+        '403':
+          $ref: '#/components/responses/ErrorForbidden'
+        '404':
+          $ref: '#/components/responses/ErrorNotFound'
+        '503':
+          $ref: '#/components/responses/ErrorUnavailable'
+        '409':
+          description: 安全错误码与可选当前序号；不自动重试
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillErrorEnvelope'
+        '422':
+          description: 安全错误码与可选当前序号；不自动重试
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillErrorEnvelope'
 components:
   schemas:
     SkillExperimentSummary:
@@ -3040,10 +3228,568 @@ components:
                 type: integer
               validationCount:
                 type: integer
+    SkillImpactScanRequest:
+      type: object
+      additionalProperties: false
+      required:
+      - projectId
+      - skillId
+      - revision
+      - expectedSequence
+      - operationId
+      - reason
+      properties:
+        projectId:
+          type: string
+          pattern: ^[A-Za-z0-9][A-Za-z0-9._:-]{0,299}$
+        skillId:
+          type: string
+          pattern: ^[a-z0-9][a-z0-9-]{0,79}$
+        revision:
+          type: string
+          pattern: ^[a-f0-9]{64}$
+        expectedSequence:
+          type: integer
+          minimum: 0
+          maximum: 9007199254740991
+        operationId:
+          type: string
+          pattern: ^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 2000
+    SkillImpactPrepareRequest:
+      type: object
+      additionalProperties: false
+      required:
+      - projectId
+      - skillId
+      - revision
+      properties:
+        projectId:
+          type: string
+          pattern: ^[A-Za-z0-9][A-Za-z0-9._:-]{0,299}$
+        skillId:
+          type: string
+          pattern: ^[a-z0-9][a-z0-9-]{0,79}$
+        revision:
+          type: string
+          pattern: ^[a-f0-9]{64}$
+    SkillImpactReviewRequest:
+      type: object
+      additionalProperties: false
+      required:
+      - projectId
+      - skillId
+      - revision
+      - expectedSequence
+      - operationId
+      - reason
+      - packageId
+      - packageHash
+      - decision
+      - rootIds
+      - validationIds
+      - replacementRevision
+      properties:
+        projectId:
+          type: string
+          pattern: ^[A-Za-z0-9][A-Za-z0-9._:-]{0,299}$
+        skillId:
+          type: string
+          pattern: ^[a-z0-9][a-z0-9-]{0,79}$
+        revision:
+          type: string
+          pattern: ^[a-f0-9]{64}$
+        expectedSequence:
+          type: integer
+          minimum: 0
+          maximum: 9007199254740991
+        operationId:
+          type: string
+          pattern: ^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 2000
+        packageId:
+          type: string
+          pattern: ^[a-f0-9]{64}$
+        packageHash:
+          type: string
+          pattern: ^[a-f0-9]{64}$
+        decision:
+          type: string
+          enum:
+          - restore
+          - retain
+          - supersede
+        rootIds:
+          type: array
+          items:
+            type: string
+            pattern: ^[a-f0-9]{64}$
+          uniqueItems: true
+          maxItems: 200
+        validationIds:
+          type: array
+          items:
+            type: string
+            pattern: ^[a-f0-9]{64}$
+          uniqueItems: true
+          maxItems: 200
+        replacementRevision:
+          type: string
+          pattern: ^[a-f0-9]{64}$
+          nullable: true
+    SkillChallengeResolveRequest:
+      type: object
+      additionalProperties: false
+      required:
+      - projectId
+      - skillId
+      - revision
+      - expectedSequence
+      - operationId
+      - reason
+      - packageId
+      - packageHash
+      - challengeId
+      - decision
+      - evidenceIds
+      - replacementRevision
+      properties:
+        projectId:
+          type: string
+          pattern: ^[A-Za-z0-9][A-Za-z0-9._:-]{0,299}$
+        skillId:
+          type: string
+          pattern: ^[a-z0-9][a-z0-9-]{0,79}$
+        revision:
+          type: string
+          pattern: ^[a-f0-9]{64}$
+        expectedSequence:
+          type: integer
+          minimum: 0
+          maximum: 9007199254740991
+        operationId:
+          type: string
+          pattern: ^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 2000
+        packageId:
+          type: string
+          pattern: ^[a-f0-9]{64}$
+        packageHash:
+          type: string
+          pattern: ^[a-f0-9]{64}$
+        challengeId:
+          type: string
+          pattern: ^[a-f0-9]{64}$
+        decision:
+          type: string
+          enum:
+          - addressed
+          - upheld
+          - superseded
+        evidenceIds:
+          type: array
+          items:
+            type: string
+            pattern: ^[a-f0-9]{64}$
+          uniqueItems: true
+          maxItems: 200
+        replacementRevision:
+          type: string
+          pattern: ^[a-f0-9]{64}$
+          nullable: true
+    SkillDependencyRelease:
+      type: object
+      additionalProperties: false
+      required:
+      - skillId
+      - revision
+      - releaseId
+      properties:
+        skillId:
+          type: string
+          pattern: ^[a-z0-9][a-z0-9-]{0,79}$
+        revision:
+          type: string
+          pattern: ^[a-f0-9]{64}$
+        releaseId:
+          type: string
+          pattern: ^[a-f0-9]{64}$
+    SkillLifecycle:
+      type: object
+      additionalProperties: false
+      required:
+      - schemaVersion
+      - enabled
+      - watermark
+      - subjects
+      - roots
+      - observations
+      - decisions
+      - dependencies
+      - gate
+      properties:
+        schemaVersion:
+          type: integer
+          enum:
+          - 1
+        enabled:
+          type: boolean
+        watermark:
+          type: string
+          pattern: ^[a-f0-9]{64}$
+        subjects:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required:
+            - subjectId
+            - kind
+            - expectedDigest
+            - observedDigest
+            - status
+            - observationId
+            properties:
+              subjectId:
+                type: string
+                pattern: ^[a-f0-9]{64}$
+              kind:
+                type: string
+                enum:
+                - memory
+                - tool
+              expectedDigest:
+                type: string
+                pattern: ^[a-f0-9]{64}$
+              observedDigest:
+                type: string
+                pattern: ^[a-f0-9]{64}$
+                nullable: true
+              status:
+                type: string
+                enum:
+                - healthy
+                - changed
+                - unavailable
+                - invalid
+                - restored
+              observationId:
+                type: string
+                pattern: ^[a-f0-9]{64}$
+                nullable: true
+        roots:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required:
+            - rootId
+            - originSkillId
+            - originRevision
+            - subjectId
+            - kind
+            - status
+            - latestObservationId
+            - paths
+            - reason
+            properties:
+              rootId:
+                type: string
+                pattern: ^[a-f0-9]{64}$
+              originSkillId:
+                type: string
+                pattern: ^[a-z0-9][a-z0-9-]{0,79}$
+              originRevision:
+                type: string
+                pattern: ^[a-f0-9]{64}$
+              subjectId:
+                type: string
+                pattern: ^[a-f0-9]{64}$
+              kind:
+                type: string
+                enum:
+                - memory
+                - tool
+              status:
+                type: string
+                enum:
+                - active
+                - restored_pending
+              latestObservationId:
+                type: string
+                pattern: ^[a-f0-9]{64}$
+              paths:
+                type: array
+                items:
+                  type: array
+                  items:
+                    type: string
+              reason:
+                type: string
+        observations:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required:
+            - observationId
+            - subjectId
+            - kind
+            - expectedDigest
+            - observedDigest
+            - status
+            - previousObservationId
+            - detectorVersion
+            - reason
+            - observedAt
+            properties:
+              observationId:
+                type: string
+                pattern: ^[a-f0-9]{64}$
+              subjectId:
+                type: string
+                pattern: ^[a-f0-9]{64}$
+              kind:
+                type: string
+                enum:
+                - memory
+                - tool
+              expectedDigest:
+                type: string
+                pattern: ^[a-f0-9]{64}$
+              observedDigest:
+                type: string
+                pattern: ^[a-f0-9]{64}$
+                nullable: true
+              status:
+                type: string
+                enum:
+                - healthy
+                - changed
+                - unavailable
+                - invalid
+                - restored
+              previousObservationId:
+                type: string
+                pattern: ^[a-f0-9]{64}$
+                nullable: true
+              detectorVersion:
+                type: string
+              reason:
+                type: string
+              observedAt:
+                type: string
+        decisions:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required:
+            - decisionId
+            - action
+            - actor
+            - reason
+            - decidedAt
+            - evidenceIds
+            properties:
+              decisionId:
+                type: string
+                pattern: ^[a-f0-9]{64}$
+              action:
+                type: string
+              actor:
+                type: string
+              reason:
+                type: string
+              decidedAt:
+                type: string
+              evidenceIds:
+                type: array
+                items:
+                  type: string
+                  pattern: ^[a-f0-9]{64}$
+                uniqueItems: true
+                maxItems: 200
+        dependencies:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required:
+            - skillId
+            - revision
+            - releaseId
+            - state
+            - allowed
+            properties:
+              skillId:
+                type: string
+                pattern: ^[a-z0-9][a-z0-9-]{0,79}$
+              revision:
+                type: string
+                pattern: ^[a-f0-9]{64}$
+              releaseId:
+                type: string
+                pattern: ^[a-f0-9]{64}$
+                nullable: true
+              state:
+                type: string
+              allowed:
+                type: boolean
+        gate:
+          type: object
+          additionalProperties: false
+          required:
+          - status
+          - reasons
+          properties:
+            status:
+              type: string
+              enum:
+              - PASS
+              - BLOCK
+            reasons:
+              type: array
+              items:
+                type: string
+    SkillLifecyclePackage:
+      type: object
+      additionalProperties: false
+      required:
+      - kind
+      - projectId
+      - skillId
+      - revision
+      - sequence
+      - contentHash
+      - exportHash
+      - sourceWatermark
+      - lifecycleWatermark
+      - activeRootIds
+      - currentChallengeIds
+      - evidenceIds
+      - dependencyReleases
+      - actor
+      - preparedAt
+      - packageId
+      - packageHash
+      properties:
+        kind:
+          type: string
+          enum:
+          - lifecycle
+        projectId:
+          type: string
+          pattern: ^[A-Za-z0-9][A-Za-z0-9._:-]{0,299}$
+        skillId:
+          type: string
+          pattern: ^[a-z0-9][a-z0-9-]{0,79}$
+        revision:
+          type: string
+          pattern: ^[a-f0-9]{64}$
+        sequence:
+          type: integer
+          minimum: 0
+          maximum: 9007199254740991
+        contentHash:
+          type: string
+          pattern: ^[a-f0-9]{64}$
+        exportHash:
+          type: string
+          pattern: ^[a-f0-9]{64}$
+          nullable: true
+        sourceWatermark:
+          type: array
+          items:
+            type: string
+            pattern: ^[a-f0-9]{64}$
+          uniqueItems: true
+          maxItems: 200
+        lifecycleWatermark:
+          type: string
+          pattern: ^[a-f0-9]{64}$
+        activeRootIds:
+          type: array
+          items:
+            type: string
+            pattern: ^[a-f0-9]{64}$
+          uniqueItems: true
+          maxItems: 200
+        currentChallengeIds:
+          type: array
+          items:
+            type: string
+            pattern: ^[a-f0-9]{64}$
+          uniqueItems: true
+          maxItems: 200
+        evidenceIds:
+          type: array
+          items:
+            type: string
+            pattern: ^[a-f0-9]{64}$
+          uniqueItems: true
+          maxItems: 200
+        dependencyReleases:
+          type: array
+          items:
+            $ref: '#/components/schemas/SkillDependencyRelease'
+        actor:
+          type: string
+        preparedAt:
+          type: string
+        packageId:
+          type: string
+          pattern: ^[a-f0-9]{64}$
+        packageHash:
+          type: string
+          pattern: ^[a-f0-9]{64}$
+    SkillImpactScanResult:
+      type: object
+      additionalProperties: false
+      required:
+      - sequence
+      - changed
+      - lifecycle
+      properties:
+        sequence:
+          type: integer
+          minimum: 0
+          maximum: 9007199254740991
+        changed:
+          type: boolean
+        lifecycle:
+          $ref: '#/components/schemas/SkillLifecycle'
+    SkillLifecycleMutationResult:
+      type: object
+      additionalProperties: false
+      required:
+      - state
+      - sequence
+      - lifecycle
+      properties:
+        state:
+          type: string
+        sequence:
+          type: integer
+          minimum: 0
+          maximum: 9007199254740991
+        lifecycle:
+          $ref: '#/components/schemas/SkillLifecycle'
     SkillDetailData:
       type: object
       required: [projectId, candidate, management, validations, jobs, releases, caseOptions]
       properties:
+        lifecycle:
+          $ref: '#/components/schemas/SkillLifecycle'
         projectId:
           type: string
         candidate:
@@ -3154,6 +3900,8 @@ components:
           type: string
           enum:
           - repair_confirmed
+          - healthy_confirmed
+          - unresolved_confirmed
           - stop_confirmed
           - failed
           - needs_evidence
@@ -3449,6 +4197,13 @@ components:
       type: object
       required: [packageId, packageHash, sequence, skillId, revision, readiness]
       properties:
+        lifecycleWatermark:
+          type: string
+          pattern: '^[a-f0-9]{64}$'
+        dependencyReleases:
+          type: array
+          items:
+            $ref: '#/components/schemas/SkillDependencyRelease'
         packageId:
           type: string
         packageHash:

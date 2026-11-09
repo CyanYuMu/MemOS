@@ -43,6 +43,10 @@ var skillRoutes = []skillRoute{
 	{path: "publish", action: "publish", capability: domain.CapProjectManage, required: []string{"skillId", "revision", "packageId", "packageHash", "expectedSequence", "operationId", "reason"}},
 	{path: "status", action: "status", capability: domain.CapProjectManage, required: []string{"skillId", "revision", "expectedSequence", "operationId", "action", "reason"}},
 	{path: "challenges", action: "challenge", capability: domain.CapProjectManage, required: []string{"skillId", "revision", "expectedSequence", "operationId", "reason"}},
+	{path: "lifecycle/scan", action: "impact_scan", capability: domain.CapProjectManage, required: []string{"skillId", "revision", "expectedSequence", "operationId", "reason"}},
+	{path: "lifecycle/prepare", action: "impact_prepare", capability: domain.CapProjectManage, required: []string{"skillId", "revision"}},
+	{path: "lifecycle/review", action: "impact_review", capability: domain.CapProjectManage, required: []string{"skillId", "revision", "expectedSequence", "operationId", "reason", "packageId", "packageHash", "decision", "rootIds", "validationIds", "replacementRevision"}},
+	{path: "challenges/resolve", action: "challenge_resolve", capability: domain.CapProjectManage, required: []string{"skillId", "revision", "expectedSequence", "operationId", "reason", "packageId", "packageHash", "challengeId", "decision", "evidenceIds", "replacementRevision"}},
 	{path: "load-preview", action: "load_preview", capability: domain.CapProjectView, required: []string{"skillId", "revision", "caseId", "mode"}},
 }
 
@@ -111,15 +115,18 @@ func validateSkillBody(spec skillRoute, body map[string]any) error {
 			return err
 		}
 	}
-	return nil
+	return validateSkillLifecycleBody(spec.action, body)
 }
 
 func validateSkillField(field string, value any) error {
 	if field == "judgment" {
 		return validateSkillJudgment(value)
 	}
-	if field == "supersedes" && value == nil {
+	if (field == "supersedes" || field == "replacementRevision") && value == nil {
 		return nil
+	}
+	if slices.Contains([]string{"rootIds", "validationIds", "evidenceIds"}, field) {
+		return validateSkillDigests(value)
 	}
 	if field == "expectedSequence" {
 		return validateSkillSequence(value)
@@ -129,14 +136,14 @@ func validateSkillField(field string, value any) error {
 		return domain.Invalid("skill", "Skill 字段必须是非空文本")
 	}
 	switch field {
-	case "revision", "packageHash", "assessmentId", "supersedes":
+	case "revision", "packageHash", "assessmentId", "supersedes", "challengeId", "replacementRevision":
 		if !skillDigest.MatchString(text) {
 			return domain.Invalid("skill", "Skill 版本与审阅包必须绑定 SHA-256")
 		}
 	case "reason", "query":
 		return validateSkillText(field, text)
 	case "decision":
-		if text != "needs_evidence" && text != "block" {
+		if !slices.Contains([]string{"needs_evidence", "block", "restore", "retain", "supersede", "addressed", "upheld", "superseded"}, text) {
 			return domain.Invalid("skill", "未知审阅决定")
 		}
 	case "action":

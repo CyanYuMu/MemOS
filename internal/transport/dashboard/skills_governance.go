@@ -9,7 +9,7 @@ import (
 )
 
 var skillJudgmentEnums = map[string][]string{
-	"taskDecision":    {"repair_confirmed", "stop_confirmed", "failed", "needs_evidence"},
+	"taskDecision":    {"repair_confirmed", "healthy_confirmed", "unresolved_confirmed", "stop_confirmed", "failed", "needs_evidence"},
 	"historyDecision": {"retain", "infra_explained"},
 	"usageDecision":   {"correct", "misused", "not_used", "unknown"},
 	"applicability":   {"in_scope", "out_of_scope", "unknown"},
