@@ -612,17 +612,23 @@ class ManagementRepository(LifecycleMixin, GovernanceMixin, SkillGraphRepository
                 previous = state.setdefault("validationLifecycle", {}).get(value["validationId"])
                 require(previous in (None, context), "validation_context_frozen", 409)
                 state["validationLifecycle"][value["validationId"]] = context
-            case = self._core_node(
-                nodes,
-                "CaseRevision",
-                {
-                    "case_id": value["caseId"],
-                    "case_revision": value["caseRevision"],
-                    "lineage_id": value["lineageId"],
-                    "split": value["split"],
-                    "management_schema": 1,
-                },
-            )
+            case_payload = {
+                "case_id": value["caseId"],
+                "case_revision": value["caseRevision"],
+                "lineage_id": value["lineageId"],
+                "split": value["split"],
+                "management_schema": 1,
+            }
+            case_key = node_key("CaseRevision", case_payload)
+            existing_case = nodes.get(("CaseRevision", case_key))
+            if value["kind"] == "isolated_dev" and existing_case is not None:
+                # A normal replay is feedback, not a new independent sample.
+                # Keep the task's original holdout allocation immutable while
+                # the Validation records this invocation's dev/feedback role.
+                original = existing_case["payload"]
+                if original == {**case_payload, "split": "holdout"}:
+                    case_payload = original
+            case = self._core_node(nodes, "CaseRevision", case_payload)
             run = self._core_node(
                 nodes,
                 "Run",
