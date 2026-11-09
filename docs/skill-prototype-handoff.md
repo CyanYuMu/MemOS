@@ -28,6 +28,8 @@ Python 数据面、Go 控制面和 React 审阅工作台可共同运行。真实
 | Go 控制面 | `codex/skill-p5-minimal-be` |
 | React 前端 | `codex/skill-p5-minimal-fe` |
 
+已向上游提交配套 PR：[数据面与完整交付 #7](https://github.com/hugegraph/MemOS/pull/7)、[Go 控制面 #8](https://github.com/hugegraph/MemOS/pull/8)、[前端工作台 #9](https://github.com/hugegraph/MemOS/pull/9)。三者分别以 `master`、`be`、`fe` 为目标分支，需联合评审/部署；本地验证通过不等于上游 CI 或维护者已批准。
+
 | Python 模块 | 责任 |
 | --- | --- |
 | `skill_evaluation` | 固定任务、快照、隐藏验收及最终补丁绑定 |

@@ -209,3 +209,4 @@ Neo4j 真实项目纯读观察为 120 个核心节点、Release 0。生命周期
 - 浏览器实际展示发布状态、6/6 覆盖、0 未解除根因、restore 审计、原 unknown 与最新 normal 成功。默认旧开发任务被 outside_release_scope 拒绝；选择 `p5-update-repair-r1` 后页面显示“服务端允许此版本本次 normal 加载”。前端保留 P4 原 21 单元。
 - 当前 normal 修复经独立定向代码审查 APPROVE，16 项运行/登记测试及 19 项 Neo4j 回归通过。前序完整管理/生命周期 299、前端 257、Go 完整检查通过；各范围不可简单求和。
 - `p5_runtime.py` 的运行摘要可追溯但未纳入冻结工具监测；泛化、统计收益、跨 Agent 实际验证和原双根因来源故障演示均不在本次完成声明内。
+- 三个中文提交分支已推送至 fork，并向上游提交 [#7](https://github.com/hugegraph/MemOS/pull/7)（master 数据面）、[#8](https://github.com/hugegraph/MemOS/pull/8)（be 控制面）、[#9](https://github.com/hugegraph/MemOS/pull/9)（fe 界面），相互关联并引用 Issue #6。未执行合并或提前关闭 issue。
