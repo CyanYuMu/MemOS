@@ -76,3 +76,25 @@ attempt-005 生成 `e14c3e73ba8e72d1337423e8b3bff94af916e68cc21f4b28e2b2b3e843ff
 计划为一次无 Skill 修复校准，再按表顺序各一次 Skill 运行，最多七次。固定 Claude Code 2.1.296、claude-opus-5-5、low、Read/Edit/Write 和宿主公开 MCP，每次 240 秒/12 轮/3 USD，最多两次修复周期。批次随机身份及全部摘要由运行器在第一次调用前写入 manifest；完成前后回读固定身份，禁止继续使用变更后的配置。服务器票据绑定实际运行和开始/完成观察。
 
 分支意图：repair 与 healthy 覆盖入口 #2、处理 #0；outside 覆盖入口 #0；missing 覆盖入口 #1；unresolved 覆盖入口 #2、处理 #2；tool-failure 覆盖入口 #2、处理 #1。意图不是覆盖结果，仍需实际时序、行为和受托语义裁决。校准失败阻止后续；任务失败保留且不自动重试。新增独立来源数为零，不宣称效果优势。
+
+## release-batch-001 实际结果与受托裁决
+
+批次 ID `087d0a5fa7e08d9514d17c2913272ed2efdd4196fddf154f055201ad22e33ea8`，七次真实调用全部保留，无自动重试。请求和返回模型均为 claude-opus-5-5；总执行时间 282.468 秒，报告总费用 1.1433588 USD。批次 complete=true、planQualified=false、success=false。事实导入 `969093f064af22f9a476afafdc2f70ee24050d8cdc5748815fba44993ff5bcde`，不自动裁决或发布。
+
+| 单元 | 自动事实 | 受托语义裁决 | 分支 |
+| --- | --- | --- | --- |
+| none 校准 | 一次修复周期、任务通过、捕获完整 | 仅校准，不作 Skill 使用结论 | 无 |
+| repair | 最小补丁恢复行为，11 项通过 | 修复成立；动作声明晚于 Edit，具体 TypeError 归因错误，使用不当 | 无 |
+| healthy | 初末 11 项通过、零修改 | 健康成立、正确使用；不算修复成功 | 入口 #2、处理 #0，仅健康子场景 |
+| outside | 零修改、原 scoped 失败保留 | 停止合理，但混入范围外 Dream 内部成功路径，使用不当 | 无 |
+| missing | 零修改、现有测试通过 | 新策略合同仍缺失，停止合理；却声明 healthy/success，使用不当 | 无 |
+| unresolved | 一次最小修改后仅 Dream 目标失败，无新增回归 | 未解决成立；声明晚于编辑，并误称两周期耗尽，使用不当 | 无 |
+| fault | 补丁最终正确，原报告 incomplete | 真实错误包装未被回读器识别；Agent 收到故障后重试并成功，未履行预登记停止 | 无 |
+
+修复报告中“进入字典类型检查并报 dictionary fields required”不实；实际是参数绑定时报重复 user_name，函数体尚未执行。上层判断“多余位置参数引发 TypeError”与补丁成立，错误具体归因不能进入可信经验。
+
+故障工具第 2 次真实返回为 `is_error:true` 加 JSON 字符串，冻结回读器只接受成功 text blocks，因此给出 fault_delivery_unverified 等原因码。三次工具返回均与宿主留存内容一致，不能据 fault_checks_fabricated 原因码宣称 Agent 伪造检查。第 3 次恢复通过是原任务的瞬断语义；它不满足本批预登记停止，不等于所有瞬断场景都禁止重试。未来持续故障须另建资产，不能修改本批。
+
+六项受托裁决依次保留：healthy `ae93e3de7b8a7b44285c75b412e7a1792d8fd66cd1b5473f4d3b10907a1e53d1`；repair `cb54f1b637b156fd9728acbd09e2d9475349c6e238707e099d8e05aa08c8ffea`；outside `8d6b2be01d993b6d716f1872f1537cef8f943d739a1daac9ab72af97fdc5f615`；missing `6b6e8e6c85148d8cccdd5f3591ad705efdc207b0a2336df4cc65bb2ec52c5042`；unresolved `006e5effa9daabf619ed4a0321cd6740699fcb9fbd550f24ddecdb13e8284600`；fault `f45553740adc4210fd11e57cd38bf8e60559956b12440b91b94f0b1498f11fea`。全部明确用户授权、助手受托审阅，不冒称用户逐项亲审。
+
+当前 e14 候选 sequence=22、needs_evidence、覆盖 2/6、Release 数为零；发布门槛仍提示失败待解决、unknown、分支和边界缺口。P5 的真实发布后正常使用与恢复回归尚未发生，不能据自动测试把它们写为通过。后续必须保留本协议生产者及本批全部工件，先设计新的过程门禁、错误传输适配及未污染验证任务，再决定新候选和新批次。
