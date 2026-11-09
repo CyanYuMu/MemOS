@@ -531,10 +531,14 @@ class HostTransport:
         call["post_hook"] = payload
         self._append("post_retained", tool_use_id=tool_id, payload=payload)
         if call["request"].tool_name == "Read" and payload["hook_event_name"] == "PostToolUse":
+            context = "observation:" + call["request"].digest
+            response = payload.get("tool_response")
+            if type(response) is dict and response.get("type") == "file_unchanged":
+                context += ". No full-file content was delivered by this call."
             return {
                 "hookSpecificOutput": {
                     "hookEventName": "PostToolUse",
-                    "additionalContext": "observation:" + call["request"].digest,
+                    "additionalContext": context,
                 }
             }
         return {}

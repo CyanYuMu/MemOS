@@ -742,3 +742,49 @@ def test_native_stream_binds_hook_error_denial_to_start_and_trusted_pre(tmp_path
     feed(consumer, init, start, result, end)
     assert consumer.finish()["completed_tools"] == 1
     assert calls == ["tool-1"]
+
+
+def unchanged_read(tmp_path):
+    request, native, material = fixture(tmp_path)
+    response = {"type": "file_unchanged", "file": {"filePath": str(tmp_path / "TASK.md")}}
+    native["structured_result"] = response
+    native["tool_result"] = (
+        "Wasted call — file unchanged since your last Read. Refer to that earlier tool_result instead."
+    )
+    material["post_hook"]["tool_response"] = response
+    return request, native, material
+
+
+def test_unchanged_read_verifies_the_marker_without_claiming_content_delivery(tmp_path):
+    request, native, material = unchanged_read(tmp_path)
+    verified = verify_native(request, native, material)
+    assert verified.read_content_delivered is False
+    assert verified.is_error is False and verified.request_digest == request.digest
+
+
+def test_full_text_read_explicitly_confirms_content_delivery(tmp_path):
+    request, native, material = fixture(tmp_path)
+    assert verify_native(request, native, material).read_content_delivered is True
+
+
+@pytest.mark.parametrize(
+    "change",
+    [
+        lambda n, m: n.update(tool_result="File unchanged"),
+        lambda n, m: n.update(tool_result=n["tool_result"] + " extra"),
+        lambda n, m: n["structured_result"]["file"].update(filePath="/other/TASK.md"),
+        lambda n, m: n["structured_result"]["file"].update(content="forged full content"),
+        lambda n, m: n["structured_result"].update(source="seeded"),
+        lambda n, m: n["structured_result"].update(type=[]),
+        lambda n, m: m.update(file_after=b"different"),
+        lambda n, m: m.update(file_before=None, file_after=None),
+        lambda n, m: m["post_hook"].update(tool_response={"type": "text", "file": {}}),
+        lambda n, m: n.update(tool_use_id="other"),
+        lambda n, m: n.update(session_id="other"),
+    ],
+)
+def test_unchanged_read_requires_exact_native_hook_path_and_live_bytes(tmp_path, change):
+    request, native, material = unchanged_read(tmp_path)
+    change(native, material)
+    with pytest.raises(NativeCaptureError):
+        verify_native(request, native, material)

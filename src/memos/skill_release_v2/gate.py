@@ -95,11 +95,14 @@ class VerifiedResult:
     result_sha256 is the digest of the canonical normalized tool result, after
     native/retained-result equality was checked. is_error preserves transport
     errors; a normal result reporting failing business checks is not an error.
+    read_content_delivered is false for a verified unchanged-file marker,
+    which must never create full TASK request evidence.
     """
 
     request_digest: str
     result_sha256: str
     is_error: bool
+    read_content_delivered: bool = True
 
 
 @dataclass(frozen=True)
@@ -674,6 +677,7 @@ class HostGate:
                     or verified.request_digest != request.digest
                     or not _hash(verified.result_sha256)
                     or type(verified.is_error) is not bool
+                    or type(verified.read_content_delivered) is not bool
                 ):
                     self._deny("receipt_mismatch")
                 if request.permit and not verified.is_error:
@@ -701,7 +705,12 @@ class HostGate:
                     full_request = request.path == self._request_path and not (
                         set(request.input) & {"offset", "limit"}
                     )
-                    if kind == "read" and full_request and not verified.is_error:
+                    if (
+                        kind == "read"
+                        and full_request
+                        and not verified.is_error
+                        and verified.read_content_delivered
+                    ):
                         kind = "request"
                     result = Observation(
                         "observation:" + request.digest,
@@ -724,6 +733,11 @@ class HostGate:
                     changed_paths=changed,
                     result_sha256=verified.result_sha256,
                     is_error=verified.is_error,
+                    **(
+                        {"read_content_delivered": verified.read_content_delivered}
+                        if request.tool_name == "Read"
+                        else {}
+                    ),
                 )
                 return result
             except GateDeniedError as exc:

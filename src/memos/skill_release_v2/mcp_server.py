@@ -2,6 +2,7 @@
 
 import argparse
 import json
+import math
 import os
 import secrets
 import socket
@@ -97,8 +98,28 @@ def load_config(path):
 
 
 def validate_call(params):
-    if type(params) is not dict or set(params) != {"name", "arguments"}:
+    if (
+        type(params) is not dict
+        or not {"name", "arguments"} <= set(params)
+        or set(params) - {"name", "arguments", "_meta"}
+    ):
         raise ValueError("call_shape")
+    if "_meta" in params:
+        metadata = params["_meta"]
+        if type(metadata) is not dict or set(metadata) - {"progressToken", "claudecode/toolUseId"}:
+            raise ValueError("call_metadata_shape")
+        if "progressToken" in metadata:
+            token = metadata["progressToken"]
+            if not (
+                (type(token) is str and len(token) <= 300)
+                or type(token) is int
+                or (type(token) is float and math.isfinite(token))
+            ):
+                raise ValueError("call_metadata_shape")
+        if "claudecode/toolUseId" in metadata:
+            hint = metadata["claudecode/toolUseId"]
+            if type(hint) is not str or not 0 < len(hint) <= 300:
+                raise ValueError("call_metadata_shape")
     name, arguments = params["name"], params["arguments"]
     if (
         type(name) is not str
@@ -137,7 +158,8 @@ def request(config, params):
         **{key: config[key] for key in ("role", "token", "run_id", "attempt_id", "session_id")},
         "nonce": secrets.token_hex(16),
         "operation": "mcp",
-        "payload": params,
+        # Runtime metadata is not business input or a source of native identity.
+        "payload": {"name": params["name"], "arguments": params["arguments"]},
     }
     raw = json.dumps(envelope, allow_nan=False, separators=(",", ":")).encode() + b"\n"
     if len(raw) > MAX_BYTES:

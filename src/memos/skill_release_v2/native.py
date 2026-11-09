@@ -31,6 +31,9 @@ TOOL_NAMES = {
 }
 _MAX_BYTES = 1048576
 _WRITE_SUFFIX = " (file state is current in your context — no need to Read it back)"
+_UNCHANGED_READ = (
+    "Wasted call — file unchanged since your last Read. Refer to that earlier tool_result instead."
+)
 
 
 class NativeCaptureError(MemOSError, ValueError):
@@ -121,13 +124,24 @@ def _file_path(response: Mapping, request: NativeRequest, material: Mapping) -> 
     )
 
 
-def _verify_read(request: NativeRequest, native: dict, material: Mapping) -> None:
+def _verify_read(request: NativeRequest, native: dict, material: Mapping) -> bool:
     response = native["structured_result"]
     _require(
-        type(response) is dict and set(response) == {"type", "file"} and response["type"] == "text",
+        type(response) is dict
+        and set(response) == {"type", "file"}
+        and type(response["type"]) is str
+        and response["type"] in {"text", "file_unchanged"},
         "read_response_shape",
     )
     data = response["file"]
+    if response["type"] == "file_unchanged":
+        _require(type(data) is dict and set(data) == {"filePath"}, "read_file_shape")
+        _file_path(data, request, material)
+        _require(type(material.get("file_before")) is bytes, "read_file_missing")
+        _require(material["file_before"] == material.get("file_after"), "read_file_changed")
+        _require(_text(native["tool_result"]) == _UNCHANGED_READ, "read_delivery_mismatch")
+        # This proves delivery of the marker, never delivery of source bytes.
+        return False
     _require(
         type(data) is dict
         and {"filePath", "content", "numLines", "startLine", "totalLines"} <= set(data)
@@ -169,6 +183,7 @@ def _verify_read(request: NativeRequest, native: dict, material: Mapping) -> Non
             for sep in ("\t", ":")
         }
         _require(_text(native["tool_result"]) in variants, "read_delivery_mismatch")
+    return True
 
 
 def _verify_write(request: NativeRequest, native: dict, material: Mapping) -> None:
@@ -268,6 +283,7 @@ def verify_native(request: NativeRequest, native: object, material: Mapping) -> 
     post = _hook(post_value, material, request.tool_use_id, event)
     _same(post["tool_input"], request.input, "post_input_mismatch")
     is_error = native["is_error"]
+    read_content_delivered = not (request.tool_name == "Read" and is_error)
     if request.tool_name in {"record_rule", "run_visible_checks"}:
         try:
             normalized = verify_tool_delivery(
@@ -335,11 +351,11 @@ def verify_native(request: NativeRequest, native: object, material: Mapping) -> 
         _require(event == "PostToolUse", "hook_error_mismatch")
         _same(post.get("tool_response"), native["structured_result"], "structured_result_mismatch")
         if request.tool_name == "Read":
-            _verify_read(request, native, material)
+            read_content_delivered = _verify_read(request, native, material)
         else:
             _verify_write(request, native, material)
         digest = hashlib.sha256(_canonical(native).encode()).hexdigest()
-    return VerifiedResult(request.digest, digest, is_error)
+    return VerifiedResult(request.digest, digest, is_error, read_content_delivered)
 
 
 def verify_denied(native: object, material: Mapping) -> None:

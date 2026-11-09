@@ -93,3 +93,115 @@ def test_mcp_transport_loss_returns_real_error_without_credential_disclosure(tmp
     )
     assert responses[0]["result"]["isError"] is True
     assert host.credentials("mcp")["token"] not in json.dumps(responses)
+
+
+def test_fixed_cli_metadata_is_validated_then_excluded_from_host_request(tmp_path, host):
+    host.start()
+    pre(host, "check", "mcp__memos_v2__run_visible_checks", {})
+    responses = invoke(
+        tmp_path,
+        host,
+        [
+            rpc(
+                "tools/call",
+                {
+                    "name": "run_visible_checks",
+                    "arguments": {},
+                    "_meta": {
+                        "progressToken": 3,
+                        "claudecode/toolUseId": "different-untrusted-hint",
+                    },
+                },
+            )
+        ],
+    )
+    assert responses[0]["result"]["isError"] is False
+    material = host.delivery_material("check")
+    assert material["request"].tool_use_id == "check"
+    assert material["request"].input == {}
+    assert "different-untrusted-hint" not in host.journal_path.read_text()
+
+
+def test_declaration_metadata_is_not_a_seventh_business_argument(tmp_path, host):
+    host.start()
+    value = {
+        "rule_id": "entry",
+        "phase": "select",
+        "branch_index": 0,
+        "observation": "Observed.",
+        "decision": "Repair.",
+        "evidence_refs": ["unknown"],
+    }
+    pre(host, "rule", "mcp__memos_v2__record_rule", value)
+    responses = invoke(
+        tmp_path,
+        host,
+        [
+            rpc(
+                "tools/call",
+                {
+                    "name": "record_rule",
+                    "arguments": value,
+                    "_meta": {"progressToken": "progress", "claudecode/toolUseId": "rule"},
+                },
+            )
+        ],
+    )
+    result = json.loads(responses[0]["result"]["content"][0]["text"])
+    assert result == host.delivery_material("rule")["host_result"]
+    assert result["error"] == "unknown_evidence"
+
+
+def test_mcp_progress_metadata_accepts_protocol_scalar_boundaries():
+    from memos.skill_release_v2.mcp_server import validate_call
+
+    for token in (0, -1, 0.0, 1.5, "", "x" * 300, 10**400):
+        validate_call(
+            {"name": "run_visible_checks", "arguments": {}, "_meta": {"progressToken": token}}
+        )
+
+
+def test_mcp_unknown_or_malformed_metadata_is_rejected():
+    import pytest
+
+    from memos.skill_release_v2.mcp_server import validate_call
+
+    bad_metadata = [
+        None,
+        [],
+        {"progressToken": None},
+        {"progressToken": True},
+        {"progressToken": []},
+        {"progressToken": {}},
+        {"progressToken": "x" * 301},
+        {"progressToken": float("nan")},
+        {"progressToken": float("inf")},
+        {"claudecode/toolUseId": ""},
+        {"claudecode/toolUseId": "x" * 301},
+        {"claudecode/toolUseId": 3},
+        {"tool_use_id": "override"},
+        {"progressToken": 1, "other": "not-allowed"},
+    ]
+    for meta in bad_metadata:
+        with pytest.raises(ValueError):
+            validate_call({"name": "run_visible_checks", "arguments": {}, "_meta": meta})
+
+
+def test_metadata_fields_inside_business_arguments_are_still_rejected(tmp_path, host):
+    host.start()
+    responses = invoke(
+        tmp_path,
+        host,
+        [
+            rpc(
+                "tools/call",
+                {
+                    "name": "run_visible_checks",
+                    "arguments": {"progressToken": 1},
+                    "_meta": {"progressToken": 1},
+                },
+            )
+        ],
+    )
+    assert responses[0]["result"]["isError"] is True
+    assert not host.gate.audit()

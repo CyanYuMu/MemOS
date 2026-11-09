@@ -542,3 +542,62 @@ def test_diagnostic_write_failure_revokes_admission(host, monkeypatch):
     result = host.handle_hook(hook(workspace=host.gate.workspace, unexpected="private"))
     assert result["hookSpecificOutput"]["permissionDecision"] == "deny"
     assert host.closed and host.gate.state().invalidated
+
+
+def test_unchanged_post_context_does_not_claim_another_full_file_delivery(host):
+    pre(host)
+    response = post(
+        host,
+        tool_response={
+            "type": "file_unchanged",
+            "file": {"filePath": str(host.gate.workspace / "TASK.md")},
+        },
+    )
+    context = response["hookSpecificOutput"]["additionalContext"]
+    assert context.startswith("observation:")
+    assert "No full-file content was delivered by this call" in context
+    assert not host.gate.state().observations
+
+
+def test_real_unchanged_verifier_transport_gate_never_create_first_task_authority(tmp_path):
+    from memos.skill_release_v2.native import verify_native
+
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    (workspace / "TASK.md").write_text("Full task not delivered by this call.\n")
+    gate = HostGate(
+        workspace=workspace,
+        identity=IDENTITY,
+        rules={"entry": ("repair",), "repair": ("exit:success",)},
+        entry_rule="entry",
+        allowed_paths=("value.py",),
+        request_path="TASK.md",
+        verify_result=lambda request, envelope: verify_native(
+            request, envelope, transport.delivery_material(request.tool_use_id)
+        ),
+    )
+    transport = HostTransport(
+        gate,
+        IDENTITY,
+        directory=tmp_path / "control",
+        check_runner=lambda request: ({"status": "passed"}, False),
+    )
+    try:
+        assert pre(transport)["hookSpecificOutput"]["permissionDecision"] == "allow"
+        response = {"type": "file_unchanged", "file": {"filePath": str(workspace / "TASK.md")}}
+        post(transport, tool_response=response)
+        observed = transport.complete_native(
+            "read",
+            {
+                "session_id": IDENTITY.session_id,
+                "tool_use_id": "read",
+                "is_error": False,
+                "tool_result": "Wasted call — file unchanged since your last Read. Refer to that earlier tool_result instead.",
+                "structured_result": response,
+            },
+        )
+        assert observed.kind == "read" and observed.document_sha256 is None
+        assert all(item.kind != "request" for item in gate.state().observations)
+        assert not gate.state().committed_declarations
+    finally:
+        transport.close()

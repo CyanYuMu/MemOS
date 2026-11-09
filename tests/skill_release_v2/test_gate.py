@@ -593,3 +593,64 @@ def test_native_tool_id_and_tool_name_invalid_types_are_safe_denials(gate):
         with pytest.raises(GateDeniedError):
             gate.begin_tool(IDENTITY, tool_id, name, {"file_path": "TASK.md"})
     assert gate.audit()[-1].event == "denied"
+
+
+def test_first_unchanged_task_read_cannot_supply_request_authority(gate):
+    request = gate.begin_tool(IDENTITY, "cached", "Read", {"file_path": "TASK.md"})
+    cached = gate.complete_tool(
+        IDENTITY,
+        "cached",
+        VerifiedResult(
+            request.digest,
+            digest_json({"type": "file_unchanged"}),
+            False,
+            read_content_delivered=False,
+        ),
+    )
+    assert cached.kind == "read" and cached.document_sha256 is None
+    check = observe(gate, "check", "run_visible_checks", {})
+    value = declaration("entry", "select", [cached.reference, check.reference], 0)
+    gate.begin_tool(IDENTITY, "entry", "record_rule", value)
+    with pytest.raises(GateDeniedError, match="request_observation_missing"):
+        gate.receive_declaration(value)
+    assert not gate.state().committed_declarations
+    executed = next(
+        row for row in gate.audit() if row.event == "executed" and row.tool_use_id == "cached"
+    )
+    assert json.loads(executed.details_json)["read_content_delivered"] is False
+
+
+def test_unchanged_read_does_not_erase_prior_delivered_request_evidence(gate):
+    original = observe(gate, "original", "Read", {"file_path": "TASK.md"})
+    request = gate.begin_tool(IDENTITY, "cached", "Read", {"file_path": "TASK.md"})
+    cached = gate.complete_tool(
+        IDENTITY,
+        "cached",
+        VerifiedResult(
+            request.digest,
+            digest_json({"type": "file_unchanged"}),
+            False,
+            read_content_delivered=False,
+        ),
+    )
+    check = observe(gate, "check", "run_visible_checks", {})
+    declare(gate, "entry", declaration("entry", "select", [original.reference, check.reference], 0))
+    assert original.kind == "request" and cached.kind == "read"
+    assert len(gate.state().committed_declarations) == 1
+
+
+@pytest.mark.parametrize("flag", [None, 0, 1, "false", []])
+def test_content_delivery_flag_is_strict_boolean(gate, flag):
+    request = gate.begin_tool(IDENTITY, "read", "Read", {"file_path": "TASK.md"})
+    with pytest.raises(GateDeniedError, match="receipt_mismatch"):
+        gate.complete_tool(
+            IDENTITY,
+            "read",
+            VerifiedResult(
+                request.digest,
+                digest_json({}),
+                False,
+                read_content_delivered=flag,
+            ),
+        )
+    assert not gate.state().observations
