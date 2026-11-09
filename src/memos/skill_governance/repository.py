@@ -23,13 +23,15 @@ def _contract_for(assessment):
     """Version dispatch preserves the producer identity of historical decisions."""
     require(isinstance(assessment, dict))
     version = assessment.get("schemaVersion")
-    require(type(version) is int and version in (1, 2, 3), "unsupported_assessment_version")
+    require(type(version) is int and version in (1, 2, 3, 4), "unsupported_assessment_version")
     if version == 1:
         return legacy_contract
     if version == 2:
         from memos.skill_branch_validation import governance
-    else:
+    elif version == 3:
         from memos.skill_branch_extensions import governance
+    else:
+        from memos.skill_branch_c2 import governance
 
     return governance
 

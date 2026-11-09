@@ -41,7 +41,7 @@ C2 与 C1、两个核心探针属于同一派生谱系：`newIndependentSamples=
 
 ## 5 schema 4 与人工覆盖
 
-结构保留 schema 3 的共同事实及分组 checkpoint，使用 C2 协议和独立 producer。修复候选要求初始隐藏/公开恰为预登记 scoped 缺陷且 Dream 全通过、完整加载/采集/送达/过程、最终公开及隐藏全通过、真实行为变化。错误或缺失信息保留 failed/incomplete，不自动授予 coverage。
+结构保留 schema 3 的共同事实及分组 checkpoint，使用 C2 协议和独立 producer。schema 4 的 `initialVerification` 新增完整有序 `checks`，直接来自初始隐藏凭条；总状态 failed 无法单独证明 Dream 初始健康。修复候选要求初始隐藏/公开恰为预登记 scoped 缺陷且 Dream 全通过、完整加载/采集/送达/过程、最终公开及隐藏全通过、真实行为变化。错误或缺失信息保留 failed/incomplete，不自动授予 coverage。
 
 预登记目标只有以下四项，不包含 `repair_dream_update#0` 或 C1 的 `verify_scoped_reads#0`：
 
