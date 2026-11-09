@@ -325,3 +325,87 @@ it('requires the selected branch rule declaration in addition to observation and
   select('confirm_contract#3 条件证据', ['rule-1'])
   expect(submit.disabled).toBe(true)
 })
+
+it('shows every schema 3 checkpoint and requires check-specific evidence selected by a human', async () => {
+  const { extensionAssessment } = await import('../lib/skill-extension.test-fixture')
+  const value = extensionAssessment()
+  vi.mocked(api.skills.prepareAdjudication).mockResolvedValue({ ...packet, assessment: value })
+  mount(true, vi.fn(), { ...data, assessments: [value] })
+  expect(screen.getByText('组合任务的过程证据')).toBeTruthy()
+  expect(screen.getByText(/保守的编辑尝试批次/)).toBeTruthy()
+  expect(screen.getByText('公开检查 #2')).toBeTruthy()
+  expect(screen.getByText('中间隐藏复核')).toBeTruthy()
+  await prepareRepair()
+  expect((screen.getByLabelText('计入分支 verify_scoped_reads#0') as HTMLInputElement).checked).toBe(false)
+  fireEvent.click(screen.getByLabelText('计入分支 verify_scoped_reads#0'))
+  const options = screen.getByLabelText('verify_scoped_reads#0 验收证据') as HTMLSelectElement
+  expect([...options.options].map((option) => option.value)).toContain('check:2:scoped.caller_contract')
+  expect([...options.options].map((option) => option.value)).toContain('check:3:dream.caller_contract')
+  expect([...options.options].some((option) => option.selected)).toBe(false)
+  expect((screen.getByRole('button', { name: '提交我的裁决' }) as HTMLButtonElement).disabled).toBe(true)
+})
+
+it('allows an overbudget repair judgment but blocks correct use and all branch coverage', async () => {
+  const { extensionAssessment } = await import('../lib/skill-extension.test-fixture')
+  const value = extensionAssessment()
+  value.processVerification.cyclesUsed = 3
+  value.processVerification.budgetExceeded = true
+  vi.mocked(api.skills.prepareAdjudication).mockResolvedValue({ ...packet, assessment: value })
+  mount(true, vi.fn(), { ...data, assessments: [value] })
+  expect(screen.getByText(/编辑尝试已超出两轮预算/)).toBeTruthy()
+  await prepareRepair()
+  expect((screen.getByRole('option', { name: '修复成立' }) as HTMLOptionElement).disabled).toBe(false)
+  expect((screen.getByRole('option', { name: '正确使用' }) as HTMLOptionElement).disabled).toBe(true)
+  expect((screen.getByLabelText('计入分支 verify_scoped_reads#0') as HTMLInputElement).disabled).toBe(true)
+  fireEvent.change(screen.getByLabelText('规则使用'), { target: { value: 'correct' } })
+  expect((screen.getByRole('button', { name: '提交我的裁决' }) as HTMLButtonElement).disabled).toBe(true)
+})
+
+it('cannot confirm final green checks when schema 3 process evidence is incomplete', async () => {
+  const { extensionAssessment } = await import('../lib/skill-extension.test-fixture')
+  const value = extensionAssessment()
+  value.processVerification.complete = false
+  value.processVerification.issues = ['unverified_edits']
+  value.processVerification.unverifiedEdits = true
+  value.outcome = 'incomplete'
+  vi.mocked(api.skills.prepareAdjudication).mockResolvedValue({ ...packet, assessment: value })
+  mount(true, vi.fn(), { ...data, assessments: [value] })
+  expect(screen.getByText(/过程证据不完整/)).toBeTruthy()
+  await prepareRepair()
+  expect((screen.getByRole('option', { name: '修复成立' }) as HTMLOptionElement).disabled).toBe(true)
+  expect((screen.getByRole('button', { name: '提交我的裁决' }) as HTMLButtonElement).disabled).toBe(true)
+})
+
+it('submits the exact manually selected checkpoint references without creating coverage automatically', async () => {
+  const { extensionAssessment } = await import('../lib/skill-extension.test-fixture')
+  const value = extensionAssessment()
+  vi.mocked(api.skills.prepareAdjudication).mockResolvedValue({ ...packet, assessment: value })
+  mount(true, vi.fn(), { ...data, assessments: [value] })
+  await prepareRepair()
+  expect(api.skills.adjudicate).not.toHaveBeenCalled()
+  fireEvent.change(screen.getByLabelText('规则使用'), { target: { value: 'correct' } })
+  fireEvent.change(screen.getByLabelText('适用范围判断'), { target: { value: 'in_scope' } })
+  fireEvent.click(screen.getByLabelText('计入分支 verify_scoped_reads#0'))
+  function select(label: string, ids: string[]) {
+    const input = screen.getByLabelText(label) as HTMLSelectElement
+    for (const option of input.options) option.selected = ids.includes(option.value)
+    fireEvent.change(input)
+  }
+  const checkRefs = value.processVerification.checkpoints
+    .slice(1)
+    .flatMap((checkpoint) => checkpoint.checks.map((check) => `check:${checkpoint.checkIndex}:${check.name}`))
+  select('verify_scoped_reads#0 条件证据', ['event-2'])
+  select('verify_scoped_reads#0 行动证据', ['edit-2', 'rule-1'])
+  select('verify_scoped_reads#0 验收证据', checkRefs)
+  fireEvent.change(screen.getByLabelText('verify_scoped_reads#0 说明'), {
+    target: { value: 'Reviewed observed intermediate state, timely declaration and next edit' },
+  })
+  fireEvent.click(screen.getByRole('button', { name: '提交我的裁决' }))
+  await waitFor(() => expect(api.skills.adjudicate).toHaveBeenCalledTimes(1))
+  expect(vi.mocked(api.skills.adjudicate).mock.calls[0][0].judgment.branches[0]).toMatchObject({
+    branchId: 'verify_scoped_reads#0',
+    checkRefs,
+    conditionRefs: ['event-2'],
+    actionRefs: ['rule-1', 'edit-2'],
+  })
+})

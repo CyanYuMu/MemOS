@@ -1,5 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
-import type { SkillAdjudicationPackage, SkillBranchClaim, SkillGovernanceState, SkillJudgment, SkillRef } from '../../shared/contract'
+import type {
+  SkillAdjudicationPackage,
+  SkillExtensionAssessment,
+  SkillBranchClaim,
+  SkillGovernanceState,
+  SkillJudgment,
+  SkillRef,
+} from '../../shared/contract'
 import { api, ApiError } from '../lib/api'
 import { Button } from '../components/ui/button'
 
@@ -76,6 +83,91 @@ function References({
   )
 }
 
+function ProcessEvidence({ assessment }: { assessment: SkillExtensionAssessment }) {
+  const process = assessment.processVerification
+  return (
+    <section aria-label="组合任务的过程证据">
+      <h3>组合任务的过程证据</h3>
+      <p>
+        {assessment.suiteId} · 已完成 {process.cyclesUsed} / {process.maxCycles} 轮 · {process.checkpoints.length} 次公开检查
+      </p>
+      <p className="skills-muted">
+        轮次统计保守的编辑尝试批次：同一批次内多次 Edit/Write 计一轮，失败或无变化的尝试也计入；无编辑的重复检查不增加轮次。
+      </p>
+      {!process.complete && (
+        <p role="alert" className="skills-notice skills-notice--warning">
+          过程证据不完整，不能凭最终绿灯确认修复或分支覆盖。缺口：{process.issues.join('、') || '尚待核验'}
+        </p>
+      )}
+      {process.budgetExceeded && (
+        <p role="alert" className="skills-notice skills-notice--warning">
+          编辑尝试已超出两轮预算。可独立判断补丁行为，不能认定正确使用或计入分支覆盖。
+        </p>
+      )}
+      {process.unverifiedEdits && <p className="skills-notice skills-notice--warning">最后一次检查后仍有未复验的编辑尝试。</p>}
+      {process.checkpoints.map((checkpoint) => (
+        <div key={checkpoint.checkIndex}>
+          <h4>公开检查 #{checkpoint.checkIndex}</h4>
+          <p>
+            scoped：{checkpoint.groupStatus.scoped ?? '未知'} · Dream：{checkpoint.groupStatus.dream ?? '未知'} · 已完成{' '}
+            {checkpoint.cyclesUsed} 轮
+          </p>
+          <p>
+            快照 <code>{checkpoint.snapshot}</code>
+          </p>
+          <p>
+            送达事件：<code>{checkpoint.startedEvent ?? '开始记录缺失'}</code> →{' '}
+            <code>{checkpoint.completedEvent ?? '结果送达未证实'}</code>
+          </p>
+          <p>
+            编辑尝试引用：{checkpoint.editEventRefs.length ? checkpoint.editEventRefs.map((ref) => <code key={ref}>{ref} </code>) : '无'}
+          </p>
+          <details>
+            <summary>检查 #{checkpoint.checkIndex} 的逐项结果与凭据</summary>
+            <p>
+              记录摘要 <code>{checkpoint.recordSha256}</code>
+            </p>
+            <table className="skills-governance-table">
+              <thead>
+                <tr>
+                  <th>检查引用</th>
+                  <th>结果</th>
+                </tr>
+              </thead>
+              <tbody>
+                {checkpoint.checks.map((check) => (
+                  <tr key={check.name}>
+                    <td>
+                      <code>
+                        check:{checkpoint.checkIndex}:{check.name}
+                      </code>
+                    </td>
+                    <td>{check.status}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </details>
+        </div>
+      ))}
+      <h4>中间隐藏复核</h4>
+      <p className="skills-muted">
+        Agent 退出后复核预登记条件命中的所有快照，不代表 Agent 当时看到了隐藏检查。中间状态、及时规则声明和后续真实行动均须逐项审阅。
+      </p>
+      {!assessment.intermediateVerifications.length && <p>没有符合转换条件的中间快照。最终修复通过不能补出中间转换分支。</p>}
+      {assessment.intermediateVerifications.map((row) => (
+        <details key={row.snapshot}>
+          <summary>
+            公开检查 {row.checkIndices.map((index) => `#${index}`).join('、')} · 隐藏 {row.status} ·{' '}
+            {row.matches ? '凭条已核验' : '凭条未证实'}
+          </summary>
+          <Json value={row} />
+        </details>
+      ))}
+    </section>
+  )
+}
+
 export function SkillGovernance({
   reference,
   data,
@@ -110,7 +202,14 @@ export function SkillGovernance({
     }
   }, [])
   const assessment = packet?.assessment ?? current.find((item) => item.assessmentId === selected)
-  const branchAssessment = assessment?.schemaVersion === 2 ? assessment : null
+  const branchAssessment = assessment?.schemaVersion === 2 || assessment?.schemaVersion === 3 ? assessment : null
+  const extensionAssessment = assessment?.schemaVersion === 3 ? assessment : null
+  const processAllowsCoverage =
+    !extensionAssessment ||
+    (extensionAssessment.processVerification.complete &&
+      !extensionAssessment.processVerification.budgetExceeded &&
+      !extensionAssessment.processVerification.unverifiedEdits)
+  const budgetExceeded = extensionAssessment?.processVerification.budgetExceeded === true
   const covered = data.coverage.filter((item) => item.status === 'covered').length
   function fail(cause: unknown) {
     setPacket(null)
@@ -149,7 +248,7 @@ export function SkillGovernance({
     }
   }
   async function submit() {
-    if (!packet || !canManage || busy || !confirmed || !judgment.reason.trim()) return
+    if (!packet || !canSubmit) return
     setBusy(true)
     setError('')
     try {
@@ -188,7 +287,8 @@ export function SkillGovernance({
       (branchAssessment.initialVerification.matches &&
         branchAssessment.publicVerification.recordsVerified &&
         branchAssessment.publicVerification.deliveriesVerified &&
-        branchAssessment.publicVerification.deliveryRefs.length >= 2))
+        branchAssessment.publicVerification.deliveryRefs.length >= 2)) &&
+    (!extensionAssessment || (extensionAssessment.processVerification.complete && !extensionAssessment.processVerification.unverifiedEdits))
   const repairSupported =
     proven &&
     assessment?.verification.status === 'passed' &&
@@ -210,7 +310,14 @@ export function SkillGovernance({
           ['passed', 'needs_review'].includes(assessment.verification.status) &&
           judgment.boundary !== null))
   const branchComplete = judgment.branches.every((branch) => {
-    if (!branch.reason.trim() || !branch.conditionRefs.length || !branch.actionRefs.length || !branch.checkRefs.length) return false
+    if (
+      !processAllowsCoverage ||
+      !branch.reason.trim() ||
+      !branch.conditionRefs.length ||
+      !branch.actionRefs.length ||
+      !branch.checkRefs.length
+    )
+      return false
     if (!branchAssessment) return true
     const events = branchAssessment.events
     const refs = [...branch.conditionRefs, ...branch.actionRefs]
@@ -246,6 +353,7 @@ export function SkillGovernance({
     taskSupported &&
     (!branchAssessment || judgment.historyDecision === 'retain') &&
     branchComplete &&
+    (!budgetExceeded || judgment.usageDecision !== 'correct') &&
     (judgment.taskDecision === 'needs_evidence' || judgment.eventRefs.length > 0)
   const previous = data.adjudications.filter(
     (item) => item.validationId === assessment?.validationId && packet?.activeAdjudicationIds.includes(item.adjudicationId),
@@ -358,6 +466,7 @@ export function SkillGovernance({
                   </>
                 )}
               </div>
+              {extensionAssessment && <ProcessEvidence assessment={extensionAssessment} />}
               <details>
                 <summary>固定身份与验收检查</summary>
                 <Json
@@ -376,6 +485,9 @@ export function SkillGovernance({
                           batchId: branchAssessment.batchId,
                           taskDigest: branchAssessment.taskDigest,
                         }
+                      : {}),
+                    ...(extensionAssessment
+                      ? { suiteId: extensionAssessment.suiteId, checkMapping: extensionAssessment.checkMapping }
                       : {}),
                     checks: assessment.checks,
                   }}
@@ -419,6 +531,7 @@ export function SkillGovernance({
               label="规则使用"
               value={judgment.usageDecision}
               options={usageNames}
+              disabledOptions={budgetExceeded ? ['correct'] : []}
               onChange={(value) => setJudgment((prior) => ({ ...prior, usageDecision: value as SkillJudgment['usageDecision'] }))}
             />
             <Choice
@@ -441,7 +554,7 @@ export function SkillGovernance({
             />
           </div>
           <p className="skills-muted">
-            {branchAssessment ? '当前任务协议只支持核心修复判断，不能确认健康或合理停止。' : '合理停止不会计为修复成功。'}
+            {branchAssessment ? '当前任务协议只支持修复判断，不能确认健康或合理停止。' : '合理停止不会计为修复成功。'}
             以下是公开过程记录，不含私有推理；选择支撑此次判断的事件。
           </p>
           <div className="skills-governance-events">
@@ -483,6 +596,7 @@ export function SkillGovernance({
                   <input
                     type="checkbox"
                     checked={!!branch}
+                    disabled={!processAllowsCoverage}
                     onChange={(event) =>
                       setJudgment((prior) => ({
                         ...prior,
@@ -511,7 +625,16 @@ export function SkillGovernance({
                     <References
                       label={`${id} 验收证据`}
                       value={branch.checkRefs}
-                      options={assessment.checks.map((check) => ({ id: check.name, label: `${check.name} · ${check.status}` }))}
+                      options={
+                        extensionAssessment
+                          ? extensionAssessment.processVerification.checkpoints.flatMap((checkpoint) =>
+                              checkpoint.checks.map((check) => ({
+                                id: `check:${checkpoint.checkIndex}:${check.name}`,
+                                label: `公开检查 #${checkpoint.checkIndex} · ${check.name} · ${check.status}`,
+                              })),
+                            )
+                          : assessment.checks.map((check) => ({ id: check.name, label: `${check.name} · ${check.status}` }))
+                      }
                       onChange={(value) => setBranch(id, 'checkRefs', value)}
                     />
                     <label className="skills-governance-field">

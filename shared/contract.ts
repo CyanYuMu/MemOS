@@ -189,7 +189,51 @@ export interface SkillBranchAssessment extends SkillAssessmentFields {
   taskDigest: string
 }
 
-export type SkillAssessment = SkillLegacyAssessment | SkillBranchAssessment
+export type SkillCheckStatus = 'passed' | 'failed' | 'error'
+
+export interface SkillProcessCheckpoint {
+  checkIndex: number
+  snapshot: string
+  recordSha256: string
+  startedEvent: string | null
+  completedEvent: string | null
+  checks: { name: string; status: SkillCheckStatus }[]
+  groupStatus: Partial<Record<'scoped' | 'dream', SkillCheckStatus>>
+  cyclesUsed: number
+  editEventRefs: string[]
+}
+
+export interface SkillExtensionAssessment extends Omit<
+  SkillBranchAssessment,
+  'schemaVersion' | 'collectorVersion' | 'initialVerification'
+> {
+  schemaVersion: 3
+  collectorVersion: 'extension-review-1'
+  initialVerification: Omit<SkillBranchAssessment['initialVerification'], 'protocol'> & { protocol: 'extension-receipt-1' }
+  suiteId: string
+  checkMapping: { id: string; group: 'scoped' | 'dream'; ruleCheck: string }[]
+  processVerification: {
+    version: 'extension-process-1'
+    complete: boolean
+    issues: string[]
+    maxCycles: 2
+    cyclesUsed: number
+    budgetExceeded: boolean
+    unverifiedEdits: boolean
+    checkpoints: SkillProcessCheckpoint[]
+  }
+  intermediateVerifications: {
+    snapshot: string
+    checkIndices: number[]
+    receiptSha256: string
+    protocol: 'extension-receipt-1'
+    matches: boolean
+    status: SkillCheckStatus
+    checks: { name: string; status: SkillCheckStatus }[]
+  }[]
+}
+
+export type SkillAssessment = SkillLegacyAssessment | SkillBranchAssessment | SkillExtensionAssessment
 
 export interface SkillAdjudicationRecord {
   adjudicationId: string

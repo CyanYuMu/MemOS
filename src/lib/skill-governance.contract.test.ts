@@ -88,7 +88,7 @@ it.each([
   if (change === 'missing_initial') delete value.initialVerification
   if (change === 'missing_delivery') value.publicVerification = { ...branch.publicVerification, deliveryRefs: undefined }
   if (change === 'bad_collector') value.collectorVersion = 'host-review-1'
-  if (change === 'unknown_version') value.schemaVersion = 3
+  if (change === 'unknown_version') value.schemaVersion = 4
   if (change === 'extra_field') value.unregisteredProof = true
   if (change === 'bad_exit') value.publicVerification = { ...branch.publicVerification, finalExitCode: 0.5 }
   if (change === 'bad_ref')
@@ -102,4 +102,59 @@ it.each([
   if (change === 'unpaired_delivery') value.events = branch.events.filter((event) => event.id !== 'event-4')
   if (change === 'unverified_refs') value.publicVerification = { ...branch.publicVerification, deliveriesVerified: false }
   expect(skillAssessment.safeParse(value).success).toBe(false)
+})
+
+it('accepts schema 3 without losing intermediate process evidence', async () => {
+  const { extensionAssessment } = await import('./skill-extension.test-fixture')
+  const value = extensionAssessment()
+  expect(skillAssessment.parse(value)).toEqual(value)
+})
+
+it.each([
+  'missing_process',
+  'missing_midpoint',
+  'old_protocol',
+  'bad_mapping',
+  'bad_cycle',
+  'foreign_delivery',
+  'foreign_edit',
+  'wrong_groups',
+  'unknown_field',
+])('rejects malformed schema 3 facts: %s', async (change) => {
+  const { extensionAssessment } = await import('./skill-extension.test-fixture')
+  const value = extensionAssessment()
+  const raw = value as unknown as Record<string, unknown>
+  if (change === 'missing_process') delete raw.processVerification
+  if (change === 'missing_midpoint') delete raw.intermediateVerifications
+  if (change === 'old_protocol') raw.verification = { ...value.verification, protocol: 'branch-receipt-1' }
+  if (change === 'bad_mapping') value.checkMapping[0].group = 'dream'
+  if (change === 'bad_cycle') value.processVerification.cyclesUsed = 1
+  if (change === 'foreign_delivery') value.processVerification.checkpoints[1].completedEvent = 'event-3'
+  if (change === 'foreign_edit') value.processVerification.checkpoints[1].editEventRefs = ['unknown']
+  if (change === 'wrong_groups') value.processVerification.checkpoints[1].groupStatus.scoped = 'failed'
+  if (change === 'unknown_field') raw.unregisteredProof = true
+  expect(skillAssessment.safeParse(value).success).toBe(false)
+})
+
+it('retains schema 3 infrastructure gaps and a single delivered baseline as incomplete facts', async () => {
+  const { extensionAssessment } = await import('./skill-extension.test-fixture')
+  const baseline = extensionAssessment()
+  baseline.processVerification.complete = false
+  baseline.processVerification.issues = ['checkpoint_incomplete']
+  baseline.processVerification.checkpoints = baseline.processVerification.checkpoints.slice(0, 1)
+  baseline.processVerification.cyclesUsed = 0
+  baseline.publicVerification.deliveryRefs = baseline.publicVerification.deliveryRefs.slice(0, 1)
+  baseline.intermediateVerifications = []
+  baseline.outcome = 'incomplete'
+  expect(skillAssessment.safeParse(baseline).success).toBe(true)
+  const fault = structuredClone(baseline)
+  fault.publicVerification.initialExitCode = 7
+  fault.publicVerification.finalExitCode = -9
+  fault.publicVerification.deliveriesVerified = false
+  fault.publicVerification.deliveryRefs = []
+  const checkpoint = fault.processVerification.checkpoints[0]
+  checkpoint.startedEvent = checkpoint.completedEvent = null
+  checkpoint.checks = []
+  checkpoint.groupStatus = {}
+  expect(skillAssessment.safeParse(fault).success).toBe(true)
 })
