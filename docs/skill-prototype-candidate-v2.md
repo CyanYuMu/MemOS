@@ -150,6 +150,14 @@ parameters.timeout_seconds 在生成器中明确指 SDK/HTTP 请求 I/O 超时�
 
 曝光快照登记原 packet、父候选、接口合同、反馈、策略和输出 schema 的实际生成用途；另以宿主角色登记已见旧资格批次、G1 协议记录及完整模块健康基线。该快照从现有工件回溯登记，时间表示登记时刻，不伪造过去曝光时刻，也不声称证明宿主从未看过其他材料或构成完整历史账本。实际请求由白名单 messages 精确约束。生成成功后仍须逐项语义审阅，不能凭结构通过自动注册、计覆盖或发布。
 
+### 4.7 规范引用摘要的显式送达
+
+首次准备清单 217d4f2a… 在请求前审阅时发现可用性缺陷：context.excerpt_sha256 是原始 UTF-8 字节摘要，而 contract_refs.value_sha256 要求 JSON 字符串规范摘要；原提示未提供后者。无工具生成器不能可靠自行计算 SHA256。该 inputs-001 原样保留为未调用准备记录，不消耗一次正式生成，不覆盖其清单。
+
+build_messages 增加确定性的公共 contract_reference_values 列表，每项严格为 context_id、locator=/excerpt、value_sha256=hash_json(context.excerpt)。只从已校验的 context 派生，提示明确复制这个值，不复制 excerpt_sha256、不自行计算。它不新增合同事实或经验，不改变 context 或候选引用校验；随 messages/prompt/request/input 身份完整绑定。反例验证原字节 hash 不等于规范值、完整输入篡改即使重哈希仍被重建拒绝，以及真实 SDK 收到该表。
+
+修订生产者审阅并提交后另建 inputs-002，重新冻结 context、曝光与请求。candidate-v2-attempt-001 仍只允许 §4.6 的一次实际生成，预算、原父和来源不变；两个准备清单不计两次模型调用。
+
 ## 5 曝光与独立性账本
 
 输入与曝光分别记录。生成输入清单证明实际送达模型的字节；宿主曝光账本证明谁在什么阶段看过什么，不以“未发送”掩盖开发者已知内容。
