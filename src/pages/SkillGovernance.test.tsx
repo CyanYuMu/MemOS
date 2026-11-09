@@ -359,6 +359,26 @@ it('shows C2 initial healthy Dream and keeps healthy-path coverage for human sel
   expect(api.skills.adjudicate).not.toHaveBeenCalled()
 })
 
+it('blocks schema 5 branch claims for calibration budget failure while keeping single-task judgment available', async () => {
+  const { c2V2Assessment } = await import('../lib/skill-c2-v2.test-fixture')
+  const value = c2V2Assessment()
+  value.executionQualification.calibration.cyclesUsed = 3
+  value.executionQualification.calibration.budgetExceeded = true
+  value.executionQualification.calibration.qualified = false
+  value.executionQualification.calibration.issues = ['repair_budget_exceeded']
+  value.executionQualification.planQualified = false
+  value.executionQualification.planIssues = ['calibration:repair_budget_exceeded']
+  vi.mocked(api.skills.prepareAdjudication).mockResolvedValue({ ...packet, assessment: value })
+  mount(true, vi.fn(), { ...data, assessments: [value] })
+  expect(screen.getByText('执行计划未通过')).toBeTruthy()
+  expect(screen.getByRole('alert').textContent).toContain('calibration:repair_budget_exceeded')
+  await prepareRepair()
+  expect((screen.getByRole('option', { name: '修复成立' }) as HTMLOptionElement).disabled).toBe(false)
+  expect((screen.getByRole('option', { name: '正确使用' }) as HTMLOptionElement).disabled).toBe(false)
+  expect((screen.getByLabelText('计入分支 verify_scoped_reads#1') as HTMLInputElement).disabled).toBe(true)
+  expect(api.skills.adjudicate).not.toHaveBeenCalled()
+})
+
 it('allows an overbudget repair judgment but blocks correct use and all branch coverage', async () => {
   const { extensionAssessment } = await import('../lib/skill-extension.test-fixture')
   const value = extensionAssessment()

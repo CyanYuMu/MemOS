@@ -205,8 +205,50 @@ const c2AssessmentFields = extensionAssessmentFields.extend({
   intermediateVerifications: z.array(z.never()).max(0),
 })
 
+const executionUnit = z
+  .object({
+    unit: z.string().min(1),
+    group: z.enum(['none', 'skill']),
+    runId: z.string().min(1),
+    attemptId: z.string().min(1),
+    reportSha256: hash,
+    eventsSha256: hash,
+    initialReceiptSha256: hash,
+    receiptSha256: hash,
+    status: z.enum(['passed', 'failed', 'incomplete']),
+    taskAccepted: z.boolean(),
+    captureComplete: z.boolean(),
+    loading: z.enum(['not_requested', 'verified', 'unknown']),
+    processComplete: z.boolean(),
+    maxCycles: z.number().int().nonnegative(),
+    cyclesUsed: z.number().int().nonnegative(),
+    budgetExceeded: z.boolean(),
+    unverifiedEdits: z.boolean(),
+    policyMatches: z.boolean(),
+    qualified: z.boolean(),
+    issues: z.array(z.string().min(1)),
+  })
+  .strict()
+const c2V2AssessmentFields = c2AssessmentFields.extend({
+  schemaVersion: z.literal(5),
+  collectorVersion: z.literal('c2-review-2'),
+  executionQualification: z
+    .object({
+      protocol: z.literal('c2-plan-1'),
+      policyDigest: hash,
+      batchProtocol: z.literal('c2-batch-2'),
+      batchId: hash,
+      manifestSha256: hash,
+      calibration: executionUnit.extend({ unit: z.literal('c2-none'), group: z.literal('none') }),
+      trial: executionUnit.extend({ unit: z.literal('c2-skill'), group: z.literal('skill') }),
+      planQualified: z.boolean(),
+      planIssues: z.array(z.string().min(1)),
+    })
+    .strict(),
+})
+
 function validateProcessAssessment(
-  assessment: z.infer<typeof extensionAssessmentFields> | z.infer<typeof c2AssessmentFields>,
+  assessment: z.infer<typeof extensionAssessmentFields> | z.infer<typeof c2AssessmentFields> | z.infer<typeof c2V2AssessmentFields>,
   context: z.RefinementCtx,
 ) {
   const invalid = (path: string[], message: string) => context.addIssue({ code: 'custom', path, message })
@@ -230,10 +272,48 @@ function validateProcessAssessment(
   if (events.size !== assessment.events.length) invalid(['events'], '事件引用重复')
   if (!checksValid(assessment.checks, assessment.verification.status !== 'error')) invalid(['checks'], '最终检查不完整或顺序不一致')
   if (
-    assessment.schemaVersion === 4 &&
+    (assessment.schemaVersion === 4 || assessment.schemaVersion === 5) &&
     !checksValid(assessment.initialVerification.checks, assessment.initialVerification.status !== 'error')
   )
     invalid(['initialVerification', 'checks'], '初始隐藏检查不完整或顺序不一致')
+  if (assessment.schemaVersion === 5) {
+    const plan = assessment.executionQualification
+    const trial = plan.trial
+    for (const unit of [plan.calibration, trial]) {
+      const qualified =
+        unit.status === 'passed' &&
+        unit.taskAccepted &&
+        unit.captureComplete &&
+        unit.processComplete &&
+        unit.loading === (unit.group === 'none' ? 'not_requested' : 'verified') &&
+        unit.maxCycles === 2 &&
+        unit.cyclesUsed <= 2 &&
+        !unit.budgetExceeded &&
+        !unit.unverifiedEdits &&
+        unit.policyMatches
+      if (qualified !== unit.qualified || unit.qualified !== (unit.issues.length === 0))
+        invalid(['executionQualification'], '会话事实与计划资格不一致')
+    }
+    const issues = [...plan.calibration.issues.map((issue) => `calibration:${issue}`), ...trial.issues.map((issue) => `trial:${issue}`)]
+    if (plan.planQualified !== (plan.calibration.qualified && trial.qualified) || plan.planIssues.join('|') !== issues.join('|'))
+      invalid(['executionQualification'], '批次计划结论与会话资格不一致')
+    if (
+      plan.batchId !== assessment.batchId ||
+      trial.runId !== assessment.runId ||
+      trial.attemptId !== assessment.attemptId ||
+      trial.reportSha256 !== assessment.reportSha256 ||
+      trial.eventsSha256 !== assessment.eventsSha256 ||
+      trial.initialReceiptSha256 !== assessment.initialVerification.receiptSha256 ||
+      trial.receiptSha256 !== assessment.verification.receiptSha256 ||
+      trial.captureComplete !== assessment.captureComplete ||
+      trial.processComplete !== process.complete ||
+      trial.maxCycles !== process.maxCycles ||
+      trial.cyclesUsed !== process.cyclesUsed ||
+      trial.budgetExceeded !== process.budgetExceeded ||
+      trial.unverifiedEdits !== process.unverifiedEdits
+    )
+      invalid(['executionQualification', 'trial'], '计划资格没有绑定当前执行事实')
+  }
   const deliveries = publicEvidence.deliveryRefs
   if (
     publicEvidence.deliveriesVerified
@@ -324,10 +404,17 @@ function validateProcessAssessment(
 
 const extensionAssessment = extensionAssessmentFields.superRefine(validateProcessAssessment)
 const c2Assessment = c2AssessmentFields.superRefine(validateProcessAssessment)
+const c2V2Assessment = c2V2AssessmentFields.superRefine(validateProcessAssessment)
 
 // A new version must satisfy its own complete shape, never fall back to the
 // permissive historical projection and lose initial/delivery evidence.
-export const skillAssessment: z.ZodType<SkillAssessment> = z.union([legacyAssessment, branchAssessment, extensionAssessment, c2Assessment])
+export const skillAssessment: z.ZodType<SkillAssessment> = z.union([
+  legacyAssessment,
+  branchAssessment,
+  extensionAssessment,
+  c2Assessment,
+  c2V2Assessment,
+])
 
 export const skillGovernance: z.ZodType<SkillGovernanceState> = z.object({
   assessments: z.array(skillAssessment),

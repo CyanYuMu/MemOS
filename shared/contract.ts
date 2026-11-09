@@ -247,7 +247,47 @@ export interface SkillC2Assessment extends Omit<
   intermediateVerifications: never[]
 }
 
-export type SkillAssessment = SkillLegacyAssessment | SkillBranchAssessment | SkillExtensionAssessment | SkillC2Assessment
+export interface SkillExecutionUnit {
+  unit: string
+  group: 'none' | 'skill'
+  runId: string
+  attemptId: string
+  reportSha256: string
+  eventsSha256: string
+  initialReceiptSha256: string
+  receiptSha256: string
+  status: 'passed' | 'failed' | 'incomplete'
+  taskAccepted: boolean
+  captureComplete: boolean
+  loading: 'not_requested' | 'verified' | 'unknown'
+  processComplete: boolean
+  maxCycles: number
+  cyclesUsed: number
+  budgetExceeded: boolean
+  unverifiedEdits: boolean
+  policyMatches: boolean
+  qualified: boolean
+  issues: string[]
+}
+
+export interface SkillC2V2Assessment extends Omit<SkillC2Assessment, 'schemaVersion' | 'collectorVersion'> {
+  schemaVersion: 5
+  collectorVersion: 'c2-review-2'
+  executionQualification: {
+    protocol: 'c2-plan-1'
+    policyDigest: string
+    batchProtocol: 'c2-batch-2'
+    batchId: string
+    manifestSha256: string
+    calibration: SkillExecutionUnit
+    trial: SkillExecutionUnit
+    planQualified: boolean
+    planIssues: string[]
+  }
+}
+
+export type SkillAssessment =
+  SkillLegacyAssessment | SkillBranchAssessment | SkillExtensionAssessment | SkillC2Assessment | SkillC2V2Assessment
 
 export interface SkillAdjudicationRecord {
   adjudicationId: string

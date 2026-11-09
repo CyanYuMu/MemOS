@@ -3,6 +3,7 @@ import type {
   SkillAdjudicationPackage,
   SkillExtensionAssessment,
   SkillC2Assessment,
+  SkillC2V2Assessment,
   SkillBranchClaim,
   SkillGovernanceState,
   SkillJudgment,
@@ -84,9 +85,9 @@ function References({
   )
 }
 
-function ProcessEvidence({ assessment }: { assessment: SkillExtensionAssessment | SkillC2Assessment }) {
+function ProcessEvidence({ assessment }: { assessment: SkillExtensionAssessment | SkillC2Assessment | SkillC2V2Assessment }) {
   const process = assessment.processVerification
-  const c2 = assessment.schemaVersion === 4
+  const c2 = assessment.schemaVersion === 4 || assessment.schemaVersion === 5
   const title = c2 ? 'scoped 读修复与健康 Dream 复验' : '组合任务的过程证据'
   const initialGroup = (group: 'scoped' | 'dream') => {
     if (!c2) return '未知'
@@ -98,6 +99,31 @@ function ProcessEvidence({ assessment }: { assessment: SkillExtensionAssessment 
   return (
     <section aria-label={title}>
       <h3>{title}</h3>
+      {assessment.schemaVersion === 4 && (
+        <p className="skills-notice skills-notice--warning">
+          此记录尚未核验批次执行计划资格。单次补丁通过不代表校准符合预算；请同时查看审阅挑战。
+        </p>
+      )}
+      {assessment.schemaVersion === 5 && (
+        <section aria-label="批次执行计划资格">
+          <h4>{assessment.executionQualification.planQualified ? '执行计划已核验' : '执行计划未通过'}</h4>
+          <p>
+            校准：{assessment.executionQualification.calibration.qualified ? '符合计划' : '不符合计划'}，
+            {assessment.executionQualification.calibration.cyclesUsed} / {assessment.executionQualification.calibration.maxCycles}{' '}
+            轮；当前会话：{assessment.executionQualification.trial.qualified ? '符合计划' : '不符合计划'}，
+            {assessment.executionQualification.trial.cyclesUsed} / {assessment.executionQualification.trial.maxCycles} 轮。
+          </p>
+          {!assessment.executionQualification.planQualified && (
+            <p role="alert" className="skills-notice skills-notice--warning">
+              {assessment.executionQualification.planIssues.join('、')}。可独立判断当前补丁与规则使用；不能计入本批次分支覆盖或发布资格。
+            </p>
+          )}
+          <details>
+            <summary>计划资格与两次运行的绑定</summary>
+            <Json value={assessment.executionQualification} />
+          </details>
+        </section>
+      )}
       {c2 && (
         <>
           <p>
@@ -237,13 +263,17 @@ export function SkillGovernance({
   }, [])
   const assessment = packet?.assessment ?? current.find((item) => item.assessmentId === selected)
   const branchAssessment =
-    assessment?.schemaVersion === 2 || assessment?.schemaVersion === 3 || assessment?.schemaVersion === 4 ? assessment : null
-  const extensionAssessment = assessment?.schemaVersion === 3 || assessment?.schemaVersion === 4 ? assessment : null
+    assessment?.schemaVersion === 2 || assessment?.schemaVersion === 3 || assessment?.schemaVersion === 4 || assessment?.schemaVersion === 5
+      ? assessment
+      : null
+  const extensionAssessment =
+    assessment?.schemaVersion === 3 || assessment?.schemaVersion === 4 || assessment?.schemaVersion === 5 ? assessment : null
   const processAllowsCoverage =
-    !extensionAssessment ||
-    (extensionAssessment.processVerification.complete &&
-      !extensionAssessment.processVerification.budgetExceeded &&
-      !extensionAssessment.processVerification.unverifiedEdits)
+    (assessment?.schemaVersion !== 5 || assessment.executionQualification.planQualified) &&
+    (!extensionAssessment ||
+      (extensionAssessment.processVerification.complete &&
+        !extensionAssessment.processVerification.budgetExceeded &&
+        !extensionAssessment.processVerification.unverifiedEdits))
   const budgetExceeded = extensionAssessment?.processVerification.budgetExceeded === true
   const covered = data.coverage.filter((item) => item.status === 'covered').length
   function fail(cause: unknown) {
