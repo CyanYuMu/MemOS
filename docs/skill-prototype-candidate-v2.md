@@ -57,6 +57,8 @@ context 必须包含并严格核验：
 
 提取接口 `extract_contract_context(repository, *, project_id, repository_revision)` 仅接受完整 Git commit ID，核对该提交中的目标文件与当前实际文件完全相同。选取规则固定为顶层 BaseGraphDB 中唯一 update_node，包含装饰器及完整方法正文；AST 使用无位置属性的 Python AST dump。context 的 schema_version 为 1，selector_version 为 `python-method-v1`，authority_kind 为 `project_interface_contract`。验证接口 `validate_contract_context(context)` 重算全部内嵌绑定；回读接口 `recheck_contract_context(context, *, authority_bindings)` 只从宿主 `project_id → 仓库根目录` 映射取路径，检查符号链接和当前完整字节。后续正常提交可以改变仓库 HEAD，但不能改变本 context 绑定的文件；不以重建 baseline 接受漂移。
 
+首版选择器只接受声明型源文件：模块级 imports、常量与唯一目标类，类体为方法及文档字符串；动态属性/类名覆盖、条件定义、类内导入重绑定等不支持形态直接拒绝。Git 必须核对真正工作区根目录及对象类型为 commit，禁用 replace objects 和环境中的 Git 仓库重定向。它核验的是固定声明归属，不执行权威源码，也不证明任意 Python 动态语义或具体后端与抽象接口兼容。
+
 ### 3.2 单独的规范性引用
 
 每条规则保留原 `evidence` 与来源证据链；另增 `contract_refs`，引用字段为 `context_id, locator, value_sha256, kind, claim`。kind 仅允许 `precondition` 或 `normative_support`，locator 必须解析到已提供的 context 内容。
@@ -125,6 +127,18 @@ exposure_manifest 精确包含 schema_version=1、kind=candidate_exposure_snapsh
 generation 精确包含 schema_version=2、kind=candidate_generation、provider=openai_compatible_json、producer、producer_digest、input_manifest_id、sdk_version、service_identity、requested_model、reported_model、model_identity_match、parameters、request_sha256、prompt_sha256、schema_sha256、response_sha256、messages、response_content、finish_reason、usage、usage_status、elapsed_seconds。全部输入必须与重推清单一致；严格解析 response_content 后等于 proposal，finish_reason 必须 stop，用量缺失或无效明确保存。model_identity_match 是精确比较结果，不允许自报 true；false 保留为来源语义审阅局限，不自动拒绝固定内容候选封存，也不能据此宣称生成模型固定一致。以上 JSON 自洽不证明供应商真实性；实际调用身份由宿主生成流程与原始记录承担。
 
 工件集合固定为 packet.json、contexts.json（恰一项）、parent.json、input-manifest.json、exposure-manifest.json、proposal.json、generation.json、candidate.json、validation.json、REVIEW.md、manifest.json。manifest 的 schema_version=2、kind=candidate_review_artifacts_v2，绑定项目/Skill/revision/packet/content/context/input/exposure/parent 与逐文件摘要及 manifest_id；每项 JSON 和 REVIEW 都确定性重推。结构验证只报告来源、lineage、两类引用和 context 数，不产生成功经验或分支覆盖。write_candidate 必须先后执行真实 source_recheck(packet) 及 authority 回读；load_candidate 必须 authority 回读，但不假称它完成了实时 Memory 认证。当前 authority 提取器字节改变会阻断实时回读，历史 context 仍可做结构展示；不能重算 extractor_digest 替旧 context 解禁。
+
+### 4.5 真实生成与来源回读编排
+
+`OpenAIJSONGeneratorV2(api_key, base_url, client_factory=None)` 提供 service_identity 及 `generate(packet, *, contexts, parent, input_manifest, exposure_manifest) -> (proposal, generation)`。输入先按确定性规则重推，并核对当前四个 producer 文件和 service 摘要；只发送已冻结 messages/model/json_object/temperature/max_tokens，不调用旧 generate 或自动补发提示。同一实例以锁保护，只允许一次 request_attempt，禁止重入、自动重试或备用模型；实例自行创建的 SDK/HTTP 客户端在成功和所有失败路径关闭。
+
+parameters.timeout_seconds 在生成器中明确指 SDK/HTTP 请求 I/O 超时，不声称整个生成及来源回读具有相同墙钟硬截止。elapsed_seconds 记录实际耗时，超时的费用保持未知。该语义与 Claude 任务的独立进程总预算监督不同。max_calls=1 约束当前 attempt/单实例；首版受托宿主不重放该 attempt，但尚无跨所有新目录/进程的全局请求去重账本。
+
+`generate_revision(parent_directory, output, generator, *, contexts, input_manifest, exposure_manifest, authority_bindings, source_recheck) -> Path` 从旧父工件读取 packet，不接受额外可变正文或反馈参数。source_recheck 为可信宿主绑定的旧 recheck_packet 回读闭包。预检、生成后、最终封存窗口均检查 Memory、父包六文档、context 和 producer；封存回调同时包含这些约束。父版本、producer 或来源漂移不得形成可加载 candidate。输出目录先独占创建，request-started 记录 fsync 完成后才尝试请求；已有/符号链接目录拒绝，崩溃留下 unknown，不能在同目录续跑。
+
+完整且公开的 proposal/generation 可先留存在 attempt 外层，再校验/封存候选；后续失败不覆盖已保存公共响应或原始主要失败。失败记录不进入候选的 11 文件集合，不序列化异常对象、provider response 对象或辅助 reasoning 字段。诊断字段仅为 schema/kind、input_manifest_id、request_sha256、producer_digest、service_identity、requested_model、reported_model|null、model_identity_match|null、finish_reason|null、usage、usage_status、elapsed_seconds、stage、code、request_attempts(0|1)、provider_response_received。明确区分请求尝试与实际发送/计费，未获响应不推定零费用。
+
+实现验收覆盖请求前任一输入/身份篡改均零调用；成功、超时和异常最多一次尝试；辅助 reasoning 属性不可读取；重复 JSON 键、非有限数、截断、工具/拒绝响应、超限或私密内容拒绝；模型别名差异真实保留 false；来源/父/context/producer 的请求后漂移保留公共结果但不封存；封存失败无可加载半包。测试使用明确合成客户端，不把它记成真实供应商调用；实际生成预算、来源快照和输入清单仍需另行预登记。
 
 ## 5 曝光与独立性账本
 
