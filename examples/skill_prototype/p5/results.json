@@ -1,0 +1,216 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-11-09",
+  "purpose": "public_delivery_summary_not_private_evidence_replacement",
+  "skillId": "python-mock-fixture-contract-repair",
+  "revision": "c7fb3c895b2d49edc82c2808d551224d7c5ef705529d966b7973c6c042b3b8d6",
+  "contentHash": "c338a0593bb00f109391f36da621861587e5a4a0b2191a4fcaf97636608e7458",
+  "exportHash": "d8f6bf61cd7ac6bafbe8df465f4ad77995fac4dff2f8a9ea9175b8fbc4dcf947",
+  "releaseId": "b23912814a518f795dd4598b3f009e514f779eda9873b8255ff7c81da84e951b",
+  "projectionVersion": "management-native-3",
+  "collectorVersion": "p5-review-1",
+  "claudeVersion": "2.1.296",
+  "requestedModel": "claude-opus-5-5",
+  "reviewAuthority": "用户授权、助手受托审阅/执行",
+  "releaseBatchId": "6e24a96208c48146da6876748841caa26fb8d01e53b24a7351fccb8ea23234da",
+  "releaseUnits": [
+    {
+      "unit": "check-unavailable-r1-skill",
+      "status": "passed",
+      "taskAccepted": true,
+      "loading": "verified",
+      "capture": "complete",
+      "elapsedSeconds": 59.427,
+      "reportedCostUsd": 0.145922,
+      "reportSha256": "bd380651eaca0af623665ad725c3a111dcc99becea3db4a946ac0dfc9464d5b4",
+      "receiptSha256": "83ce97ecf122e0dac51850a72ed8e70beb2fb55ab944aec83afa845e916404fb"
+    },
+    {
+      "unit": "contract-missing-r1-skill",
+      "status": "passed",
+      "taskAccepted": true,
+      "loading": "verified",
+      "capture": "complete",
+      "elapsedSeconds": 23.358,
+      "reportedCostUsd": 0.1033284,
+      "reportSha256": "a6e949b0dd7090a8e3ed39221a517e65baa4891de54561475f27dc4e8adf299d",
+      "receiptSha256": "3ab1d1e7e3c83ca7d24d5972a8be83b69eabf9132d41b08fc76dac2687d9ae1a"
+    },
+    {
+      "unit": "p5-none",
+      "status": "passed",
+      "taskAccepted": true,
+      "loading": "not_requested",
+      "capture": "complete",
+      "elapsedSeconds": 23.141,
+      "reportedCostUsd": 0.1162686,
+      "reportSha256": "b0033e734940ae5255f25cbfc8e19e7404cabeb2363d8bd77323e38439d7bfa5",
+      "receiptSha256": "eb8f752b4961fe01514e82ab38d644ed472764614b174627b2fe27542d212368"
+    },
+    {
+      "unit": "scope-outside-r1-skill",
+      "status": "passed",
+      "taskAccepted": true,
+      "loading": "verified",
+      "capture": "complete",
+      "elapsedSeconds": 41.52,
+      "reportedCostUsd": 0.1768366,
+      "reportSha256": "eea4a176097dc66d2a82a8e6f4c0b5517bd37b27d1d0facebfcb4b2da9456e23",
+      "receiptSha256": "298acc055b7b36e3aacec7f914849bd520c080b6f21837ef22f60be986830988"
+    },
+    {
+      "unit": "update-healthy-r1-skill",
+      "status": "passed",
+      "taskAccepted": true,
+      "loading": "verified",
+      "capture": "complete",
+      "elapsedSeconds": 30.563,
+      "reportedCostUsd": 0.1482488,
+      "reportSha256": "6d56f070ca84c5d3856cd0ad84e7cf3dbad27f4100475c05906687855b210b3a",
+      "receiptSha256": "63965c779e4453374cff25d3118bc8d51f7564fb97b66c63db10706274d03add"
+    },
+    {
+      "unit": "update-repair-r1-skill",
+      "status": "passed",
+      "taskAccepted": true,
+      "loading": "verified",
+      "capture": "complete",
+      "elapsedSeconds": 35.047,
+      "reportedCostUsd": 0.1438832,
+      "reportSha256": "353ee2ea8528a67552e5b3f38ebf69c4b38e549e566b2683102f1dface412f6f",
+      "receiptSha256": "4af5d37f11a0fa5d44396b2b67e32632413fe8ba7a76ae501e642f04bc73665c"
+    },
+    {
+      "unit": "update-unresolved-r1-skill",
+      "status": "passed",
+      "taskAccepted": true,
+      "loading": "verified",
+      "capture": "complete",
+      "elapsedSeconds": 77.479,
+      "reportedCostUsd": 0.263907,
+      "reportSha256": "8005ce8e261758c8384d66008542678df298769165483beab2aa5d03b89315b6",
+      "receiptSha256": "5820f1c39163eeac8406cd074aeb81c5f52c57ead1020e61f9371002cda4b84c"
+    }
+  ],
+  "recoveryBatchId": "32f5ebb61cc20912abc6ac07339e9ddee5e710469c20d4cb2dc9101124697d74",
+  "recoveryUnits": [
+    {
+      "unit": "p5-none",
+      "status": "passed",
+      "taskAccepted": true,
+      "loading": "not_requested",
+      "capture": "complete",
+      "elapsedSeconds": 30.797,
+      "reportedCostUsd": 0.1349218,
+      "reportSha256": "016132a62f48391c40517bca9d99cc2fcb8e58f41e21256c2b02f30238994042",
+      "receiptSha256": "a91fc6f43e2a475104f33d12694c9e368758e80ca81e8f56197224ea6ecb613a"
+    },
+    {
+      "unit": "update-repair-r1-skill",
+      "status": "passed",
+      "taskAccepted": true,
+      "loading": "verified",
+      "capture": "complete",
+      "elapsedSeconds": 34.209,
+      "reportedCostUsd": 0.1789848,
+      "reportSha256": "c08958bc626aea7541421905ab4ef47bc3e0c25a861ccb56c6e0735b601c05f7",
+      "receiptSha256": "fb5ffac6d19a132e02a57a086cf41cad8f15312c394fb5eeebb29479c8b297bb"
+    }
+  ],
+  "normalUnits": [
+    {
+      "unit": "normal-003",
+      "status": "passed",
+      "taskAccepted": true,
+      "loading": "verified",
+      "capture": "complete",
+      "elapsedSeconds": 66.925,
+      "reportedCostUsd": 0.17436,
+      "reportSha256": "9c58d6a96d87a840ea069bb1a0fefc00cba6db7b6f3742a8e8331108232a815c",
+      "receiptSha256": "513ee74214f544327dab9de6a4b9905e3afdad46d04642720cea49c795bfd6d4",
+      "jobId": "9c5ad97cb96efad02bdfae1293b6c1e16a34ebcb9ffee24dbc3373723dcb9fce",
+      "jobStatus": "unknown",
+      "validationId": null
+    },
+    {
+      "unit": "normal-004",
+      "status": "passed",
+      "taskAccepted": true,
+      "loading": "verified",
+      "capture": "complete",
+      "elapsedSeconds": 65.572,
+      "reportedCostUsd": 0.1725822,
+      "reportSha256": "72d073f7093daecb33980ed30bdb6cca8a84dad149f6c63d2e0d3f933483a273",
+      "receiptSha256": "32d55c60bf7272d9559fe5b3fa160884b0227182492adc51675739f7a5fefe92",
+      "jobId": "bb60be6bc37def5de240cafc2402f7177ee5d06c682eeb92c8e23a4f0831b7df",
+      "jobStatus": "passed",
+      "validationId": "52a68ec08e2b878dfb3becc06b1af8d8cbfdf5ad19e945f36e684943813bd459"
+    }
+  ],
+  "normalFeedbackRecoveryValidation": "289b9f0bd74848d499f0c923733af37b7d9f7653b36aa0529db1327272165321",
+  "restorationDecisionId": "36100ccfd7c385fc3447f6048fd5b5304c87a860db890a6aa0044bb3513a8435",
+  "restorationValidationId": "dce2035bf37838b052e0faaaf7eb37b224a0daabfcc1edfd9012216dd25dcfec",
+  "toolEvolution": {
+    "beforeAllowed": true,
+    "unavailableAllowed": false,
+    "restoredObservationAllowed": false,
+    "afterReviewedRecoveryAllowed": true,
+    "dedicatedCliBytesUnchanged": true
+  },
+  "ruleTraces": {
+    "check_update_contract": {
+      "evidence": 3,
+      "runs": 3,
+      "cases": 2,
+      "memories": 3,
+      "links": 3
+    },
+    "repair_and_verify_update": {
+      "evidence": 1,
+      "runs": 1,
+      "cases": 1,
+      "memories": 1,
+      "links": 9
+    }
+  },
+  "graphNodeCounts": {
+    "CaseRevision": 27,
+    "EvidenceRevision": 35,
+    "MemorySnapshot": 3,
+    "Release": 1,
+    "Rule": 16,
+    "Run": 35,
+    "Skill": 1,
+    "SkillRevision": 4,
+    "Validation": 36
+  },
+  "graphEdgeCounts": {
+    "BASED_ON": 6,
+    "DERIVED_FROM": 12,
+    "EVALUATES": 36,
+    "EVIDENCE_LINK": 62,
+    "FROM_RUN": 35,
+    "HAS_REVISION": 4,
+    "HAS_RULE": 16,
+    "OF_CASE": 35,
+    "PUBLISHES": 1,
+    "REFERENCES": 3,
+    "SUPERSEDES": 1,
+    "USES_RUN": 44
+  },
+  "supersedes": {
+    "newRevision": "c7fb3c895b2d49edc82c2808d551224d7c5ef705529d966b7973c6c042b3b8d6",
+    "oldRevision": "e14c3e73ba8e72d1337423e8b3bff94af916e68cc21f4b28e2b2b3e843ffd995",
+    "oldStateRetained": "needs_evidence"
+  },
+  "statisticalBenefitEstablished": false,
+  "newIndependentProblemFamilies": 0,
+  "branchCoverage": [
+    "check_update_contract#0",
+    "check_update_contract#1",
+    "check_update_contract#2",
+    "repair_and_verify_update#0",
+    "repair_and_verify_update#1",
+    "repair_and_verify_update#2"
+  ]
+}

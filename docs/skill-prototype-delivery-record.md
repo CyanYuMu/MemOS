@@ -198,3 +198,14 @@ inputs-001（217d4f2a…）在请求前被阻断，模型调用为零。规范�
 Neo4j 真实项目纯读观察为 120 个核心节点、Release 0。生命周期集成测试验证变化、依赖传播、恢复票据和撤回机制；不把合成管理测试记成已发布候选的真实 P5。当前服务继续运行，浏览器审阅页保持可访问。
 
 收尾交付入口为 [skill-prototype-handoff.md](skill-prototype-handoff.md)，统一给出启动、演示、代码模块、实验结论及未完成清单。本次交付为受控原型，实际正式发布及发布后 P5 仍未完成；不关闭原发布挑战，不自动关闭 GitHub issue，未推送或合并。
+# 当前交付结果：正式发布及最小 P5 已完成（2026-11-09）
+
+本节是当前结论；前文早期“最终验收”标题对应当时阶段，历史结果保持不变。完整身份、数据及限制见 [P5 实际结果](skill-prototype-p5-results.md)，操作入口见 [handoff](skill-prototype-handoff.md)。
+
+- 新版 `c7fb3c895b2d…` 从三条真实 MemorySnapshot 限定为 Dream UPDATE 多余位置参数修复。固定七单元通过，逐条受托裁决形成 6/6 分支和三个停止边界，正式 Release `b23912814a51…` 已生成。
+- normal-001/002 在模型调用前失败；normal-003 实际补丁通过但反馈事务失败。修复后独立回读追加反馈，原 unknown 不改。normal-004 在恢复后取得正式准入，作业 passed、反馈 Validation `52a68ec08e2b…` 写回成功。
+- 专用 CLI 不可执行 → 实际扫描拒绝 normal；恢复权限 → restored_pending 仍拒绝；恢复后新两单元及裁决通过 → 固定影响包 restore → normal-004 成功。CLI 字节未改变，未操作全局安装。
+- Neo4j 实际回读当前两条规则的来源路径，并登记新版本 SUPERSEDES e14；旧 e14 保持 needs_evidence。依赖传播/多根因/撤回的隔离数据库测试与真实工具演示分开报告。
+- 浏览器实际展示发布状态、6/6 覆盖、0 未解除根因、restore 审计、原 unknown 与最新 normal 成功。默认旧开发任务被 outside_release_scope 拒绝；选择 `p5-update-repair-r1` 后页面显示“服务端允许此版本本次 normal 加载”。前端保留 P4 原 21 单元。
+- 当前 normal 修复经独立定向代码审查 APPROVE，16 项运行/登记测试及 19 项 Neo4j 回归通过。前序完整管理/生命周期 299、前端 257、Go 完整检查通过；各范围不可简单求和。
+- `p5_runtime.py` 的运行摘要可追溯但未纳入冻结工具监测；泛化、统计收益、跨 Agent 实际验证和原双根因来源故障演示均不在本次完成声明内。

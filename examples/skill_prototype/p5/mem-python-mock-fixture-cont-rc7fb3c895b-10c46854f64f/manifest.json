@@ -1,0 +1,17 @@
+{
+  "canonical_digest": "10c46854f64fb5199e6d7ddbc1a63e49b6daf90b964d8f19456507a4d229ee37",
+  "export_hash": "d8f6bf61cd7ac6bafbe8df465f4ad77995fac4dff2f8a9ea9175b8fbc4dcf947",
+  "exporter_version": "0.1",
+  "files": {
+    "SKILL.md": "191423d8072babd26d2ac6a6cc954d5357458cd5ef9873c164dff3f8d8e87d22"
+  },
+  "requires": [],
+  "revision": "c7fb3c895b2d49edc82c2808d551224d7c5ef705529d966b7973c6c042b3b8d6",
+  "rule_ids": [
+    "check_update_contract",
+    "repair_and_verify_update"
+  ],
+  "runtime_alias": "mem-python-mock-fixture-cont-rc7fb3c895b-10c46854f64f",
+  "schema_version": 1,
+  "skill_id": "python-mock-fixture-contract-repair"
+}
