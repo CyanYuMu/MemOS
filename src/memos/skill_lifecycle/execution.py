@@ -185,7 +185,7 @@ class ExecutionMixin:
     def _require_recovery_execution(self, records, nodes, state, validation_id, after_sequence):
         assessment_id = state.get("currentAssessments", {}).get(validation_id)
         assessment = records.get(("assessment", assessment_id), {})
-        require(assessment.get("schemaVersion") == 6, "restoration_execution_required", 422)
+        require(assessment.get("schemaVersion") in (6, 7), "restoration_execution_required", 422)
         matches = [
             row
             for row in self._items(records, "execution_ticket", state)

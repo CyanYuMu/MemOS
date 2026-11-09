@@ -63,7 +63,12 @@ def read_config(path: Path) -> dict:
         graph_projects.add(project["graphProject"])
         require(isinstance(project["candidates"], list) and 0 < len(project["candidates"]) <= 100)
         for candidate in project["candidates"]:
-            require(set(candidate) == {"directory", "challenges"})
+            require(
+                {"directory", "challenges"}
+                <= set(candidate)
+                <= {"directory", "challenges", "executionProfile"}
+            )
+            require(candidate.get("executionProfile", "release") in {"release", "p5"})
             require(
                 Path(candidate["directory"]).is_absolute()
                 and isinstance(candidate["challenges"], list)
@@ -125,6 +130,7 @@ def build_service(config):
     from memos.skill_management.repository import ManagementRepository
     from memos.skill_management.runtime import export_identity
     from memos.skill_management.service import Project, SkillService
+    from memos.skill_p5.lifecycle import subjects_for_packet as p5_subjects
 
     runtime = config["runtime"]
     run_config = RunConfig(
@@ -211,7 +217,11 @@ def build_service(config):
                     repo.bind_lifecycle(
                         loaded["candidate"]["skill_id"],
                         loaded["candidate"]["revision"],
-                        subjects=subjects_for_packet(packet, run_config.cli_path),
+                        subjects=(
+                            p5_subjects
+                            if registration.get("executionProfile") == "p5"
+                            else subjects_for_packet
+                        )(packet, run_config.cli_path),
                         actor="host_lifecycle_registration",
                     )
                 candidates.append(loaded["candidate"])

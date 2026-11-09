@@ -24,7 +24,7 @@ def _contract_for(assessment):
     require(isinstance(assessment, dict))
     version = assessment.get("schemaVersion")
     require(
-        type(version) is int and version in (1, 2, 3, 4, 5, 6), "unsupported_assessment_version"
+        type(version) is int and version in (1, 2, 3, 4, 5, 6, 7), "unsupported_assessment_version"
     )
     if version == 1:
         return legacy_contract
@@ -36,8 +36,10 @@ def _contract_for(assessment):
         from memos.skill_branch_c2 import governance
     elif version == 5:
         from memos.skill_branch_c2 import governance_v2 as governance
-    else:
+    elif version == 6:
         from memos.skill_release import governance
+    else:
+        from memos.skill_p5 import governance
 
     return governance
 
@@ -84,7 +86,7 @@ class GovernanceMixin:
             "verifiedExpectedStopValidationIds": sorted(
                 row["validationId"]
                 for row in usable
-                if records[("assessment", row["assessmentId"])].get("schemaVersion") == 6
+                if records[("assessment", row["assessmentId"])].get("schemaVersion") in (6, 7)
                 and row["contribution"].get("expectedStopConfirmed") is True
                 and row["contribution"]["qualifiedIndependent"] is True
             ),

@@ -377,7 +377,7 @@ def test_missing_evidence_can_be_retained_without_confirming_or_covering():
     assert result["branchCoverage"] == [] and not result["taskResolved"]
 
 
-@pytest.mark.parametrize("version", [None, True, 0, 7, "2", "6", 6.0])
+@pytest.mark.parametrize("version", [None, True, 0, 8, "2", "6", "7", 6.0, 7.0])
 def test_repository_rejects_unknown_or_noninteger_versions(version):
     with pytest.raises(ManagementError, match="unsupported_assessment_version"):
         _contract_for({"schemaVersion": version})
@@ -386,6 +386,11 @@ def test_repository_rejects_unknown_or_noninteger_versions(version):
 def test_repository_dispatch_preserves_legacy_contract_identity():
     assert _contract_for({"schemaVersion": 1}) is legacy
     assert _contract_for({"schemaVersion": 2}) is governance
+    from memos.skill_p5 import governance as p5
+    from memos.skill_release import governance as release
+
+    assert _contract_for({"schemaVersion": 6}) is release
+    assert _contract_for({"schemaVersion": 7}) is p5
 
 
 def test_repository_dispatches_release_facts_without_relabeling_old_schemas():

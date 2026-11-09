@@ -207,6 +207,10 @@ class SkillService:
 
     @staticmethod
     def _case(case_id):
+        if case_id.startswith("p5-"):
+            from memos.skill_p5.service_runtime import dev_case as p5_case
+
+            return p5_case(case_id)
         if case_id.startswith("release-"):
             from memos.skill_release.service_runtime import dev_case as release_case
 
@@ -215,9 +219,10 @@ class SkillService:
 
     @staticmethod
     def _case_options():
+        from memos.skill_p5.service_runtime import case_options as p5_options
         from memos.skill_release.service_runtime import case_options as release_options
 
-        return case_options() + release_options()
+        return case_options() + release_options() + p5_options()
 
     def _sources(self, project, detail):
         if any(
@@ -514,7 +519,11 @@ class SkillService:
             _LOG.info("skill evaluation started job=%s", job_id)
             execute = execute_task
             execution_options = {}
-            if case_id.startswith("release-"):
+            if case_id.startswith("p5-"):
+                from memos.skill_p5.service_runtime import execute_task as execute_p5
+
+                execute = execute_p5
+            elif case_id.startswith("release-"):
                 from memos.skill_lifecycle.execution import make_execution_guard
                 from memos.skill_release.service_runtime import execute_task as execute_release
 
