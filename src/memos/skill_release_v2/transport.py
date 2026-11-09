@@ -7,7 +7,9 @@ hooks or the two fixed MCP operations, never assert that native execution ended.
 import copy
 import hmac
 import json
+import math
 import os
+import re
 import secrets
 import socket
 import stat
@@ -48,6 +50,13 @@ _HOOK_KEYS = {
     "tool_response",
     "error",
     "is_interrupt",
+    "prompt_id",
+    "scratchpad_dir",
+    "effort",
+    "agent_id",
+    "agent_type",
+    "duration_ms",
+    "mcp_server",
 }
 
 
@@ -232,6 +241,126 @@ class HostTransport:
             raise TransportError("hook_event_shape")
         if len(_json(payload).encode()) > MAX_MESSAGE_BYTES:
             raise TransportError("message_too_large")
+        self._validate_hook_metadata(payload)
+
+    def _validate_hook_metadata(self, payload):
+        # Fixed CLI 2.1.296: $d supplies common fields, Okn/P9r supply
+        # duration_ms, and _X/Mnr supply MCP provenance. None are Agent args.
+        if "agent_id" in payload or "agent_type" in payload:
+            raise TransportError("subagent_unsupported")
+        if "prompt_id" in payload and (
+            type(payload["prompt_id"]) is not str
+            or not re.fullmatch(
+                r"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}",
+                payload["prompt_id"],
+            )
+        ):
+            raise TransportError("prompt_id_shape")
+        for key in ("scratchpad_dir", "transcript_path"):
+            if key not in payload:
+                continue
+            value = payload[key]
+            if (
+                type(value) is not str
+                or not 0 < len(value) <= 4096
+                or any(ord(char) < 32 or ord(char) == 127 for char in value)
+                or "\\" in value
+                or not Path(value).is_absolute()
+                or ".." in Path(value).parts
+            ):
+                raise TransportError("hook_path_metadata_shape")
+        if "permission_mode" in payload and (
+            type(payload["permission_mode"]) is not str
+            or payload["permission_mode"]
+            not in {
+                "default",
+                "plan",
+                "acceptEdits",
+                "auto",
+                "dontAsk",
+                "bypassPermissions",
+            }
+        ):
+            raise TransportError("permission_mode_shape")
+        # The frozen profile uses low. Other documented effort levels need
+        # their own explicit profile rather than silently changing this run.
+        if "effort" in payload and (
+            type(payload["effort"]) is not dict or payload["effort"] != {"level": "low"}
+        ):
+            raise TransportError("effort_mismatch")
+        if "duration_ms" in payload:
+            duration = payload["duration_ms"]
+            if (
+                payload["hook_event_name"] not in {"PostToolUse", "PostToolUseFailure"}
+                or type(duration) not in (int, float)
+                or duration < 0
+                or (type(duration) is float and not math.isfinite(duration))
+            ):
+                raise TransportError("duration_shape")
+        if payload["tool_name"] in {
+            "mcp__memos_v2__record_rule",
+            "mcp__memos_v2__run_visible_checks",
+        }:
+            # --mcp-config loads this stdio server with scope dynamic. SDK,
+            # plugin and persisted configuration scopes are different origins.
+            provenance = payload.get("mcp_server")
+            if type(provenance) is not dict or provenance != {
+                "name": "memos_v2",
+                "source": "dynamic",
+            }:
+                raise TransportError("mcp_provenance_mismatch")
+        elif "mcp_server" in payload:
+            raise TransportError("mcp_provenance_mismatch")
+
+    def _record_rejected_hook_shape(self, payload, reason):
+        """Retain only bounded structural diagnostics after authentication."""
+        fields = []
+        truncated = False
+        names = {
+            dict: "object",
+            list: "array",
+            str: "string",
+            int: "integer",
+            float: "number",
+            bool: "boolean",
+            type(None): "null",
+        }
+
+        def visit(value, prefix="", depth=0):
+            nonlocal truncated
+            if type(value) is not dict:
+                return
+            for key, item in value.items():
+                if len(fields) >= 64:
+                    truncated = True
+                    return
+                name = (
+                    key
+                    if type(key) is str and re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]{0,63}", key)
+                    else "<invalid-key>"
+                )
+                path = prefix + name
+                fields.append({"name": path, "type": names.get(type(item), "invalid")})
+                if type(item) is dict:
+                    if depth < 2:
+                        visit(item, path + ".", depth + 1)
+                    elif item:
+                        truncated = True
+
+        visit(payload)
+        try:
+            fingerprint = digest_json(json.loads(_json(payload)))
+        except TransportError:
+            fingerprint = None
+        self._append(
+            "hook_rejected_shape",
+            reason=reason,
+            payload_type=names.get(type(payload), "invalid"),
+            payload_sha256=fingerprint,
+            field_count=len(payload) if type(payload) is dict else 0,
+            fields=fields,
+            fields_truncated=truncated,
+        )
 
     def _file(self, request):
         if request is None or request.path is None:
@@ -279,14 +408,21 @@ class HostTransport:
         """Process authenticated Hook input; no Post event waits for native stdout."""
         with self._condition:
             is_pre = type(payload) is dict and payload.get("hook_event_name") == "PreToolUse"
+            validated = False
             try:
                 self._live()
                 self._validate_hook(payload)
+                validated = True
                 payload = _clone(payload)
                 if is_pre:
                     return self._pre(payload)
                 return self._post(payload)
             except (TransportError, GateDeniedError) as exc:
+                if not validated and not self._closed:
+                    try:
+                        self._record_rejected_hook_shape(payload, exc.code)
+                    except TransportError:
+                        self._closed = True
                 if not is_pre:
                     try:
                         self._invalidate(exc.code)

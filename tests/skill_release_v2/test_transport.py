@@ -18,6 +18,8 @@ IDENTITY = RunIdentity("run", "attempt", "session")
 
 
 def hook(tool_id="read", name="Read", value=None, event="PreToolUse", **extra):
+    if name in {"mcp__memos_v2__record_rule", "mcp__memos_v2__run_visible_checks"}:
+        extra.setdefault("mcp_server", {"name": "memos_v2", "source": "dynamic"})
     return {
         "session_id": "session",
         "cwd": str(extra.pop("workspace")),
@@ -376,3 +378,167 @@ def test_close_does_not_wait_forever_for_a_blocked_state_lock(host):
         release.set()
         worker.join(1)
     assert host.close(timeout=0.03) is True
+
+
+def test_fixed_cli_common_hook_metadata_and_post_duration_are_accepted(host):
+    metadata = {
+        "prompt_id": "550e8400-e29b-41d4-a716-446655440000",
+        "transcript_path": "/private/session/transcript.jsonl",
+        "scratchpad_dir": "/private/session/scratchpad",
+        "permission_mode": "dontAsk",
+        "effort": {"level": "low"},
+    }
+    payload = hook(workspace=host.gate.workspace, **metadata)
+    assert host.handle_hook(payload)["hookSpecificOutput"]["permissionDecision"] == "allow"
+    response = host.handle_hook(
+        {
+            **payload,
+            "hook_event_name": "PostToolUse",
+            "duration_ms": 1.5,
+            "tool_response": {"content": "Repair caller.\n"},
+        }
+    )
+    assert "additionalContext" in response["hookSpecificOutput"]
+    retained = host.delivery_material("read")
+    assert retained["pre_hook"]["prompt_id"] == metadata["prompt_id"]
+    assert retained["post_hook"]["duration_ms"] == 1.5
+
+
+@pytest.mark.parametrize(
+    "metadata",
+    [
+        {"prompt_id": None},
+        {"prompt_id": 1},
+        {"prompt_id": "not-a-uuid"},
+        {"prompt_id": "550e8400e29b41d4a716446655440000"},
+        {"scratchpad_dir": None},
+        {"scratchpad_dir": True},
+        {"scratchpad_dir": "relative/path"},
+        {"scratchpad_dir": "/private/../escape"},
+        {"scratchpad_dir": "/" + "x" * 4096},
+        {"transcript_path": []},
+        {"transcript_path": "relative.jsonl"},
+        {"effort": None},
+        {"effort": "low"},
+        {"effort": {}},
+        {"effort": {"level": True}},
+        {"effort": {"level": "medium"}},
+        {"effort": {"level": "high"}},
+        {"effort": {"level": "low", "other": 1}},
+        {"agent_id": "child"},
+        {"agent_id": None},
+        {"agent_type": "main"},
+        {"permission_mode": None},
+        {"permission_mode": "manual"},
+        {"duration_ms": 1},
+        {"mcp_server": {"name": "memos_v2", "source": "dynamic"}},
+        {"unknown_runtime_key": "private metadata value"},
+    ],
+)
+def test_invalid_or_unbound_metadata_is_denied_with_value_free_diagnostics(host, metadata):
+    payload = hook(workspace=host.gate.workspace, **metadata)
+    result = host.handle_hook(payload)
+    assert result["hookSpecificOutput"]["permissionDecision"] == "deny"
+    rows = [json.loads(line) for line in host.journal_path.read_text().splitlines()]
+    diagnostic = next(row for row in rows if row["event"] == "hook_rejected_shape")
+    assert diagnostic["payload_sha256"] == digest_json(payload)
+    assert "payload" not in diagnostic and "pre_hook" not in diagnostic
+    assert "private metadata value" not in json.dumps(diagnostic)
+    assert not host.gate.audit()
+
+
+@pytest.mark.parametrize("duration", [None, True, -1, "1", [], float("inf"), float("nan")])
+def test_post_duration_requires_finite_nonnegative_number(host, duration):
+    pre(host)
+    result = post(host, tool_response={}, duration_ms=duration)
+    assert result["continue"] is False
+    assert host.gate.state().invalidated
+
+
+def test_mcp_provenance_must_match_the_fixed_dynamic_stdio_source(host):
+    payload = hook(
+        "check",
+        "mcp__memos_v2__run_visible_checks",
+        {},
+        workspace=host.gate.workspace,
+        mcp_server={"name": "memos_v2", "source": "dynamic"},
+    )
+    result = host.handle_hook(payload)
+    assert result["hookSpecificOutput"]["permissionDecision"] == "allow"
+
+
+@pytest.mark.parametrize(
+    "provenance",
+    [
+        None,
+        {},
+        {"name": "other", "source": "dynamic"},
+        {"name": "memos_v2", "source": "sdk"},
+        {"name": "memos_v2", "source": "plugin"},
+        {"name": "memos_v2", "source": "project"},
+        {"name": "memos_v2", "source": "dynamic", "extra": True},
+    ],
+)
+def test_mcp_other_provenance_never_registers_native_request(host, provenance):
+    payload = hook(
+        "check",
+        "mcp__memos_v2__run_visible_checks",
+        {},
+        workspace=host.gate.workspace,
+        mcp_server=provenance,
+    )
+    result = host.handle_hook(payload)
+    assert result["hookSpecificOutput"]["permissionDecision"] == "deny"
+    assert not host.gate.audit()
+
+
+def test_fixed_cli_mcp_requires_provenance_field(host):
+    payload = hook("check", "mcp__memos_v2__run_visible_checks", {}, workspace=host.gate.workspace)
+    payload.pop("mcp_server", None)
+    assert host.handle_hook(payload)["hookSpecificOutput"]["permissionDecision"] == "deny"
+    assert not host.gate.audit()
+
+
+def test_rejected_hook_diagnostics_are_bounded_and_exclude_values(host):
+    private = "private diagnostic sentinel"
+    payload = hook(workspace=host.gate.workspace)
+    payload.update({f"extra_{i}": private for i in range(200)})
+    payload[private + "\n" + "x" * 200] = private
+    result = host.handle_hook(payload)
+    assert result["hookSpecificOutput"]["permissionDecision"] == "deny"
+    row = json.loads(host.journal_path.read_text().splitlines()[-1])
+    assert row["event"] == "hook_rejected_shape"
+    assert row["field_count"] == len(payload)
+    assert len(row["fields"]) <= 64 and row["fields_truncated"] is True
+    assert row["payload_sha256"] == digest_json(payload)
+    assert private not in json.dumps(row)
+
+
+def test_rejected_unauthenticated_socket_input_has_no_hook_diagnostic(host):
+    config = host.credentials("hook")
+    message = {
+        **{k: config[k] for k in ("role", "token", "run_id", "attempt_id", "session_id")},
+        "nonce": "unauthenticated",
+        "operation": "hook",
+        "payload": hook(workspace=host.gate.workspace, unknown="secret"),
+    }
+    message["token"] = "wrong"
+    with pytest.raises(TransportError, match="authentication_failed"):
+        host.dispatch(message)
+    assert [json.loads(line)["event"] for line in host.journal_path.read_text().splitlines()] == [
+        "opened"
+    ]
+
+
+@pytest.mark.parametrize("duration", [0, 0.0, 10**400])
+def test_finite_nonnegative_duration_does_not_require_float_coercion(host, duration):
+    pre(host)
+    result = post(host, tool_response={}, duration_ms=duration)
+    assert "additionalContext" in result["hookSpecificOutput"]
+
+
+def test_diagnostic_write_failure_revokes_admission(host, monkeypatch):
+    monkeypatch.setattr(os, "fsync", lambda fd: (_ for _ in ()).throw(OSError("disk")))
+    result = host.handle_hook(hook(workspace=host.gate.workspace, unexpected="private"))
+    assert result["hookSpecificOutput"]["permissionDecision"] == "deny"
+    assert host.closed and host.gate.state().invalidated

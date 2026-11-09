@@ -565,3 +565,180 @@ def test_failed_file_tool_closes_with_exact_error_sidecar(tmp_path, tool):
     del material["post_hook"]["tool_response"]
     native.update(is_error=True, tool_result=error, structured_result="Error: " + error)
     assert verify_native(request, native, material).is_error is True
+
+
+def thinking_tokens(**changes):
+    """Sanitized shape observed in the pinned CLI, with SDK optional metadata."""
+    return {
+        "type": "system",
+        "subtype": "thinking_tokens",
+        "estimated_tokens": 3,
+        "estimated_tokens_delta": 1,
+        "session_id": IDENTITY.session_id,
+        "uuid": "00000000-0000-4000-8000-000000000001",
+        **changes,
+    }
+
+
+@pytest.mark.parametrize("count,delta", [(0, 0), (3, 1), (3.5, 0.5), (1e100, 1e10)])
+@pytest.mark.parametrize("user_message_uuid", [None, "user-message-1"])
+def test_thinking_counts_are_validated_without_creating_tool_evidence(
+    tmp_path, count, delta, user_message_uuid
+):
+    consumer, materials, material, calls, init, start, result, end = stream(tmp_path)
+    row = thinking_tokens(estimated_tokens=count, estimated_tokens_delta=delta)
+    if user_message_uuid is not None:
+        row["user_message_uuid"] = user_message_uuid
+    feed(consumer, init)
+    before = consumer.summary()
+    feed(consumer, row)
+    assert consumer.summary() == before
+    assert calls == []
+    materials["tool-1"] = material
+    feed(consumer, start, row, result, row, end)
+    summary = consumer.finish()
+    assert summary["completed_tools"] == 1
+    assert summary["total_cost_usd"] == 0.01
+    assert len(calls) == 1
+    assert "estimated_tokens" not in str(summary)
+    assert "user-message-1" not in str(summary)
+
+
+@pytest.mark.parametrize("key", ["estimated_tokens", "estimated_tokens_delta"])
+@pytest.mark.parametrize(
+    "value", [True, False, None, "1", -1, -0.5, float("inf"), float("nan"), 10**400]
+)
+def test_thinking_counts_reject_invalid_numbers(tmp_path, key, value):
+    consumer, _, _, calls, init, *_ = stream(tmp_path)
+    feed(consumer, init)
+    with pytest.raises(NativeCaptureError):
+        feed(consumer, thinking_tokens(**{key: value}))
+    assert calls == []
+    assert consumer.summary()["complete"] is False
+
+
+@pytest.mark.parametrize(
+    "changes,removed",
+    [
+        ({}, "estimated_tokens"),
+        ({}, "estimated_tokens_delta"),
+        ({}, "uuid"),
+        ({}, "session_id"),
+        ({"session_id": "other-session"}, None),
+        ({"uuid": "not-a-uuid"}, None),
+        ({"uuid": ""}, None),
+        ({"uuid": 1}, None),
+        ({"user_message_uuid": None}, None),
+        ({"user_message_uuid": ""}, None),
+        ({"user_message_uuid": 1}, None),
+        ({"user_message_uuid": "x" * 301}, None),
+        ({"parent_tool_use_id": "nested-call"}, None),
+        ({"tool_use_id": "tool-1"}, None),
+        ({"thinking": "unsupported-private-field"}, None),
+    ],
+)
+def test_thinking_counts_reject_missing_unknown_or_unbound_fields(tmp_path, changes, removed):
+    consumer, _, _, calls, init, *_ = stream(tmp_path)
+    row = thinking_tokens(**changes)
+    if removed:
+        del row[removed]
+    feed(consumer, init)
+    with pytest.raises(NativeCaptureError):
+        feed(consumer, row)
+    assert calls == []
+
+
+@pytest.mark.parametrize("position", ["before_init", "after_result"])
+def test_thinking_counts_require_an_active_initialized_invocation(tmp_path, position):
+    consumer, _, _, _, init, _, _, end = stream(tmp_path)
+    if position == "after_result":
+        feed(consumer, init, end)
+    with pytest.raises(NativeCaptureError):
+        feed(consumer, thinking_tokens())
+
+
+@pytest.mark.parametrize("tool", ["Read", "Edit", "Write", "record_rule", "run_visible_checks"])
+def test_pre_denial_accepts_exact_pinned_hook_error_template(tmp_path, tool):
+    _, native, material = fixture(tmp_path, tool)
+    material.update(
+        request=None, denied="hook_shape", post_hook=None, file_after=material["file_before"]
+    )
+    refusal = f"PreToolUse:{material['full_name']} hook error: hook_shape"
+    native.update(is_error=True, tool_result=refusal, structured_result="Error: " + refusal)
+    verify_denied(native, material)
+
+
+@pytest.mark.parametrize(
+    "content,sidecar",
+    [
+        ("PreToolUse:Edit hook error: hook_shape", "Error: PreToolUse:Edit hook error: hook_shape"),
+        (
+            "PreToolUse:Read hook error: other_reason",
+            "Error: PreToolUse:Read hook error: other_reason",
+        ),
+        (
+            "prefix PreToolUse:Read hook error: hook_shape",
+            "Error: prefix PreToolUse:Read hook error: hook_shape",
+        ),
+        (
+            "PreToolUse:Read hook error: hook_shape suffix",
+            "Error: PreToolUse:Read hook error: hook_shape suffix",
+        ),
+        (
+            "PostToolUse:Read hook error: hook_shape",
+            "Error: PostToolUse:Read hook error: hook_shape",
+        ),
+        ("PreToolUse:Read hook error: hook_shape", "Error: hook_shape"),
+        ("PreToolUse:Read hook error: hook_shape", {"status": "success"}),
+        ("PreToolUse:Read hook error: hook_shape", None),
+    ],
+)
+def test_hook_error_denial_rejects_other_names_reasons_prefixes_and_sidecars(
+    tmp_path, content, sidecar
+):
+    _, native, material = fixture(tmp_path)
+    material.update(
+        request=None, denied="hook_shape", post_hook=None, file_after=material["file_before"]
+    )
+    native.update(is_error=True, tool_result=content, structured_result=sidecar)
+    with pytest.raises(NativeCaptureError, match="denial_result_mismatch"):
+        verify_denied(native, material)
+
+
+def test_hook_error_denial_postfailure_must_match_the_delivered_template(tmp_path):
+    _, native, material = fixture(tmp_path)
+    material.update(request=None, denied="hook_shape", file_after=material["file_before"])
+    refusal = "PreToolUse:Read hook error: hook_shape"
+    native.update(is_error=True, tool_result=refusal, structured_result="Error: " + refusal)
+    material["post_hook"].update(hook_event_name="PostToolUseFailure", error=refusal)
+    del material["post_hook"]["tool_response"]
+    verify_denied(native, material)
+    material["post_hook"]["error"] = "hook_shape"
+    with pytest.raises(NativeCaptureError, match="denial_result_mismatch"):
+        verify_denied(native, material)
+
+
+def test_native_stream_binds_hook_error_denial_to_start_and_trusted_pre(tmp_path):
+    _, _, material, _, init, start, result, end = stream(tmp_path)
+    material.update(
+        request=None, denied="hook_shape", post_hook=None, file_after=material["file_before"]
+    )
+    calls = []
+
+    def complete(tool_id, native):
+        verify_denied(native, material)
+        calls.append(tool_id)
+
+    consumer = NativeStream(
+        identity=IDENTITY,
+        expected_model=MODEL,
+        expected_tools=TOOLS,
+        material=lambda _: material,
+        complete=complete,
+    )
+    refusal = "PreToolUse:Read hook error: hook_shape"
+    result["message"]["content"][0].update(content=refusal, is_error=True)
+    result["tool_use_result"] = "Error: " + refusal
+    feed(consumer, init, start, result, end)
+    assert consumer.finish()["completed_tools"] == 1
+    assert calls == ["tool-1"]

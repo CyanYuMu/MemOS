@@ -10,6 +10,7 @@ import math
 from collections.abc import Callable, Mapping
 from pathlib import Path
 from typing import Any
+from uuid import UUID
 
 from memos.exceptions import MemOSError
 from memos.skill_release_v2.capture import (
@@ -350,15 +351,17 @@ def verify_denied(native: object, material: Mapping) -> None:
         and bool(material["denied"]),
         "trusted_denial_missing",
     )
-    # Claude 2.1.296 passes permissionDecisionReason directly into the native
-    # refusal; these fixed tools do not receive the Agent-only refusal suffix.
-    # Its stream sidecar is exactly "Error: " followed by that same refusal.
-    # An unrelated I/O failure cannot stand in for the trusted Pre decision.
+    # Claude 2.1.296 renders either permissionDecisionReason directly or a
+    # blocking Hook error as JH(`PreToolUse:${tool.name}`, blockingError).
+    # The stream sidecar is exactly "Error: " followed by that same refusal.
+    # Neither path accepts a substring match against an unrelated failure.
     reason = material["denied"]
+    delivered = native["tool_result"]
     _require(
         native["is_error"] is True
-        and native["tool_result"] == reason
-        and native["structured_result"] == "Error: " + reason,
+        and type(delivered) is str
+        and delivered in (reason, f"PreToolUse:{material['full_name']} hook error: {reason}")
+        and native["structured_result"] == "Error: " + delivered,
         "denial_result_mismatch",
     )
     _require(material.get("file_before") == material.get("file_after"), "denied_file_changed")
@@ -367,8 +370,42 @@ def verify_denied(native: object, material: Mapping) -> None:
         _hook(post, material, native["tool_use_id"], "PostToolUseFailure")
         _same(post["tool_input"], pre["tool_input"], "post_input_mismatch")
         _require(
-            post.get("error") == reason and "tool_response" not in post, "denial_result_mismatch"
+            post.get("error") == delivered and "tool_response" not in post,
+            "denial_result_mismatch",
         )
+
+
+def _verify_thinking_tokens(row: dict) -> None:
+    required = {
+        "type",
+        "subtype",
+        "estimated_tokens",
+        "estimated_tokens_delta",
+        "session_id",
+        "uuid",
+    }
+    _require(
+        required <= set(row) <= required | {"user_message_uuid"},
+        "native_thinking_shape",
+    )
+    value = row["uuid"]
+    _require(type(value) is str, "native_thinking_shape")
+    try:
+        valid_uuid = str(UUID(value)) == value
+    except ValueError:
+        valid_uuid = False
+    _require(valid_uuid, "native_thinking_shape")
+    if "user_message_uuid" in row:
+        value = row["user_message_uuid"]
+        _require(type(value) is str and 0 < len(value) <= 300, "native_thinking_shape")
+    for key in ("estimated_tokens", "estimated_tokens_delta"):
+        value = row[key]
+        _require(type(value) in (int, float), "native_thinking_shape")
+        try:
+            finite = math.isfinite(value)
+        except OverflowError:
+            finite = False
+        _require(finite and value >= 0, "native_thinking_shape")
 
 
 class NativeStream:
@@ -460,6 +497,9 @@ class NativeStream:
             self._init = True
             return
         _require(self._init, "native_init_missing")
+        if kind == "system" and row.get("subtype") == "thinking_tokens":
+            _verify_thinking_tokens(row)
+            return
         if kind == "result":
             _require(
                 type(row.get("is_error")) is bool
