@@ -29,6 +29,7 @@
 | [invites](invites.md) | 项目邀请链接：一次性 token、过期/撤销、落地页与兑换 |
 | [redis](redis.md) | 登录节流的 Redis 共享计数（可选）与内存回退 |
 | [dashboard-routes](dashboard-routes.md) | Dashboard 37 条路径的逐条状态与契约 |
+| [skill-lifecycle](skill-lifecycle.md) | Skill 来源/工具观察、影响包、挑战与恢复控制面 |
 | [prompt-studio](prompt-studio.md) | 提示词工作台的控制面代理：`prompts/*` 八条路由、权限、错误映射、限流与审计 |
 | [observability](observability.md) | Prometheus 指标与可选告警规则（集群当前无采集端）、tracing 待决事项 |
 | [deploy](deploy.md) | 镜像、dev 清单、生产发布/回滚与集群验证手册 |
