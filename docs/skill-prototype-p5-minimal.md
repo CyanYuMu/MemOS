@@ -26,3 +26,35 @@
 `skill_p5` 是冻结协议的显式继任版本；复制版本化执行代码会增加维护成本，换取历史事实可复验。后续可提取稳定公共实现，本次不进行大规模重构。Claude 的声明与工具选择仍有不确定性；本次不承诺收益优势，不把一次通过推广成通用技能。既有三组对照和失败案例继续报告，新增批次是发布资格验证。
 
 真实运行结果、发布 ID、成本、耗时和未完成项在执行后补入验收记录；本文件本身不代表已通过验收。
+
+## 可复现入口
+
+使用现有私有服务配置，在新候选登记项增加 `"executionProfile": "p5"`。凭据、来源快照、完整事件和生成目录放在仓库外。`CANDIDATE` 指向可由 `load_candidate` 完整复验的候选目录；`ARTIFACTS` 是全新私有运行目录。示例中的环境变量由操作者按部署设置，不需要把配置提交到 Git。
+
+```sh
+.venv/bin/python -m memos.skill_p5 qualify --output "$ARTIFACTS/qualification"
+.venv/bin/python -m memos.skill_p5 run --config "$CONFIG" \
+  --candidate "$CANDIDATE" --qualification "$ARTIFACTS/qualification" \
+  --branch-plan "$BRANCH_PLAN" --output "$ARTIFACTS/batch" --project "$PROJECT"
+.venv/bin/python -m memos.skill_p5 import --config "$CONFIG" \
+  --batch "$ARTIFACTS/batch" --qualification "$ARTIFACTS/qualification" \
+  --allowed-root "$ARTIFACTS" --output "$ARTIFACTS/import" \
+  --project "$PROJECT" --skill "$SKILL"
+```
+
+分支计划为六个 suite ID 到候选分支 ID 列表的 JSON 映射，必须覆盖候选的所有分支，意向不等于实际覆盖。固定 suite 名称见 `skill_p5.tasks.SUITES`。恢复时在 `run` 增加 `--plan-purpose recovery` 并使用新的输出目录：该计划只运行校准和修复两个单元。
+
+在管理界面逐条准备裁决包，检查实际事件和检查引用，再提交裁决。取得全部覆盖和发布门槛 PASS 后准备固定审阅包并发布；任何缺口都应保留。新协议的 schema 7 在 Python、Go OpenAPI 和前端均有独立身份，旧 schema 6 不变。
+
+正式 normal 使用须先停止管理服务，让宿主独占同一服务锁，然后运行：
+
+```sh
+.venv/bin/python scripts/dev/skill_p5_normal.py --config "$CONFIG" \
+  --project "$PROJECT" --skill "$SKILL" --revision "$REVISION" \
+  --case p5-update-repair-r1 --operation p5-normal-001 \
+  --output "$ARTIFACTS/normal-001.json"
+```
+
+操作 ID 和输出路径不能重复使用。服务配置若保留旧三组实验，必须继续匹配其冻结运行配置；新批次可使用独立配置文件。normal 命令结束后重启管理服务查看作业和反馈。该任务是已知场景的使用演示，不能增加独立覆盖或被计为新的效果样本。
+
+工具失效演示仅操作部署中专用的 Claude CLI 副本：记录原权限，移除执行权限，调用来源/工具扫描并核对 normal 拒绝；用 `finally` 恢复原权限并再次扫描。此时应仍有 `restored_pending` 根因。完成变化之后的恢复批次、回读和裁决，再审阅固定影响包执行 restore。不要更改用户全局 Claude 安装，也不要把“文件恢复”描述为“已重新获准使用”。
