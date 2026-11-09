@@ -84,11 +84,11 @@ RED 先覆盖模块缺失和旧 readiness 拒绝依赖；GREEN 包含真实 Neo4
 
 增加宿主专用执行票据，无浏览器写入口：
 
-- `begin_execution(skill_id, revision, *, batch_id, unit_id, case_id, group, mode, content_hash, export_hash, actor, operation_id)`：在真实执行前，已实际扫描来源/工具后调用。mode 为 independent_validation / normal；group 为 none / skill。图事务检查固定候选/导出、主体观察均健康，保存不可变开始记录及单调 startedSequence。由服务器产生随机量和 runId、attemptId，不接受客户端指定旧 runId 后补签。runId 为服务器生成的 64 位随机十六进制（保持底层 80 字符限制），attemptId 为服务器生成的 32 位随机十六进制；batchId + unitId 对固定候选只允许一个票据。返回 `{ticketId,runId,attemptId,startedSequence,observationIds,contentHash,exportHash,batchId,unitId,caseId,mode,group}`。相同 operation 的回读不构成再次启动 CLI 的授权，运行器仍要求全新输出目录。
+- `begin_execution(skill_id, revision, *, batch_id, unit_id, case_id, group, mode, content_hash, export_hash, actor, operation_id)`：在真实执行前，已实际扫描来源/工具后调用。mode 为 independent_validation / candidate_evaluation / normal；group 为 none / skill。图事务检查固定候选/导出、主体观察均健康，保存不可变开始记录及单调 startedSequence。由服务器产生随机量和 runId、attemptId，不接受客户端指定旧 runId 后补签。runId 为服务器生成的 64 位随机十六进制（保持底层 80 字符限制），attemptId 为服务器生成的 32 位随机十六进制；batchId + unitId 对固定候选只允许一个票据。返回 `{ticketId,runId,attemptId,startedSequence,observationIds,contentHash,exportHash,batchId,unitId,caseId,mode,group}`。相同 operation 的回读不构成再次启动 CLI 的授权，运行器仍要求全新输出目录。
 - `finish_execution(ticket_id, *, report_sha256, events_sha256, initial_receipt_sha256, receipt_sha256, actor, operation_id)`：宿主真实运行完成、原生证据写盘且重新扫描后调用。图事务关联原票据，保存不可变完成记录，绑定 report/events/初始及最终 receipt 四个摘要、finishedSequence 和结束观察。开始与结束观察不一致或不健康时记录 invalid，不能将其当作恢复凭证。完成记录独立保存，避免将包含自身摘要的 report 写回形成循环依赖。
 
 新 runner 在启动 Claude 前取得票据，并把服务器给出的 runId/attemptId 用于所有原生公共事件、报告与验收回执。新 collector 仍验证完整批次和原生证据，其 schema 6 assessment 已有 batchId、runId、attemptId、reportSha256、eventsSha256、initialVerification.receiptSha256、verification.receiptSha256，恢复事务用这些字段逐项匹配图内完成票据。不能只把可编辑的文件时间或客户端开始时间作为顺序依据。
 
 根因新增 openedSequence，暂停使用追加事件的 sequence。restore 要求：当前可信独立资格对应 skill 组的 independent_validation 票据，startedSequence 严格晚于所清除根因的 openedSequence（或手工暂停事件）；开始、结束与当前观察 ID 一致且健康；完成摘要与当前 assessment 逐项相等；任务本身验收成立。根因前执行后延迟导入、根因前签发后执行、票据缺失/未完成、摘要不匹配、观察变化、同 batch/unit 重复签发均不得恢复。旧无票据记录保留全部回读、裁决与历史状态，但不能为其补发恢复资格。
 
-回调责任：`skill_lifecycle` 负责图票据、单调顺序、实际观察与恢复门槛；`skill_release` 负责仅在新真实运行的 CLI 前/后调用，并验证票据 run/attempt 与原生链一致。服务正常运行沿用既有 before/after admission，执行票据不能绕过发布准入。真实 batch 仅在这项修订测试完成并冻结后启动。
+回调责任：`skill_lifecycle` 负责图票据、单调顺序、实际观察与恢复门槛；`skill_release` 负责仅在新真实运行的 CLI 前/后调用，并验证票据 run/attempt 与原生链一致。服务正常运行沿用既有 before/after admission，执行票据不能绕过发布准入。candidate_evaluation 允许未发布候选在当前观察健康时隔离执行，仍为 dev 且不授予独立资格；不能把它标记为 normal 或 independent_validation。票据使用管理状态内独立的 lifecycleOrdinal 单调时钟，开始/完成推进该时钟但不推进管理 sequence，避免正常运行因自身票据失效；观察与治理变更同时推进管理 sequence 和该时钟，根因 openedSequence 与暂停阈值使用同一 lifecycleOrdinal。真实 batch 仅在这项修订测试完成并冻结后启动。
