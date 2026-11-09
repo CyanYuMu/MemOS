@@ -22,6 +22,9 @@ def test_normal_feedback_reuses_qualified_case_but_never_changes_lineage(repo, s
     )
     original = deepcopy(repo.inspect())
     normal = _fixtures.report(candidate, kind="isolated_dev", suffix="normal")
+    # Each real invocation has a distinct receipt; the generic fixture reuses
+    # one synthetic digest and would otherwise test an unrelated evidence clash.
+    normal["receipt"]["sha256"] = "f" * 64
     normal.update(caseId=holdout["caseId"], caseRevision=holdout["caseRevision"])
     normal["scope"]["caseIds"] = [normal["caseId"]]
     normal["lineageId"] = holdout["lineageId"] if same_lineage else "another-lineage"
