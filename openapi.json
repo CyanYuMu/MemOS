@@ -2755,144 +2755,14 @@
         "type": "object"
       },
       "SkillAssessment": {
-        "additionalProperties": true,
-        "properties": {
-          "assessmentId": {
-            "pattern": "^[a-f0-9]{64}$",
-            "type": "string"
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/SkillHistoricalAssessment"
           },
-          "behaviorChanged": {
-            "type": "boolean"
-          },
-          "branchCandidates": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array"
-          },
-          "candidateSnapshot": {
-            "pattern": "^[a-f0-9]{64}$",
-            "type": "string"
-          },
-          "captureComplete": {
-            "type": "boolean"
-          },
-          "caseId": {
-            "type": "string"
-          },
-          "checks": {
-            "items": {
-              "additionalProperties": false,
-              "properties": {
-                "name": {
-                  "type": "string"
-                },
-                "status": {
-                  "type": "string"
-                }
-              },
-              "required": ["name", "status"],
-              "type": "object"
-            },
-            "type": "array"
-          },
-          "contentHash": {
-            "pattern": "^[a-f0-9]{64}$",
-            "type": "string"
-          },
-          "coveragePlanHash": {
-            "pattern": "^[a-f0-9]{64}$",
-            "type": "string"
-          },
-          "events": {
-            "items": {
-              "additionalProperties": false,
-              "properties": {
-                "id": {
-                  "type": "string"
-                },
-                "kind": {
-                  "type": "string"
-                },
-                "value": {
-                  "additionalProperties": true,
-                  "type": "object"
-                }
-              },
-              "required": ["id", "kind", "value"],
-              "type": "object"
-            },
-            "type": "array"
-          },
-          "eventsSha256": {
-            "pattern": "^[a-f0-9]{64}$",
-            "type": "string"
-          },
-          "exportHash": {
-            "pattern": "^[a-f0-9]{64}$",
-            "type": "string"
-          },
-          "loadVerified": {
-            "type": "boolean"
-          },
-          "originalStatus": {
-            "type": "string"
-          },
-          "reportSha256": {
-            "pattern": "^[a-f0-9]{64}$",
-            "type": "string"
-          },
-          "validationId": {
-            "pattern": "^[a-f0-9]{64}$",
-            "type": "string"
-          },
-          "verification": {
-            "additionalProperties": false,
-            "properties": {
-              "matches": {
-                "type": "boolean"
-              },
-              "posthoc": {
-                "type": "boolean"
-              },
-              "protocol": {
-                "type": "string"
-              },
-              "receiptSha256": {
-                "pattern": "^[a-f0-9]{64}$",
-                "type": "string"
-              },
-              "sameFinalPatch": {
-                "type": "boolean"
-              },
-              "status": {
-                "type": "string"
-              }
-            },
-            "required": ["status", "receiptSha256", "protocol", "matches", "sameFinalPatch", "posthoc"],
-            "type": "object"
+          {
+            "$ref": "#/components/schemas/SkillReleaseAssessment"
           }
-        },
-        "required": [
-          "assessmentId",
-          "validationId",
-          "contentHash",
-          "exportHash",
-          "candidateSnapshot",
-          "reportSha256",
-          "eventsSha256",
-          "coveragePlanHash",
-          "caseId",
-          "captureComplete",
-          "loadVerified",
-          "behaviorChanged",
-          "originalStatus",
-          "verification",
-          "checks",
-          "events",
-          "branchCandidates"
-        ],
-        "type": "object"
+        ]
       },
       "SkillBranchClaim": {
         "additionalProperties": false,
@@ -3395,6 +3265,150 @@
           }
         },
         "required": ["experimentId", "skillId", "revision", "manifestHash", "status", "planned", "completed"],
+        "type": "object"
+      },
+      "SkillHistoricalAssessment": {
+        "additionalProperties": true,
+        "properties": {
+          "assessmentId": {
+            "pattern": "^[a-f0-9]{64}$",
+            "type": "string"
+          },
+          "behaviorChanged": {
+            "type": "boolean"
+          },
+          "branchCandidates": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "candidateSnapshot": {
+            "pattern": "^[a-f0-9]{64}$",
+            "type": "string"
+          },
+          "captureComplete": {
+            "type": "boolean"
+          },
+          "caseId": {
+            "type": "string"
+          },
+          "checks": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "status": {
+                  "type": "string"
+                }
+              },
+              "required": ["name", "status"],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "contentHash": {
+            "pattern": "^[a-f0-9]{64}$",
+            "type": "string"
+          },
+          "coveragePlanHash": {
+            "pattern": "^[a-f0-9]{64}$",
+            "type": "string"
+          },
+          "events": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "kind": {
+                  "type": "string"
+                },
+                "value": {
+                  "additionalProperties": true,
+                  "type": "object"
+                }
+              },
+              "required": ["id", "kind", "value"],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "eventsSha256": {
+            "pattern": "^[a-f0-9]{64}$",
+            "type": "string"
+          },
+          "exportHash": {
+            "pattern": "^[a-f0-9]{64}$",
+            "type": "string"
+          },
+          "loadVerified": {
+            "type": "boolean"
+          },
+          "originalStatus": {
+            "type": "string"
+          },
+          "reportSha256": {
+            "pattern": "^[a-f0-9]{64}$",
+            "type": "string"
+          },
+          "schemaVersion": {
+            "enum": [1, 2, 3, 4, 5],
+            "type": "integer"
+          },
+          "validationId": {
+            "pattern": "^[a-f0-9]{64}$",
+            "type": "string"
+          },
+          "verification": {
+            "additionalProperties": false,
+            "properties": {
+              "matches": {
+                "type": "boolean"
+              },
+              "posthoc": {
+                "type": "boolean"
+              },
+              "protocol": {
+                "type": "string"
+              },
+              "receiptSha256": {
+                "pattern": "^[a-f0-9]{64}$",
+                "type": "string"
+              },
+              "sameFinalPatch": {
+                "type": "boolean"
+              },
+              "status": {
+                "type": "string"
+              }
+            },
+            "required": ["status", "receiptSha256", "protocol", "matches", "sameFinalPatch", "posthoc"],
+            "type": "object"
+          }
+        },
+        "required": [
+          "assessmentId",
+          "validationId",
+          "contentHash",
+          "exportHash",
+          "candidateSnapshot",
+          "reportSha256",
+          "eventsSha256",
+          "coveragePlanHash",
+          "caseId",
+          "captureComplete",
+          "loadVerified",
+          "behaviorChanged",
+          "originalStatus",
+          "verification",
+          "checks",
+          "events",
+          "branchCandidates"
+        ],
         "type": "object"
       },
       "SkillImpactPrepareRequest": {
@@ -4137,6 +4151,765 @@
           }
         },
         "required": ["status", "reasons"],
+        "type": "object"
+      },
+      "SkillReleaseAssessment": {
+        "additionalProperties": false,
+        "description": "schema 6 精确事实；健康、修复与停止分别记录。底层 failed 不因合理停止改成 passed；工具故障没有业务退出码。绑定和交叉引用由 Python 及前端严格核对。",
+        "properties": {
+          "assessmentId": {
+            "pattern": "^[a-f0-9]{64}$",
+            "type": "string"
+          },
+          "attemptId": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "batchId": {
+            "pattern": "^[a-f0-9]{64}$",
+            "type": "string"
+          },
+          "behaviorChanged": {
+            "type": "boolean"
+          },
+          "branchCandidates": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "candidateSnapshot": {
+            "pattern": "^[a-f0-9]{64}$",
+            "type": "string"
+          },
+          "captureComplete": {
+            "type": "boolean"
+          },
+          "caseId": {
+            "type": "string"
+          },
+          "caseRevision": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "checkMapping": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "group": {
+                  "enum": ["scoped", "dream"],
+                  "type": "string"
+                },
+                "id": {
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "ruleCheck": {
+                  "pattern": "^[a-z_]+$",
+                  "type": "string"
+                }
+              },
+              "required": ["id", "group", "ruleCheck"],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "checks": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "name": {
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "status": {
+                  "enum": ["passed", "failed", "error"],
+                  "type": "string"
+                }
+              },
+              "required": ["name", "status"],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "collectorDigest": {
+            "pattern": "^[a-f0-9]{64}$",
+            "type": "string"
+          },
+          "collectorVersion": {
+            "enum": ["release-review-1"],
+            "type": "string"
+          },
+          "contentHash": {
+            "pattern": "^[a-f0-9]{64}$",
+            "type": "string"
+          },
+          "coveragePlanHash": {
+            "pattern": "^[a-f0-9]{64}$",
+            "type": "string"
+          },
+          "events": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "kind": {
+                  "enum": ["tool_started", "tool_completed", "assistant_text", "rule_declaration"],
+                  "type": "string"
+                },
+                "value": {
+                  "additionalProperties": true,
+                  "type": "object"
+                }
+              },
+              "required": ["id", "kind", "value"],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "eventsSha256": {
+            "pattern": "^[a-f0-9]{64}$",
+            "type": "string"
+          },
+          "executionQualification": {
+            "additionalProperties": false,
+            "properties": {
+              "batchId": {
+                "pattern": "^[a-f0-9]{64}$",
+                "type": "string"
+              },
+              "batchProtocol": {
+                "enum": ["release-batch-1"],
+                "type": "string"
+              },
+              "calibration": {
+                "additionalProperties": false,
+                "properties": {
+                  "attemptId": {
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "budgetExceeded": {
+                    "type": "boolean"
+                  },
+                  "captureComplete": {
+                    "type": "boolean"
+                  },
+                  "cyclesUsed": {
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  "eventsSha256": {
+                    "pattern": "^[a-f0-9]{64}$",
+                    "type": "string"
+                  },
+                  "group": {
+                    "enum": ["none"],
+                    "type": "string"
+                  },
+                  "initialReceiptSha256": {
+                    "pattern": "^[a-f0-9]{64}$",
+                    "type": "string"
+                  },
+                  "issues": {
+                    "items": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "loading": {
+                    "enum": ["not_requested", "verified", "unknown"],
+                    "type": "string"
+                  },
+                  "maxCycles": {
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  "policyMatches": {
+                    "type": "boolean"
+                  },
+                  "processComplete": {
+                    "type": "boolean"
+                  },
+                  "qualified": {
+                    "type": "boolean"
+                  },
+                  "receiptSha256": {
+                    "pattern": "^[a-f0-9]{64}$",
+                    "type": "string"
+                  },
+                  "reportSha256": {
+                    "pattern": "^[a-f0-9]{64}$",
+                    "type": "string"
+                  },
+                  "runId": {
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "status": {
+                    "enum": ["passed", "failed", "incomplete"],
+                    "type": "string"
+                  },
+                  "taskAccepted": {
+                    "type": "boolean"
+                  },
+                  "unit": {
+                    "enum": ["release-none"],
+                    "type": "string"
+                  },
+                  "unverifiedEdits": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "unit",
+                  "group",
+                  "runId",
+                  "attemptId",
+                  "reportSha256",
+                  "eventsSha256",
+                  "initialReceiptSha256",
+                  "receiptSha256",
+                  "status",
+                  "taskAccepted",
+                  "captureComplete",
+                  "loading",
+                  "processComplete",
+                  "maxCycles",
+                  "cyclesUsed",
+                  "budgetExceeded",
+                  "unverifiedEdits",
+                  "policyMatches",
+                  "qualified",
+                  "issues"
+                ],
+                "type": "object"
+              },
+              "manifestSha256": {
+                "pattern": "^[a-f0-9]{64}$",
+                "type": "string"
+              },
+              "planIssues": {
+                "items": {
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "planQualified": {
+                "type": "boolean"
+              },
+              "policyDigest": {
+                "pattern": "^[a-f0-9]{64}$",
+                "type": "string"
+              },
+              "protocol": {
+                "enum": ["release-plan-1"],
+                "type": "string"
+              },
+              "trial": {
+                "additionalProperties": false,
+                "properties": {
+                  "attemptId": {
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "budgetExceeded": {
+                    "type": "boolean"
+                  },
+                  "captureComplete": {
+                    "type": "boolean"
+                  },
+                  "cyclesUsed": {
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  "eventsSha256": {
+                    "pattern": "^[a-f0-9]{64}$",
+                    "type": "string"
+                  },
+                  "group": {
+                    "enum": ["skill"],
+                    "type": "string"
+                  },
+                  "initialReceiptSha256": {
+                    "pattern": "^[a-f0-9]{64}$",
+                    "type": "string"
+                  },
+                  "issues": {
+                    "items": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "loading": {
+                    "enum": ["not_requested", "verified", "unknown"],
+                    "type": "string"
+                  },
+                  "maxCycles": {
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  "policyMatches": {
+                    "type": "boolean"
+                  },
+                  "processComplete": {
+                    "type": "boolean"
+                  },
+                  "qualified": {
+                    "type": "boolean"
+                  },
+                  "receiptSha256": {
+                    "pattern": "^[a-f0-9]{64}$",
+                    "type": "string"
+                  },
+                  "reportSha256": {
+                    "pattern": "^[a-f0-9]{64}$",
+                    "type": "string"
+                  },
+                  "runId": {
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "status": {
+                    "enum": ["passed", "failed", "incomplete"],
+                    "type": "string"
+                  },
+                  "taskAccepted": {
+                    "type": "boolean"
+                  },
+                  "unit": {
+                    "description": "固定 suiteId 加 -skill 后缀",
+                    "type": "string"
+                  },
+                  "unverifiedEdits": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "unit",
+                  "group",
+                  "runId",
+                  "attemptId",
+                  "reportSha256",
+                  "eventsSha256",
+                  "initialReceiptSha256",
+                  "receiptSha256",
+                  "status",
+                  "taskAccepted",
+                  "captureComplete",
+                  "loading",
+                  "processComplete",
+                  "maxCycles",
+                  "cyclesUsed",
+                  "budgetExceeded",
+                  "unverifiedEdits",
+                  "policyMatches",
+                  "qualified",
+                  "issues"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "protocol",
+              "policyDigest",
+              "batchProtocol",
+              "batchId",
+              "manifestSha256",
+              "calibration",
+              "trial",
+              "planQualified",
+              "planIssues"
+            ],
+            "type": "object"
+          },
+          "exportHash": {
+            "pattern": "^[a-f0-9]{64}$",
+            "type": "string"
+          },
+          "initialVerification": {
+            "additionalProperties": false,
+            "properties": {
+              "candidateSnapshot": {
+                "pattern": "^[a-f0-9]{64}$",
+                "type": "string"
+              },
+              "checks": {
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "name": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "status": {
+                      "enum": ["passed", "failed", "error"],
+                      "type": "string"
+                    }
+                  },
+                  "required": ["name", "status"],
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "matches": {
+                "type": "boolean"
+              },
+              "protocol": {
+                "enum": ["release-receipt-1"],
+                "type": "string"
+              },
+              "receiptSha256": {
+                "pattern": "^[a-f0-9]{64}$",
+                "type": "string"
+              },
+              "status": {
+                "enum": ["passed", "failed", "error"],
+                "type": "string"
+              }
+            },
+            "required": ["status", "receiptSha256", "protocol", "matches", "candidateSnapshot", "checks"],
+            "type": "object"
+          },
+          "intermediateVerifications": {
+            "items": {
+              "type": "object"
+            },
+            "maxItems": 0,
+            "type": "array"
+          },
+          "lineageId": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "loadVerified": {
+            "type": "boolean"
+          },
+          "originalStatus": {
+            "type": "string"
+          },
+          "outcome": {
+            "enum": ["healthy_candidate", "repair_candidate", "stop_candidate", "unresolved_candidate", "incomplete", "failed"],
+            "type": "string"
+          },
+          "processVerification": {
+            "additionalProperties": false,
+            "properties": {
+              "budgetExceeded": {
+                "type": "boolean"
+              },
+              "checkpoints": {
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "checkIndex": {
+                      "minimum": 1,
+                      "type": "integer"
+                    },
+                    "checks": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "name": {
+                            "minLength": 1,
+                            "type": "string"
+                          },
+                          "status": {
+                            "enum": ["passed", "failed", "error"],
+                            "type": "string"
+                          }
+                        },
+                        "required": ["name", "status"],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "completedEvent": {
+                      "minLength": 1,
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "cyclesUsed": {
+                      "minimum": 0,
+                      "type": "integer"
+                    },
+                    "editEventRefs": {
+                      "items": {
+                        "minLength": 1,
+                        "type": "string"
+                      },
+                      "type": "array"
+                    },
+                    "groupStatus": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "dream": {
+                          "enum": ["passed", "failed", "error"],
+                          "type": "string"
+                        },
+                        "scoped": {
+                          "enum": ["passed", "failed", "error"],
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "recordSha256": {
+                      "pattern": "^[a-f0-9]{64}$",
+                      "type": "string"
+                    },
+                    "snapshot": {
+                      "pattern": "^[a-f0-9]{64}$",
+                      "type": "string"
+                    },
+                    "startedEvent": {
+                      "minLength": 1,
+                      "nullable": true,
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "checkIndex",
+                    "snapshot",
+                    "recordSha256",
+                    "startedEvent",
+                    "completedEvent",
+                    "checks",
+                    "groupStatus",
+                    "cyclesUsed",
+                    "editEventRefs"
+                  ],
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "complete": {
+                "type": "boolean"
+              },
+              "cyclesUsed": {
+                "minimum": 0,
+                "type": "integer"
+              },
+              "issues": {
+                "items": {
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "maxCycles": {
+                "enum": [2],
+                "type": "integer"
+              },
+              "unverifiedEdits": {
+                "type": "boolean"
+              },
+              "version": {
+                "enum": ["release-process-1"],
+                "type": "string"
+              }
+            },
+            "required": ["version", "complete", "issues", "maxCycles", "cyclesUsed", "budgetExceeded", "unverifiedEdits", "checkpoints"],
+            "type": "object"
+          },
+          "publicVerification": {
+            "additionalProperties": false,
+            "properties": {
+              "deliveriesVerified": {
+                "type": "boolean"
+              },
+              "deliveryRefs": {
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "checkIndex": {
+                      "minimum": 1,
+                      "type": "integer"
+                    },
+                    "completedEvent": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "startedEvent": {
+                      "minLength": 1,
+                      "type": "string"
+                    }
+                  },
+                  "required": ["checkIndex", "startedEvent", "completedEvent"],
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "fault": {
+                "additionalProperties": false,
+                "nullable": true,
+                "properties": {
+                  "checkIndex": {
+                    "enum": [2],
+                    "type": "integer"
+                  },
+                  "code": {
+                    "enum": ["registered_check_unavailable"],
+                    "type": "string"
+                  },
+                  "completedEvent": {
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "recordSha256": {
+                    "pattern": "^[a-f0-9]{64}$",
+                    "type": "string"
+                  },
+                  "startedEvent": {
+                    "minLength": 1,
+                    "type": "string"
+                  }
+                },
+                "required": ["checkIndex", "code", "recordSha256", "startedEvent", "completedEvent"],
+                "type": "object"
+              },
+              "finalExitCode": {
+                "nullable": true,
+                "type": "integer"
+              },
+              "initialExitCode": {
+                "nullable": true,
+                "type": "integer"
+              },
+              "recordsVerified": {
+                "type": "boolean"
+              }
+            },
+            "required": ["initialExitCode", "finalExitCode", "recordsVerified", "deliveriesVerified", "deliveryRefs", "fault"],
+            "type": "object"
+          },
+          "purpose": {
+            "enum": ["actual", "management_test"],
+            "type": "string"
+          },
+          "reportSha256": {
+            "pattern": "^[a-f0-9]{64}$",
+            "type": "string"
+          },
+          "runId": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "schemaVersion": {
+            "enum": [6],
+            "type": "integer"
+          },
+          "split": {
+            "enum": ["holdout"],
+            "type": "string"
+          },
+          "suiteId": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "taskDigest": {
+            "pattern": "^[a-f0-9]{64}$",
+            "type": "string"
+          },
+          "taskOutcome": {
+            "additionalProperties": false,
+            "properties": {
+              "eligible": {
+                "type": "boolean"
+              },
+              "kind": {
+                "enum": ["healthy", "repair", "out_of_scope", "missing_evidence", "unresolved", "tool_failure"],
+                "type": "string"
+              },
+              "reasons": {
+                "items": {
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "type": "array"
+              }
+            },
+            "required": ["kind", "eligible", "reasons"],
+            "type": "object"
+          },
+          "validationId": {
+            "pattern": "^[a-f0-9]{64}$",
+            "type": "string"
+          },
+          "verification": {
+            "additionalProperties": false,
+            "properties": {
+              "matches": {
+                "type": "boolean"
+              },
+              "posthoc": {
+                "enum": [false],
+                "type": "boolean"
+              },
+              "protocol": {
+                "enum": ["release-receipt-1"],
+                "type": "string"
+              },
+              "receiptSha256": {
+                "pattern": "^[a-f0-9]{64}$",
+                "type": "string"
+              },
+              "sameFinalPatch": {
+                "type": "boolean"
+              },
+              "status": {
+                "enum": ["passed", "failed", "error"],
+                "type": "string"
+              }
+            },
+            "required": ["status", "receiptSha256", "protocol", "matches", "sameFinalPatch", "posthoc"],
+            "type": "object"
+          }
+        },
+        "required": [
+          "assessmentId",
+          "validationId",
+          "contentHash",
+          "exportHash",
+          "candidateSnapshot",
+          "reportSha256",
+          "eventsSha256",
+          "coveragePlanHash",
+          "caseId",
+          "captureComplete",
+          "loadVerified",
+          "behaviorChanged",
+          "originalStatus",
+          "verification",
+          "checks",
+          "events",
+          "branchCandidates",
+          "schemaVersion",
+          "collectorVersion",
+          "collectorDigest",
+          "runId",
+          "attemptId",
+          "caseRevision",
+          "lineageId",
+          "split",
+          "purpose",
+          "initialVerification",
+          "publicVerification",
+          "outcome",
+          "batchId",
+          "taskDigest",
+          "suiteId",
+          "checkMapping",
+          "processVerification",
+          "intermediateVerifications",
+          "taskOutcome",
+          "executionQualification"
+        ],
         "type": "object"
       },
       "SkillReviewPackage": {

@@ -197,7 +197,7 @@ export interface SkillBranchClaim {
 }
 
 export interface SkillJudgment {
-  taskDecision: 'repair_confirmed' | 'stop_confirmed' | 'failed' | 'needs_evidence'
+  taskDecision: 'repair_confirmed' | 'healthy_confirmed' | 'unresolved_confirmed' | 'stop_confirmed' | 'failed' | 'needs_evidence'
   historyDecision: 'retain' | 'infra_explained'
   usageDecision: 'correct' | 'misused' | 'not_used' | 'unknown'
   applicability: 'in_scope' | 'out_of_scope' | 'unknown'
@@ -365,8 +365,50 @@ export interface SkillC2V2Assessment extends Omit<SkillC2Assessment, 'schemaVers
   }
 }
 
+export interface SkillReleaseAssessment extends Omit<
+  SkillC2V2Assessment,
+  | 'schemaVersion'
+  | 'collectorVersion'
+  | 'verification'
+  | 'initialVerification'
+  | 'publicVerification'
+  | 'outcome'
+  | 'processVerification'
+  | 'executionQualification'
+> {
+  schemaVersion: 6
+  collectorVersion: 'release-review-1'
+  verification: Omit<SkillC2V2Assessment['verification'], 'protocol'> & { protocol: 'release-receipt-1' }
+  initialVerification: Omit<SkillC2V2Assessment['initialVerification'], 'protocol'> & { protocol: 'release-receipt-1' }
+  publicVerification: SkillC2V2Assessment['publicVerification'] & {
+    fault: null | {
+      checkIndex: number
+      code: 'registered_check_unavailable'
+      recordSha256: string
+      startedEvent: string
+      completedEvent: string
+    }
+  }
+  outcome: 'healthy_candidate' | 'repair_candidate' | 'stop_candidate' | 'unresolved_candidate' | 'incomplete' | 'failed'
+  processVerification: Omit<SkillC2V2Assessment['processVerification'], 'version'> & { version: 'release-process-1' }
+  taskOutcome: {
+    kind: 'healthy' | 'repair' | 'out_of_scope' | 'missing_evidence' | 'unresolved' | 'tool_failure'
+    eligible: boolean
+    reasons: string[]
+  }
+  executionQualification: Omit<SkillC2V2Assessment['executionQualification'], 'protocol' | 'batchProtocol'> & {
+    protocol: 'release-plan-1'
+    batchProtocol: 'release-batch-1'
+  }
+}
+
 export type SkillAssessment =
-  SkillLegacyAssessment | SkillBranchAssessment | SkillExtensionAssessment | SkillC2Assessment | SkillC2V2Assessment
+  | SkillLegacyAssessment
+  | SkillBranchAssessment
+  | SkillExtensionAssessment
+  | SkillC2Assessment
+  | SkillC2V2Assessment
+  | SkillReleaseAssessment
 
 export interface SkillAdjudicationRecord {
   adjudicationId: string

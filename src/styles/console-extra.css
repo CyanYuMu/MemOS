@@ -6230,3 +6230,6 @@ body:has(.memos-guide-step) .memos-log-close {
   padding: 0.6rem;
   overflow-wrap: anywhere;
 }
+.skills-lifecycle code {
+  overflow-wrap: anywhere;
+}

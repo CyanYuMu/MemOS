@@ -11,6 +11,8 @@ import type {
 } from '../../shared/contract'
 import { api, ApiError } from '../lib/api'
 import { Button } from '../components/ui/button'
+import { SkillReleaseEvidence } from './SkillReleaseEvidence'
+import { releaseJudgmentSupported, releaseBranchSupported } from '../lib/skill-release.judgment'
 
 const emptyJudgment = (): SkillJudgment => ({
   taskDecision: 'needs_evidence',
@@ -23,11 +25,25 @@ const emptyJudgment = (): SkillJudgment => ({
   eventRefs: [],
   branches: [],
 })
-const taskNames = { repair_confirmed: '修复成立', stop_confirmed: '合理停止', failed: '真实失败', needs_evidence: '证据不足' }
+const taskNames = {
+  repair_confirmed: '修复成立',
+  healthy_confirmed: '健康确认',
+  unresolved_confirmed: '有限修改后仍未解决',
+  stop_confirmed: '合理停止',
+  failed: '真实失败',
+  needs_evidence: '证据不足',
+}
 const usageNames = { correct: '正确使用', misused: '使用不当', not_used: '未使用', unknown: '不可判断' }
 const scopeNames = { in_scope: '范围内', out_of_scope: '范围外', unknown: '尚不明确' }
 const boundaryNames = { not_applicable: '不适用', needs_evidence: '缺少证据', unresolved: '无法解决' }
-const outcomeNames = { repair_candidate: '待确认的修复', failed: '修复未通过', incomplete: '事实尚不完整' }
+const outcomeNames = {
+  repair_candidate: '待确认的修复',
+  healthy_candidate: '待确认的健康',
+  stop_candidate: '待确认的合理停止',
+  unresolved_candidate: '待确认的未解决结局',
+  failed: '任务未通过',
+  incomplete: '事实尚不完整',
+}
 
 function Json({ value }: { value: unknown }) {
   return <pre className="skills-json">{JSON.stringify(value, null, 2)}</pre>
@@ -263,18 +279,29 @@ export function SkillGovernance({
   }, [])
   const assessment = packet?.assessment ?? current.find((item) => item.assessmentId === selected)
   const branchAssessment =
-    assessment?.schemaVersion === 2 || assessment?.schemaVersion === 3 || assessment?.schemaVersion === 4 || assessment?.schemaVersion === 5
+    assessment?.schemaVersion === 2 ||
+    assessment?.schemaVersion === 3 ||
+    assessment?.schemaVersion === 4 ||
+    assessment?.schemaVersion === 5 ||
+    assessment?.schemaVersion === 6
       ? assessment
       : null
   const extensionAssessment =
     assessment?.schemaVersion === 3 || assessment?.schemaVersion === 4 || assessment?.schemaVersion === 5 ? assessment : null
+  const releaseAssessment = assessment?.schemaVersion === 6 ? assessment : null
   const processAllowsCoverage =
+    (!releaseAssessment ||
+      (releaseAssessment.taskOutcome.eligible &&
+        releaseAssessment.executionQualification.planQualified &&
+        releaseAssessment.processVerification.complete &&
+        !releaseAssessment.processVerification.budgetExceeded &&
+        !releaseAssessment.processVerification.unverifiedEdits)) &&
     (assessment?.schemaVersion !== 5 || assessment.executionQualification.planQualified) &&
     (!extensionAssessment ||
       (extensionAssessment.processVerification.complete &&
         !extensionAssessment.processVerification.budgetExceeded &&
         !extensionAssessment.processVerification.unverifiedEdits))
-  const budgetExceeded = extensionAssessment?.processVerification.budgetExceeded === true
+  const budgetExceeded = (extensionAssessment ?? releaseAssessment)?.processVerification.budgetExceeded === true
   const covered = data.coverage.filter((item) => item.status === 'covered').length
   function fail(cause: unknown) {
     setPacket(null)
@@ -352,8 +379,10 @@ export function SkillGovernance({
       (branchAssessment.initialVerification.matches &&
         branchAssessment.publicVerification.recordsVerified &&
         branchAssessment.publicVerification.deliveriesVerified &&
-        branchAssessment.publicVerification.deliveryRefs.length >= 2)) &&
-    (!extensionAssessment || (extensionAssessment.processVerification.complete && !extensionAssessment.processVerification.unverifiedEdits))
+        branchAssessment.publicVerification.deliveryRefs.length >= (releaseAssessment ? 1 : 2))) &&
+    (!(extensionAssessment ?? releaseAssessment) ||
+      ((extensionAssessment ?? releaseAssessment)!.processVerification.complete &&
+        !(extensionAssessment ?? releaseAssessment)!.processVerification.unverifiedEdits))
   const repairSupported =
     proven &&
     assessment?.verification.status === 'passed' &&
@@ -368,12 +397,15 @@ export function SkillGovernance({
     judgment.taskDecision === 'failed' ||
     (proven &&
       judgment.violations === 'none' &&
-      (judgment.taskDecision === 'repair_confirmed'
-        ? repairSupported && judgment.boundary === null
-        : !branchAssessment &&
-          assessment?.behaviorChanged === false &&
-          ['passed', 'needs_review'].includes(assessment.verification.status) &&
-          judgment.boundary !== null))
+      (releaseAssessment
+        ? releaseJudgmentSupported(releaseAssessment, judgment)
+        : judgment.taskDecision === 'repair_confirmed'
+          ? repairSupported && judgment.boundary === null
+          : judgment.taskDecision === 'stop_confirmed' &&
+            !branchAssessment &&
+            assessment?.behaviorChanged === false &&
+            ['passed', 'needs_review'].includes(assessment.verification.status) &&
+            judgment.boundary !== null))
   const branchComplete = judgment.branches.every((branch) => {
     if (
       !processAllowsCoverage ||
@@ -384,22 +416,29 @@ export function SkillGovernance({
     )
       return false
     if (!branchAssessment) return true
+    if (releaseAssessment) return releaseBranchSupported(releaseAssessment, branch, judgment)
     const events = branchAssessment.events
     const refs = [...branch.conditionRefs, ...branch.actionRefs]
     const ruleId = branch.branchId.split('#')[0]
     // A declaration records selected guidance; a tool observation and an actual
     // action are still required separately before a branch can be submitted.
     return (
-      judgment.taskDecision === 'repair_confirmed' &&
+      (releaseAssessment ? releaseJudgmentSupported(releaseAssessment, judgment) : judgment.taskDecision === 'repair_confirmed') &&
       judgment.violations === 'none' &&
       judgment.usageDecision === 'correct' &&
-      judgment.applicability === 'in_scope' &&
+      (releaseAssessment || judgment.applicability === 'in_scope') &&
       events.some((event) => branch.conditionRefs.includes(event.id) && event.kind === 'tool_completed') &&
-      events.some((event) => branch.actionRefs.includes(event.id) && ['tool_started', 'assistant_text'].includes(event.kind)) &&
+      events.some(
+        (event) =>
+          branch.actionRefs.includes(event.id) &&
+          (releaseAssessment ? ['tool_started', 'tool_completed', 'assistant_text'] : ['tool_started', 'assistant_text']).includes(
+            event.kind,
+          ),
+      ) &&
       events.some((event) => {
         const display = event.value.display
         return (
-          refs.includes(event.id) &&
+          (releaseAssessment ? branch.actionRefs : refs).includes(event.id) &&
           event.kind === 'rule_declaration' &&
           typeof display === 'object' &&
           display !== null &&
@@ -424,6 +463,33 @@ export function SkillGovernance({
     (item) => item.validationId === assessment?.validationId && packet?.activeAdjudicationIds.includes(item.adjudicationId),
   )
   const eventOptions = (assessment?.events ?? []).map((event) => ({ id: event.id, label: `${event.kind} · ${event.id}` }))
+  const expectedReleaseDecision = releaseAssessment
+    ? {
+        repair_candidate: 'repair_confirmed',
+        healthy_candidate: 'healthy_confirmed',
+        stop_candidate: 'stop_confirmed',
+        unresolved_candidate: 'unresolved_confirmed',
+        incomplete: '',
+        failed: '',
+      }[releaseAssessment.outcome]
+    : ''
+  const releaseCheckOptions = releaseAssessment
+    ? [
+        ...releaseAssessment.processVerification.checkpoints.flatMap((checkpoint) =>
+          checkpoint.checks.map((check) => ({
+            id: `check:${checkpoint.checkIndex}:${check.name}`,
+            label: `公开检查 #${checkpoint.checkIndex} · ${check.name} · ${check.status}`,
+          })),
+        ),
+        ...releaseAssessment.checks.map((check) => ({
+          id: `final:${check.name}`,
+          label: `宿主最终隐藏检查 · ${check.name} · ${check.status}`,
+        })),
+        ...(releaseAssessment.publicVerification.fault
+          ? [{ id: `fault:2:registered_check_unavailable`, label: '实际送达的第2次工具故障（非业务通过）' }]
+          : []),
+      ]
+    : []
   return (
     <section className="skills-panel skills-governance">
       <div className="skills-row">
@@ -532,6 +598,7 @@ export function SkillGovernance({
                 )}
               </div>
               {extensionAssessment && <ProcessEvidence assessment={extensionAssessment} />}
+              {releaseAssessment && <SkillReleaseEvidence assessment={releaseAssessment} />}
               <details>
                 <summary>固定身份与验收检查</summary>
                 <Json
@@ -582,7 +649,15 @@ export function SkillGovernance({
               label="任务判断"
               value={judgment.taskDecision}
               options={taskNames}
-              disabledOptions={branchAssessment ? ['stop_confirmed', ...(!repairSupported ? ['repair_confirmed'] : [])] : []}
+              disabledOptions={
+                releaseAssessment
+                  ? Object.keys(taskNames).filter((key) => !['failed', 'needs_evidence', expectedReleaseDecision].includes(key))
+                  : [
+                      'healthy_confirmed',
+                      'unresolved_confirmed',
+                      ...(branchAssessment ? ['stop_confirmed', ...(!repairSupported ? ['repair_confirmed'] : [])] : []),
+                    ]
+              }
               onChange={(value) => setJudgment((prior) => ({ ...prior, taskDecision: value as SkillJudgment['taskDecision'] }))}
             />
             <Choice
@@ -619,7 +694,11 @@ export function SkillGovernance({
             />
           </div>
           <p className="skills-muted">
-            {branchAssessment ? '当前任务协议只支持修复判断，不能确认健康或合理停止。' : '合理停止不会计为修复成功。'}
+            {releaseAssessment
+              ? '新版协议区分健康、修复与停止；最终隐藏检查不能单独证明 Agent 观察到了结果。'
+              : branchAssessment
+                ? '当前任务协议只支持修复判断，不能确认健康或合理停止。'
+                : '合理停止不会计为修复成功。'}
             以下是公开过程记录，不含私有推理；选择支撑此次判断的事件。
           </p>
           <div className="skills-governance-events">
@@ -691,14 +770,16 @@ export function SkillGovernance({
                       label={`${id} 验收证据`}
                       value={branch.checkRefs}
                       options={
-                        extensionAssessment
-                          ? extensionAssessment.processVerification.checkpoints.flatMap((checkpoint) =>
-                              checkpoint.checks.map((check) => ({
-                                id: `check:${checkpoint.checkIndex}:${check.name}`,
-                                label: `公开检查 #${checkpoint.checkIndex} · ${check.name} · ${check.status}`,
-                              })),
-                            )
-                          : assessment.checks.map((check) => ({ id: check.name, label: `${check.name} · ${check.status}` }))
+                        releaseAssessment
+                          ? releaseCheckOptions
+                          : extensionAssessment
+                            ? extensionAssessment.processVerification.checkpoints.flatMap((checkpoint) =>
+                                checkpoint.checks.map((check) => ({
+                                  id: `check:${checkpoint.checkIndex}:${check.name}`,
+                                  label: `公开检查 #${checkpoint.checkIndex} · ${check.name} · ${check.status}`,
+                                })),
+                              )
+                            : assessment.checks.map((check) => ({ id: check.name, label: `${check.name} · ${check.status}` }))
                       }
                       onChange={(value) => setBranch(id, 'checkRefs', value)}
                     />

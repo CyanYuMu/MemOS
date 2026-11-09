@@ -15,3 +15,11 @@
 D2 已实现：严格解析可选 `detail.lifecycle`、固定影响包与变更响应；`/lifecycle/scan|prepare|review` 和 `/challenges/resolve` 集中在 API 层。独立面板展示当前观察、完整历史、未解除多根因及固定依赖路径，分别选择恢复证据、挑战证据和新版本摘要。陈旧版本/序号/水位包被拒绝；409 清除确认，要求重新读取。旧详情没有 lifecycle 时仍可读。发布包新增生命周期水位及固定依赖 release 展示，并校验已绑定候选的水位。
 
 测试先观察缺失模块的 RED，再验证严格字段、错误状态、重复摘要、多个根因、只读权限、包绑定和冲突不重试。D2 `pnpm verify`：34 文件、226 测试通过；typecheck、lint、格式、现有自检与生产构建全部通过。schema 6 待独立合同具体子形状确认后继续；此结果不代表真实浏览器发布已完成。
+
+D3 已接入 `release-review-1` schema 6，旧 schema 1–5 的验证函数不改。严格检查新协议、唯一字段、初末快照、批次与两次运行、逐检查送达、轮次和故障凭据。健康允许一次检查；合理停止保留原始失败；工具故障固定第 2 次实际返回，`finalExitCode=null`，不生成虚构的通过结果。零修改的未解决按停止审阅，只有真实有限修改后的失败可选“有限修改后仍未解决”。
+
+页面使用独立新版证据区，并根据事实开放健康/修复/停止/未解决判断；人工仍选择适用范围、退出、事件、每条分支及理由。分支必须有已送达公开检查、先于声明的工具观察和实际行动；仅有宿主隐藏最终检查不能提交覆盖。OpenAPI 的历史/新协议也分离。新增协议先 7 项 RED、页面先 4 项 RED；当前 `pnpm verify` 为 37 文件、248 测试及全流程通过。随后拆出纯判断函数，末次 lint 为 0 警告，21 项受影响测试、typecheck 与格式复验通过；实际批次及浏览器由主代理验证。
+
+跨语言烟测：直接读取 Python `validate_assessment` 已通过的工具故障 schema 6 JSON，以 Vite SSR 加载真实前端 parser，成功得到 `stop_candidate / tool_failure / eligible=true / planQualified=true / faultIndex=2 / finalExitCode=null`。初末隐藏业务结果保留原值，停止不冒充修复。该证据来自合成原生事件及真实 OS 公开/隐藏检查，明确不是 Claude 实测，也不用于发布资格。私有 JSON 和路径不进入仓库。
+
+审查补充：unresolved 必须保留 `dream.caller_contract` 或 `dream.caller_with_fake` 的目标失败，不能用 scoped 失败顶替；unresolved 与 tool_failure 均拒绝新增业务失败。三个反例先 RED，修正后 24 项定向测试及完整 `pnpm verify` 的 251 项通过。另用真实隔离 Neo4j 导出的六次观察、两个根因、一个决定及生命周期包直接运行 Vite SSR parser，通过严格白名单校验；这仍属于跨端合同检查，不代替浏览器验收。
