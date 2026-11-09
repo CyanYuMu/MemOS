@@ -233,7 +233,21 @@ export interface SkillExtensionAssessment extends Omit<
   }[]
 }
 
-export type SkillAssessment = SkillLegacyAssessment | SkillBranchAssessment | SkillExtensionAssessment
+export interface SkillC2Assessment extends Omit<
+  SkillExtensionAssessment,
+  'schemaVersion' | 'collectorVersion' | 'initialVerification' | 'processVerification' | 'intermediateVerifications'
+> {
+  schemaVersion: 4
+  collectorVersion: 'c2-review-1'
+  initialVerification: Omit<SkillExtensionAssessment['initialVerification'], 'protocol'> & {
+    protocol: 'c2-receipt-1'
+    checks: { name: string; status: SkillCheckStatus }[]
+  }
+  processVerification: Omit<SkillExtensionAssessment['processVerification'], 'version'> & { version: 'c2-process-1' }
+  intermediateVerifications: never[]
+}
+
+export type SkillAssessment = SkillLegacyAssessment | SkillBranchAssessment | SkillExtensionAssessment | SkillC2Assessment
 
 export interface SkillAdjudicationRecord {
   adjudicationId: string

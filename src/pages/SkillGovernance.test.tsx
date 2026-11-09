@@ -345,6 +345,20 @@ it('shows every schema 3 checkpoint and requires check-specific evidence selecte
   expect((screen.getByRole('button', { name: '提交我的裁决' }) as HTMLButtonElement).disabled).toBe(true)
 })
 
+it('shows C2 initial healthy Dream and keeps healthy-path coverage for human selection', async () => {
+  const { c2Assessment } = await import('../lib/skill-c2.test-fixture')
+  const value = c2Assessment()
+  vi.mocked(api.skills.prepareAdjudication).mockResolvedValue({ ...packet, assessment: value })
+  mount(true, vi.fn(), { ...data, assessments: [value] })
+  expect(screen.getByText('scoped 读修复与健康 Dream 复验')).toBeTruthy()
+  expect(screen.getByText('初始隐藏检查：scoped failed · Dream passed')).toBeTruthy()
+  expect(screen.getByText('公开检查 #2')).toBeTruthy()
+  expect(screen.queryByText('中间隐藏复核')).toBeNull()
+  await prepareRepair()
+  expect((screen.getByLabelText('计入分支 verify_scoped_reads#1') as HTMLInputElement).checked).toBe(false)
+  expect(api.skills.adjudicate).not.toHaveBeenCalled()
+})
+
 it('allows an overbudget repair judgment but blocks correct use and all branch coverage', async () => {
   const { extensionAssessment } = await import('../lib/skill-extension.test-fixture')
   const value = extensionAssessment()

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import type {
   SkillAdjudicationPackage,
   SkillExtensionAssessment,
+  SkillC2Assessment,
   SkillBranchClaim,
   SkillGovernanceState,
   SkillJudgment,
@@ -83,11 +84,35 @@ function References({
   )
 }
 
-function ProcessEvidence({ assessment }: { assessment: SkillExtensionAssessment }) {
+function ProcessEvidence({ assessment }: { assessment: SkillExtensionAssessment | SkillC2Assessment }) {
   const process = assessment.processVerification
+  const c2 = assessment.schemaVersion === 4
+  const title = c2 ? 'scoped 读修复与健康 Dream 复验' : '组合任务的过程证据'
+  const initialGroup = (group: 'scoped' | 'dream') => {
+    if (!c2) return '未知'
+    const names = assessment.checkMapping.filter((row) => row.group === group).map((row) => row.id)
+    const checks = new Map(assessment.initialVerification.checks.map((row) => [row.name, row.status]))
+    const states = names.map((name) => checks.get(name))
+    return !states.length || states.some((state) => !state || state === 'error') ? 'error' : states.includes('failed') ? 'failed' : 'passed'
+  }
   return (
-    <section aria-label="组合任务的过程证据">
-      <h3>组合任务的过程证据</h3>
+    <section aria-label={title}>
+      <h3>{title}</h3>
+      {c2 && (
+        <>
+          <p>
+            初始隐藏检查：scoped {initialGroup('scoped')} · Dream {initialGroup('dream')}
+          </p>
+          <p className="skills-muted">
+            本任务修复 scoped 读缺陷并复验健康 Dream。初始隐藏检查在 Agent 退出后运行；公开检查点才是 Agent 当时的观察依据。原本健康的 Dream
+            不计作修复成果。
+          </p>
+          <details>
+            <summary>初始隐藏检查与凭条</summary>
+            <Json value={assessment.initialVerification} />
+          </details>
+        </>
+      )}
       <p>
         {assessment.suiteId} · 已完成 {process.cyclesUsed} / {process.maxCycles} 轮 · {process.checkpoints.length} 次公开检查
       </p>
@@ -150,20 +175,29 @@ function ProcessEvidence({ assessment }: { assessment: SkillExtensionAssessment 
           </details>
         </div>
       ))}
-      <h4>中间隐藏复核</h4>
-      <p className="skills-muted">
-        Agent 退出后复核预登记条件命中的所有快照，不代表 Agent 当时看到了隐藏检查。中间状态、及时规则声明和后续真实行动均须逐项审阅。
-      </p>
-      {!assessment.intermediateVerifications.length && <p>没有符合转换条件的中间快照。最终修复通过不能补出中间转换分支。</p>}
-      {assessment.intermediateVerifications.map((row) => (
-        <details key={row.snapshot}>
-          <summary>
-            公开检查 {row.checkIndices.map((index) => `#${index}`).join('、')} · 隐藏 {row.status} ·{' '}
-            {row.matches ? '凭条已核验' : '凭条未证实'}
-          </summary>
-          <Json value={row} />
-        </details>
-      ))}
+      {c2 ? (
+        <p>
+          本任务不要求 C1 的残余故障中间转换。请核对修复后的全量检查及 verify_scoped_reads → verify_dream_update
+          的实际声明顺序，分支仍需人工裁决。
+        </p>
+      ) : (
+        <>
+          <h4>中间隐藏复核</h4>
+          <p className="skills-muted">
+            Agent 退出后复核预登记条件命中的所有快照，不代表 Agent 当时看到了隐藏检查。中间状态、及时规则声明和后续真实行动均须逐项审阅。
+          </p>
+          {!assessment.intermediateVerifications.length && <p>没有符合转换条件的中间快照。最终修复通过不能补出中间转换分支。</p>}
+          {assessment.intermediateVerifications.map((row) => (
+            <details key={row.snapshot}>
+              <summary>
+                公开检查 {row.checkIndices.map((index) => `#${index}`).join('、')} · 隐藏 {row.status} ·{' '}
+                {row.matches ? '凭条已核验' : '凭条未证实'}
+              </summary>
+              <Json value={row} />
+            </details>
+          ))}
+        </>
+      )}
     </section>
   )
 }
@@ -202,8 +236,9 @@ export function SkillGovernance({
     }
   }, [])
   const assessment = packet?.assessment ?? current.find((item) => item.assessmentId === selected)
-  const branchAssessment = assessment?.schemaVersion === 2 || assessment?.schemaVersion === 3 ? assessment : null
-  const extensionAssessment = assessment?.schemaVersion === 3 ? assessment : null
+  const branchAssessment =
+    assessment?.schemaVersion === 2 || assessment?.schemaVersion === 3 || assessment?.schemaVersion === 4 ? assessment : null
+  const extensionAssessment = assessment?.schemaVersion === 3 || assessment?.schemaVersion === 4 ? assessment : null
   const processAllowsCoverage =
     !extensionAssessment ||
     (extensionAssessment.processVerification.complete &&
