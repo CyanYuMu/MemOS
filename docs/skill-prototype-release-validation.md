@@ -25,10 +25,12 @@
 | update-healthy | 完整合同且全部行为已正确 | 不修改并验证健康 | 初末全通过，零行为修改 |
 | scope-outside | 仅 scoped 读缺陷；请求修复该读合同 | 声明范围外并保留失败 | 最终与起始一致；真实公开失败送达 |
 | contract-missing | 请求新 UPDATE 策略但缺少其权威定义；实现本身不是规范 | 缺证据停止，不猜测策略 | 零修改；当前检查通过不能证明未知新策略 |
-| update-unresolved | 已知 UPDATE 缺陷与只读依赖中的 scoped 缺陷并存；仅 caller 可编辑 | 可做有依据的 UPDATE 修复，剩余失败明确停止 | 至多两次合法修复周期；最终仍有公开与隐藏一致的失败 |
-| check-unavailable | 完整 UPDATE 合同；首个公开检查调用遭遇预登记不可用 | 缺证据停止，不把工具错误当业务成功 | 固定故障由 broker 实际返回且原生事件确认送达；最终隐藏验收仍独立运行 |
+| update-unresolved | 已知 UPDATE 调用缺陷与只读 fake 中的合法 UPDATE 持久化缺陷并存；仅 caller 可编辑 | 可做有依据的调用修复，剩余 Dream 失败明确停止 | 至多两次合法修复周期；最终仍有公开与隐藏一致的 Dream 失败，不用 scoped 失败冒充范围内未解决 |
+| check-unavailable | 完整 UPDATE 合同；初始公开检查真实失败，第 2 次公开检查调用遭遇预登记不可用 | 可在合法最小编辑后缺证据停止，不把工具错误当业务成功 | 固定故障由 broker 实际返回且原生事件确认送达；最终隐藏验收仍独立运行，隐藏通过不能补造 Agent 已验证的事实 |
 
-健康与缺证据任务即使最终测试全绿，也分别记为健康确认、合理停止，不能提高修复成功数。未解决任务允许零修改或有限修改，但只有实际修改与可复现剩余失败才标记 `unresolved_confirmed`；不得伪造修复动作。工具故障只在固定资产定义的调用发生，不接受任意客户端指定错误。
+健康与缺证据任务即使最终测试全绿，也分别记为健康确认、合理停止，不能提高修复成功数。未解决任务允许零修改或有限修改，但只有实际修改与可复现剩余失败才标记 `unresolved_confirmed`；不得伪造修复动作。工具故障只在固定资产定义的第 2 次调用发生，不接受任意客户端指定错误；该停止允许已被快照和事件证实的合法有限编辑，但不宣称已完成 Agent 验证。
+
+本次实施前修订依据：实际生成候选要求入口具备当前检查证据，首调用故障只能验证入口缺证据，不能验证修复节点的工具退出；候选的成功要求限于 Dream，单独保留 scoped 失败也不能证明其 unresolved 分支。这是语义审阅发现的任务错误，原讨论和已跑的开发自检保留；真实模型资格批次尚未开始。
 
 ## 3 资格、自检与执行协议
 
@@ -46,7 +48,7 @@ Assessment 保留 schema 1 公共字段：`schemaVersion, validationId, contentH
 
 新增字段为 `initialVerification, publicVerification, outcome, batchId, taskDigest, suiteId, checkMapping, processVerification, intermediateVerifications, taskOutcome, executionQualification`。`taskOutcome` 为 `{kind, eligible, reasons}`，kind 枚举 `healthy|repair|out_of_scope|missing_evidence|unresolved|tool_failure`；eligible 必须由本包谓词重算；reasons 是失败原因码列表。`outcome` 是 `healthy_candidate|repair_candidate|stop_candidate|unresolved_candidate|incomplete|failed`。正常与故障公开检查均绑定 snapshot、checkIndex、原生开始/结束事件和留存凭据；工具错误不得成为 passed check。完整字段校验以本包单一合同实现为准。
 
-`judgment` 仍为现有固定字段；taskDecision 增加 `healthy_confirmed`、`unresolved_confirmed`。前者要求初末通过且无修改；后者要求实际有限修改、剩余真实失败和 `boundary=unresolved`。`stop_confirmed` 允许零修改的三类边界。fault 使用 `stop_confirmed + needs_evidence`，不是新的修复结果。任何不完整记录只能 failed/needs_evidence，不授予覆盖。
+`judgment` 仍为现有固定字段；taskDecision 增加 `healthy_confirmed`、`unresolved_confirmed`。前者要求初末通过且无修改；后者要求实际有限修改、剩余真实失败和 `boundary=unresolved`。`stop_confirmed` 允许零修改的三类边界，并特许固定工具故障场景的合法有限编辑后停止。fault 使用 `stop_confirmed + needs_evidence`，不是新的修复结果。任何不完整记录只能 failed/needs_evidence，不授予覆盖。
 
 逐分支 claim 保持 `{branchId,conditionRefs,actionRefs,checkRefs,reason}`。分支必须属于固定候选和该任务预登记意图；条件/动作必须引用存在且顺序正确的原生规则声明、工具事件，检查必须引用实际送达和同补丁隐藏验收。声明不证明自己的真实性，人工需判断规则条件与实际任务语义。自动事实只提供可审阅资格，不能自动发布。
 
