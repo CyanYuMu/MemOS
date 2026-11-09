@@ -42,6 +42,8 @@
 
 预算超限与行为正确分别表达：最终补丁仍可独立通过，完整事实中的超限不能被包装成正确使用或计入覆盖。过程缺口则阻断自动 repair_candidate 资格，保留 incomplete。完整失败记 failed，不删除运行。单次会话不能借用另一会话的检查或编辑。
 
+实现前补充审查结论：这里计数的是保守的编辑尝试批次，不声称精确统计实际内容修改。暂不增加编辑 hook 或主动阻断第三轮；超限作为硬性使用/覆盖门槛保存。中间转换要求 Dream 的 caller_contract、fake_contract、caller_with_fake 至少一项失败，同时 other_actions 与 no_unintended_write 通过；不能把其他动作损坏解释成 UPDATE 待修。Agent 退出后，自动选择所有满足该条件且 scoped 六项公开通过的不同快照，逐一执行隐藏验收，相同快照去重并保留全部检查序号。选择规则预先固定，不能事后挑选；隐藏结果不送回 Agent，也不替代它当时收到的公开观察。中间实现不要求等于参考变体。
+
 ## 5 schema 3 与人工分支约束
 
 schema 3 / collectorVersion=extension-review-1 保留旧共同字段及 initialVerification/publicVerification/outcome/batchId/taskDigest，新增 suiteId、checkMapping、processVerification。taskDigest 对应 suiteDigest。collector 回读固定批次、资格、真实原生上下文、导出、所有公开快照及送达、初始/最终凭条，并调用同一纯过程重算函数。不能把报告中的 complete、轮次和分组状态当作证据。
@@ -61,6 +63,8 @@ C1 仅预登记 confirm_contract#3、repair_scoped_reads#0、verify_scoped_reads
 | verify_dream_update#0 | 最终两组全部通过、结果完整送达、明确成功退出且后面没有未复验编辑 |
 
 检查引用按固定映射要求相应组的完整验收集；初始缺陷和中间条件由 checkpoint 引用证明，不拿最终绿灯倒推出中间状态。若 Agent 一次修好两类问题，可确认最终修复及有充分证据的其他分支，但 verify_scoped_reads#0 保持缺失；不要求重跑以制造该路径。
+
+schema 3 的 checkRefs 使用 `check:<序号>:<组名.检查名>`，精确定位公开检查点；隐藏中间复核独立存入 intermediateVerifications（snapshot、checkIndices、receiptSha256、protocol、matches、status、checks）。转换声明必须发生在中间结果送达之后、后续编辑之前，任务结束后补写不计转换。其他分支也核验观察→声明/动作→结果的先后关系，仍由人工判断语义。过程 checkpoint 的 editEventRefs 为原生 Edit/Write 开始事件 ID；未配对送达的 startedEvent/completedEvent 为 null，并明确 incomplete。
 
 实际登记为 Validation 和 schema 3 assessment 后仍无覆盖。沿用固定人工包、序号/来源水位/导出绑定和追加裁决事务；只有用户确认具体判断后提交。新的组合场景明确派生于两项核心探针，newIndependentSamples=0，不扩大利益实验样本。
 
