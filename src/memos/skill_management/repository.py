@@ -1062,8 +1062,11 @@ class ManagementRepository(LifecycleMixin, GovernanceMixin, SkillGraphRepository
     def _job_request(skill_id, revision, *, case_id, actor, export_hash, mode):
         identity(skill_id, revision)
         text(case_id, maximum=300)
-        if case_id.startswith("release-"):
-            from memos.skill_release.service_runtime import dev_case
+        if case_id.startswith(("release-", "p5-")):
+            if case_id.startswith("p5-"):
+                from memos.skill_p5.service_runtime import dev_case
+            else:
+                from memos.skill_release.service_runtime import dev_case
 
             try:
                 dev_case(case_id)

@@ -520,9 +520,13 @@ class SkillService:
             execute = execute_task
             execution_options = {}
             if case_id.startswith("p5-"):
+                from memos.skill_lifecycle.execution import make_execution_guard
                 from memos.skill_p5.service_runtime import execute_task as execute_p5
 
                 execute = execute_p5
+                execution_options["execution_guard"] = make_execution_guard(
+                    repo, project.observe, detail["candidate"], actor="host_normal_execution"
+                )
             elif case_id.startswith("release-"):
                 from memos.skill_lifecycle.execution import make_execution_guard
                 from memos.skill_release.service_runtime import execute_task as execute_release
