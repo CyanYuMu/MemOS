@@ -177,12 +177,12 @@ repair_candidate 要求初始隐藏 failed、初始公开 1、最终隐藏 passe
 
 实际图回读仍为覆盖 **0/22**、发布 **0**，普通加载返回 `release_unavailable`，就绪状态为 `NEEDS_EVIDENCE`，保留 `open_challenges` 与 `independent_validation_missing`。原 P4 的 **52/52** 份冻结记录哈希保持不变。后续还缺新任务的真人裁决、其余组合/健康/停止/工具故障任务、完整覆盖与未决挑战处置，再进入 42-B；本增量不构成 P4 后续或 P5 完成。
 
-### 10.3 scoped 真人裁决与 Dream 审阅准备（2026-11-09）
+### 10.3 scoped 与 Dream 真人裁决（2026-11-09）
 
 用户明确确认 scoped 的具体判断后，已通过浏览器保存裁决 `473a44757afb…`，管理序号从 21 增至 22。页面刷新曾丢失未提交表单，重建包 `7feaee77a249…`；宿主逐字段比对原批准包，差异仅为 `preparedAt`、`packageId`、`packageHash`，候选、来源水位、完整事实、既有裁决和序号均相同，保留比对记录后提交同一判断。
 
 结果为 repair_confirmed / misused / in_scope / violations=none，引用八条公开事件，branchCoverage 与 boundaryCoverage 为空。没有将补丁成功等同于正确使用，也没有把误用自动升级为规则反例或严重违规。Neo4j 回读确认三条人工裁决（H4、H6、scoped），覆盖 **0/22**、发布 **0**；原始验证与评分不改写。
 
-Dream 包 `761a1079ffd6…` 绑定同一候选、assessment `e47de0307ae4…` 和序号 22。页面已分别填写 confirm_contract#4、repair_dream_update#0、verify_dream_update#0 的条件观察、实际动作、规则声明、验收项及理由，并完成不写入的合同校验。建议修复成立、范围内正确使用、无严重违规，仅申报这三个正常分支；尚待用户确认，未提交。
+Dream 包 `761a1079ffd6…` 绑定同一候选、assessment `e47de0307ae4…` 和序号 22。页面分别填写 confirm_contract#4、repair_dream_update#0、verify_dream_update#0 的条件观察、实际动作、规则声明、验收项及理由，并完成不写入的合同校验。用户确认后已提交裁决 `042f713c0ea3…`：修复成立、范围内正确使用、无严重违规，计入这三个正常分支。
 
-Dream 的五项公开检查已实际执行并送达；宿主最终隐藏检查另覆盖非法额外位置参数拒绝后状态不变、空内容及其他动作。后者只能证明最终补丁行为，不能表述为 Agent 当时亲自运行了这些细分可见样例，也不扩大适用范围或证明收益。即使三个分支获准，仍须补其余十九个分支及未决挑战，不能直接发布或进入 P5。
+Dream 的五项公开检查已实际执行并送达；宿主最终隐藏检查另覆盖非法额外位置参数拒绝后状态不变、空内容及其他动作。后者只能证明最终补丁行为，不能表述为 Agent 当时亲自运行了这些细分可见样例，也不扩大适用范围或证明收益。浏览器与 Neo4j 回读一致：管理序号 **23**、四条人工裁决、覆盖 **3/22**、发布 **0**，普通加载仍因 `release_unavailable` 拒绝。仍须补其余十九个分支及未决挑战，不能直接进入 P5。下一增量范围与验收见 [组合与边界任务开发合同](skill-prototype-branch-extensions.md)。
