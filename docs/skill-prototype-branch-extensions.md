@@ -1,6 +1,6 @@
 # 42-A4e 组合与边界任务开发合同
 
-日期：2026-11-09。基于 `codex/skill-prototype-branch-validation@75540c0a`，开发分支为 `codex/skill-prototype-branch-extensions`。第 1–6 节先于实现冻结开发合同；第 7 节记录已完成的 A4e-1 验收，执行协议与后续增量仍未完成。
+日期：2026-11-09。基于 `codex/skill-prototype-branch-validation@75540c0a`，首增量开发分支为 `codex/skill-prototype-branch-extensions`。第 1–6 节先于实现冻结开发合同；第 7 节保留 A4e-1 当时验收，第 8 节记录执行协议与 schema 3 的后续进展。
 
 ## 1 当前依据与目标
 
@@ -110,4 +110,12 @@ PYTHONPATH=src .venv/bin/python -m memos.skill_branch_extensions audit \
   --suite combined-c1-v1 --output /private/new-audit-directory
 ```
 
-下一步按第 6 节实现选定套件的固定执行协议、公开结果送达和资格校验，再运行 Claude 并接入 schema 3 的中间状态证据；之后处理健康/停止/工具故障、其余覆盖与挑战、42-B 失效传播和新版发布，最后进入 P5。
+A4e-1 结束时的后续顺序为第 6 节所列执行协议、Claude、schema 3，再处理其余场景、42-B 和 P5；最新进展见下一节。
+
+## 8 A4e-2/3 已交付与剩余门槛
+
+组合执行协议、完整过程回读、schema 3 入图及浏览器审阅已经实现并实际联调。开发合同见[组合执行协议与证据接入](skill-prototype-combined-protocol.md)，完整测试、提交和实际批次见[验收报告](skill-prototype-combined-protocol-acceptance.md)。
+
+真实 C1 none 与固定 Skill 两次会话均通过，均是一轮编辑后两组同时通过；没有符合条件的中间快照，不能补出中途转换覆盖。Skill 运行已登记 schema 3 事实，具体规则使用仍待人工裁决。当前覆盖保持 3/22、发布 0，normal 加载拒绝。
+
+接下来按 C2/H/S/F 场景补齐合同与证据，处理其余分支和审阅挑战；再完成来源/工具变化的失效传播、新版验证和人工发布，满足门槛后才进入 P5。不能为凑覆盖重复已完成的 C1 会话或改写旧评分。
