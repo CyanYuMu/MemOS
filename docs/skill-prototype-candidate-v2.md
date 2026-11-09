@@ -108,6 +108,24 @@ candidate 使用 `schema_version=2` 和独立 domain/producer 版本；assessmen
 
 首版不增加图节点类型。现有 SkillRevision/Rule 的 JSON payload 可保存独立 context 引用与工件摘要；原 DERIVED_FROM/EVIDENCE_LINK 继续只指真实 Memory/Evidence。不能伪造必须绑定 run/case 的 EvidenceRevision 来容纳项目文件。以后如需要一等合同节点，须另行定义 v2 图合同与迁移，不改旧枚举或全局变量。
 
+### 4.4 首版精确工件合同
+
+纯合同实现增加 `inputs.py`：确定性 `build_messages`、输入/曝光清单构建及校验、生成记录校验。candidate 调用它时显式提供自身 proposal schema，避免与实际供应商调用模块循环依赖。`generation.py` 后续负责实际请求及前后身份检查，不能由合成记录声称发生真实模型调用。
+
+proposal 保留旧正文的明确字段集合，每条 rule 增加 `contract_refs`。首版每条规则至少一条合同引用，locator 仅为 `/excerpt`；value_sha256 为所引用 JSON 字符串的规范哈希，与 excerpt_sha256 的原始 UTF-8 字节哈希分开。入口 basis 固定 normative，处理规则固定 hypothesis；原 Dream 已观察修复继续在 Memory evidence 主张中表达，不把跨模块整体效果标为 empirical。
+
+parent.json 为旧 loader 返回的 packet/proposal/candidate/generation/validation/manifest 六项完整内容，按旧合同逐项重推；其 packet 必须等于本次 packet。首版只接 schema 1 父版本。candidate.parent 引用四项 schema_version/revision/content_hash/manifest_id。candidate 顶层沿用既有正文/来源身份与固定初始状态，schema_version=2、domain_version=2，增加 producer、parent、contract_context_ids、input_manifest_id、exposure_manifest_id。规则独立派生 contract_links，含原引用、producer/semantic_review/skill_id/revision/rule_id/link_id，不含 source_id 或经验资格。revision 先绑定全部输入及正文，再派生两类链接；content_hash 绑定完整派生结果。
+
+input_manifest 精确包含 schema_version=1、kind=candidate_generation_input、project_id、packet_id、source_ids、source_fact_ids、parent、context_ids、exposure_manifest_id、feedback、host_policy、producer、producer_digest、requested_model、service_identity、parameters、budget、output_schema_sha256、messages、prompt_sha256、request_sha256、input_manifest_id。来源/事实/context IDs 排序且完全等于供给材料。feedback 每项为 issue_id/reason/required_change/fact_ids/context_ids，引用至少一类已供给依据；host_policy 仅 max_repair_cycles。parameters 为 timeout_seconds/max_tokens/temperature=0/max_retries=0/tools=[]；budget 为 max_calls=1、max_input_bytes。输入字节上限不超过 512000，响应公开内容不超过 131072；所有上限为明确正值。通用供应商 API 未提供美元硬限额时不得声称实现了美元预算强制，费用不可知如实保留。
+
+producer 为 version=memos-candidate-generator-v2 及 files 映射，明确绑定 authority.py/candidate.py/inputs.py/generation.py 四项字节；producer_digest 为此对象的规范哈希。messages 由 packet 公共投影、父候选、context、feedback、host_policy 与输出 schema 的白名单确定性重建，不能只信任自报哈希。prompt/schema/request 哈希分别绑定实际消息、实际 schema 和 provider/service_identity/requested_model/parameters/messages/response_format={type:json_object}。input_manifest_id 绑定去除自身 ID 后全部字段。
+
+exposure_manifest 精确包含 schema_version=1、kind=candidate_exposure_snapshot、project_id、previous_manifest_id、entries、exposure_manifest_id。每项 entry 包含 actor_id/actor_role/phase/asset_kind/asset_sha256/recorded_at/allowed_roles/included_in_generation/lineage_ids/derived_from；角色为 generator/host_developer/semantic_reviewer，时间为 UTC ISO 字符串，重复项拒绝。资产类别及用途遵循第 5 节；generator 不能接收 independent_family_baseline/task_request/public_fixture/hidden_check/reference_patch/task_result。整个曝光清单不发送模型。字段白名单不能自动证明自由文本的语义未泄漏，来源反馈仍须宿主逐项审阅。
+
+generation 精确包含 schema_version=2、kind=candidate_generation、provider=openai_compatible_json、producer、producer_digest、input_manifest_id、sdk_version、service_identity、requested_model、reported_model、model_identity_match、parameters、request_sha256、prompt_sha256、schema_sha256、response_sha256、messages、response_content、finish_reason、usage、usage_status、elapsed_seconds。全部输入必须与重推清单一致；严格解析 response_content 后等于 proposal，finish_reason 必须 stop，用量缺失或无效明确保存。model_identity_match 是精确比较结果，不允许自报 true；false 保留为来源语义审阅局限，不自动拒绝固定内容候选封存，也不能据此宣称生成模型固定一致。以上 JSON 自洽不证明供应商真实性；实际调用身份由宿主生成流程与原始记录承担。
+
+工件集合固定为 packet.json、contexts.json（恰一项）、parent.json、input-manifest.json、exposure-manifest.json、proposal.json、generation.json、candidate.json、validation.json、REVIEW.md、manifest.json。manifest 的 schema_version=2、kind=candidate_review_artifacts_v2，绑定项目/Skill/revision/packet/content/context/input/exposure/parent 与逐文件摘要及 manifest_id；每项 JSON 和 REVIEW 都确定性重推。结构验证只报告来源、lineage、两类引用和 context 数，不产生成功经验或分支覆盖。write_candidate 必须先后执行真实 source_recheck(packet) 及 authority 回读；load_candidate 必须 authority 回读，但不假称它完成了实时 Memory 认证。当前 authority 提取器字节改变会阻断实时回读，历史 context 仍可做结构展示；不能重算 extractor_digest 替旧 context 解禁。
+
 ## 5 曝光与独立性账本
 
 输入与曝光分别记录。生成输入清单证明实际送达模型的字节；宿主曝光账本证明谁在什么阶段看过什么，不以“未发送”掩盖开发者已知内容。
