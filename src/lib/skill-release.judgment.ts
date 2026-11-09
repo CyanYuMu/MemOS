@@ -1,4 +1,4 @@
-import type { SkillBranchClaim, SkillJudgment, SkillReleaseAssessment } from '../../shared/contract'
+import type { SkillBranchClaim, SkillJudgment, SkillReleaseAssessment, SkillP5Assessment } from '../../shared/contract'
 
 const boundaries = {
   healthy: null,
@@ -8,7 +8,7 @@ const boundaries = {
   unresolved: 'unresolved',
   tool_failure: 'needs_evidence',
 } as const
-export function releaseJudgmentSupported(assessment: SkillReleaseAssessment, judgment: SkillJudgment) {
+export function releaseJudgmentSupported(assessment: SkillReleaseAssessment | SkillP5Assessment, judgment: SkillJudgment) {
   const expected = {
     healthy_candidate: 'healthy_confirmed',
     repair_candidate: 'repair_confirmed',
@@ -26,7 +26,11 @@ export function releaseJudgmentSupported(assessment: SkillReleaseAssessment, jud
   )
 }
 
-export function releaseBranchSupported(assessment: SkillReleaseAssessment, branch: SkillBranchClaim, judgment: SkillJudgment) {
+export function releaseBranchSupported(
+  assessment: SkillReleaseAssessment | SkillP5Assessment,
+  branch: SkillBranchClaim,
+  judgment: SkillJudgment,
+) {
   if (
     !releaseJudgmentSupported(assessment, judgment) ||
     judgment.usageDecision !== 'correct' ||

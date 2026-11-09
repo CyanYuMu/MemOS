@@ -1,8 +1,8 @@
 import type { z } from 'zod'
-import type { SkillReleaseAssessment } from '../../shared/contract'
+import type { SkillReleaseAssessment, SkillP5Assessment } from '../../shared/contract'
 
 /** 独立检查 schema 6 的绑定和内部矛盾；旧 schema 的判据保持原样。 */
-export function validateReleaseAssessment(value: SkillReleaseAssessment, context: z.RefinementCtx) {
+export function validateReleaseAssessment(value: SkillReleaseAssessment | SkillP5Assessment, context: z.RefinementCtx) {
   const invalid = (path: string, message: string) => context.addIssue({ code: 'custom', path: [path], message })
   const process = value.processVerification,
     publicEvidence = value.publicVerification,

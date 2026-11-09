@@ -283,12 +283,13 @@ export function SkillGovernance({
     assessment?.schemaVersion === 3 ||
     assessment?.schemaVersion === 4 ||
     assessment?.schemaVersion === 5 ||
-    assessment?.schemaVersion === 6
+    assessment?.schemaVersion === 6 ||
+    assessment?.schemaVersion === 7
       ? assessment
       : null
   const extensionAssessment =
     assessment?.schemaVersion === 3 || assessment?.schemaVersion === 4 || assessment?.schemaVersion === 5 ? assessment : null
-  const releaseAssessment = assessment?.schemaVersion === 6 ? assessment : null
+  const releaseAssessment = assessment?.schemaVersion === 6 || assessment?.schemaVersion === 7 ? assessment : null
   const processAllowsCoverage =
     (!releaseAssessment ||
       (releaseAssessment.taskOutcome.eligible &&

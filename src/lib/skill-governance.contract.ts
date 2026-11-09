@@ -284,6 +284,42 @@ const releaseAssessmentFields = c2V2AssessmentFields
   })
   .strict()
 
+const p5AssessmentFields = c2V2AssessmentFields
+  .extend({
+    schemaVersion: z.literal(7),
+    collectorVersion: z.literal('p5-review-1'),
+    verification: extensionReceipt.extend({ protocol: z.literal('p5-receipt-1') }),
+    initialVerification: c2AssessmentFields.shape.initialVerification.extend({ protocol: z.literal('p5-receipt-1') }),
+    publicVerification: branchAssessmentFields.shape.publicVerification.extend({
+      fault: z
+        .object({
+          checkIndex: z.literal(2),
+          code: z.literal('registered_check_unavailable'),
+          recordSha256: hash,
+          startedEvent: z.string().min(1),
+          completedEvent: z.string().min(1),
+        })
+        .strict()
+        .nullable(),
+    }),
+    processVerification: c2AssessmentFields.shape.processVerification.extend({ version: z.literal('p5-process-1') }),
+    outcome: z.enum(['healthy_candidate', 'repair_candidate', 'stop_candidate', 'unresolved_candidate', 'incomplete', 'failed']),
+    taskOutcome: z
+      .object({
+        kind: z.enum(['healthy', 'repair', 'out_of_scope', 'missing_evidence', 'unresolved', 'tool_failure']),
+        eligible: z.boolean(),
+        reasons: z.array(z.string().min(1)),
+      })
+      .strict(),
+    executionQualification: c2V2AssessmentFields.shape.executionQualification.extend({
+      protocol: z.literal('p5-plan-1'),
+      batchProtocol: z.literal('p5-batch-1'),
+      calibration: executionUnit.extend({ unit: z.literal('p5-none'), group: z.literal('none') }),
+      trial: executionUnit.extend({ group: z.literal('skill') }),
+    }),
+  })
+  .strict()
+
 function validateProcessAssessment(
   assessment: z.infer<typeof extensionAssessmentFields> | z.infer<typeof c2AssessmentFields> | z.infer<typeof c2V2AssessmentFields>,
   context: z.RefinementCtx,
@@ -452,6 +488,7 @@ export const skillAssessment: z.ZodType<SkillAssessment> = z.union([
   c2Assessment,
   c2V2Assessment,
   releaseAssessmentFields.superRefine(validateReleaseAssessment),
+  p5AssessmentFields.superRefine(validateReleaseAssessment),
 ])
 
 export const skillGovernance: z.ZodType<SkillGovernanceState> = z.object({

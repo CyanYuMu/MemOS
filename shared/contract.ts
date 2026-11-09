@@ -402,6 +402,43 @@ export interface SkillReleaseAssessment extends Omit<
   }
 }
 
+export interface SkillP5Assessment extends Omit<
+  SkillC2V2Assessment,
+  | 'schemaVersion'
+  | 'collectorVersion'
+  | 'verification'
+  | 'initialVerification'
+  | 'publicVerification'
+  | 'outcome'
+  | 'processVerification'
+  | 'executionQualification'
+> {
+  schemaVersion: 7
+  collectorVersion: 'p5-review-1'
+  verification: Omit<SkillC2V2Assessment['verification'], 'protocol'> & { protocol: 'p5-receipt-1' }
+  initialVerification: Omit<SkillC2V2Assessment['initialVerification'], 'protocol'> & { protocol: 'p5-receipt-1' }
+  publicVerification: SkillC2V2Assessment['publicVerification'] & {
+    fault: null | {
+      checkIndex: number
+      code: 'registered_check_unavailable'
+      recordSha256: string
+      startedEvent: string
+      completedEvent: string
+    }
+  }
+  outcome: 'healthy_candidate' | 'repair_candidate' | 'stop_candidate' | 'unresolved_candidate' | 'incomplete' | 'failed'
+  processVerification: Omit<SkillC2V2Assessment['processVerification'], 'version'> & { version: 'p5-process-1' }
+  taskOutcome: {
+    kind: 'healthy' | 'repair' | 'out_of_scope' | 'missing_evidence' | 'unresolved' | 'tool_failure'
+    eligible: boolean
+    reasons: string[]
+  }
+  executionQualification: Omit<SkillC2V2Assessment['executionQualification'], 'protocol' | 'batchProtocol'> & {
+    protocol: 'p5-plan-1'
+    batchProtocol: 'p5-batch-1'
+  }
+}
+
 export type SkillAssessment =
   | SkillLegacyAssessment
   | SkillBranchAssessment
@@ -409,6 +446,7 @@ export type SkillAssessment =
   | SkillC2Assessment
   | SkillC2V2Assessment
   | SkillReleaseAssessment
+  | SkillP5Assessment
 
 export interface SkillAdjudicationRecord {
   adjudicationId: string

@@ -1,4 +1,4 @@
-import type { SkillReleaseAssessment } from '../../shared/contract'
+import type { SkillReleaseAssessment, SkillP5Assessment } from '../../shared/contract'
 
 const kindNames = {
   healthy: '健康确认',
@@ -8,7 +8,7 @@ const kindNames = {
   unresolved: '仍有可复现失败',
   tool_failure: '公开检查工具不可用',
 }
-export function SkillReleaseEvidence({ assessment }: { assessment: SkillReleaseAssessment }) {
+export function SkillReleaseEvidence({ assessment }: { assessment: SkillReleaseAssessment | SkillP5Assessment }) {
   const { taskOutcome, processVerification: process, executionQualification: plan, publicVerification } = assessment
   return (
     <section aria-label="新版独立任务证据">
