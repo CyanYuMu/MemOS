@@ -43,3 +43,5 @@ Python 仓库 `docs/skill-prototype-delivery.md`、`docs/skill-prototype-lifecyc
 同日 D2：新增 `/lifecycle/scan|prepare|review` 与 `/challenges/resolve`，对应 `impact_scan|impact_prepare|impact_review|challenge_resolve`；OpenAPI 的请求、响应及前端派生 JSON 同步。摘要数组拒绝重复及非摘要，decision 校验按具体 action 隔离；旧审阅接口不能借新枚举执行恢复。健康确认与未解决确认仅扩展传输枚举，实际事实资格仍由数据面判断。
 
 验证：新路由先因 404、裁决枚举先因拒绝而 RED；实现后 dashboard/upstream 包全部通过。`make check` 完成格式、lint（0 issues）、vet、全库 race 乱序测试、tidy、文档、容器配置和构建。新增上游测试确认四命令冲突时均仅调用一次，记录安全错误不泄露上游细节。真实服务演示由主代理继续。
+
+D3：响应 OpenAPI 显式区分历史 schema 1–5 与严格 schema 6（`release-review-1`）。schema 6 记载六类任务结局、校准/当前单元、公开检查点与第 2 次固定工具故障；不把合理停止的底层失败改成通过。控制面仍透传已验证的事实，由 Python 和前端分别检查绑定。OpenAPI 双向路由/结构检查及新增任务判断测试通过。

@@ -3991,6 +3991,10 @@ components:
           pattern: ^[a-f0-9]{64}$
           nullable: true
     SkillAssessment:
+      oneOf:
+      - $ref: '#/components/schemas/SkillHistoricalAssessment'
+      - $ref: '#/components/schemas/SkillReleaseAssessment'
+    SkillHistoricalAssessment:
       type: object
       additionalProperties: true
       required:
@@ -4104,6 +4108,706 @@ components:
           type: array
           items:
             type: string
+        schemaVersion:
+          type: integer
+          enum:
+          - 1
+          - 2
+          - 3
+          - 4
+          - 5
+    SkillReleaseAssessment:
+      type: object
+      additionalProperties: false
+      required:
+      - assessmentId
+      - validationId
+      - contentHash
+      - exportHash
+      - candidateSnapshot
+      - reportSha256
+      - eventsSha256
+      - coveragePlanHash
+      - caseId
+      - captureComplete
+      - loadVerified
+      - behaviorChanged
+      - originalStatus
+      - verification
+      - checks
+      - events
+      - branchCandidates
+      - schemaVersion
+      - collectorVersion
+      - collectorDigest
+      - runId
+      - attemptId
+      - caseRevision
+      - lineageId
+      - split
+      - purpose
+      - initialVerification
+      - publicVerification
+      - outcome
+      - batchId
+      - taskDigest
+      - suiteId
+      - checkMapping
+      - processVerification
+      - intermediateVerifications
+      - taskOutcome
+      - executionQualification
+      properties:
+        assessmentId:
+          type: string
+          pattern: ^[a-f0-9]{64}$
+        validationId:
+          type: string
+          pattern: ^[a-f0-9]{64}$
+        contentHash:
+          type: string
+          pattern: ^[a-f0-9]{64}$
+        exportHash:
+          type: string
+          pattern: ^[a-f0-9]{64}$
+        candidateSnapshot:
+          type: string
+          pattern: ^[a-f0-9]{64}$
+        reportSha256:
+          type: string
+          pattern: ^[a-f0-9]{64}$
+        eventsSha256:
+          type: string
+          pattern: ^[a-f0-9]{64}$
+        coveragePlanHash:
+          type: string
+          pattern: ^[a-f0-9]{64}$
+        caseId:
+          type: string
+        captureComplete:
+          type: boolean
+        loadVerified:
+          type: boolean
+        behaviorChanged:
+          type: boolean
+        originalStatus:
+          type: string
+        verification:
+          type: object
+          additionalProperties: false
+          required:
+          - status
+          - receiptSha256
+          - protocol
+          - matches
+          - sameFinalPatch
+          - posthoc
+          properties:
+            status:
+              type: string
+              enum:
+              - passed
+              - failed
+              - error
+            receiptSha256:
+              type: string
+              pattern: ^[a-f0-9]{64}$
+            protocol:
+              type: string
+              enum:
+              - release-receipt-1
+            matches:
+              type: boolean
+            sameFinalPatch:
+              type: boolean
+            posthoc:
+              type: boolean
+              enum:
+              - false
+        checks:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required:
+            - name
+            - status
+            properties:
+              name:
+                type: string
+                minLength: 1
+              status:
+                type: string
+                enum:
+                - passed
+                - failed
+                - error
+        events:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required:
+            - id
+            - kind
+            - value
+            properties:
+              id:
+                type: string
+              kind:
+                type: string
+                enum:
+                - tool_started
+                - tool_completed
+                - assistant_text
+                - rule_declaration
+              value:
+                type: object
+                additionalProperties: true
+        branchCandidates:
+          type: array
+          items:
+            type: string
+        schemaVersion:
+          type: integer
+          enum:
+          - 6
+        collectorVersion:
+          type: string
+          enum:
+          - release-review-1
+        collectorDigest:
+          type: string
+          pattern: ^[a-f0-9]{64}$
+        runId:
+          type: string
+          minLength: 1
+        attemptId:
+          type: string
+          minLength: 1
+        caseRevision:
+          type: string
+          minLength: 1
+        lineageId:
+          type: string
+          minLength: 1
+        split:
+          type: string
+          enum:
+          - holdout
+        purpose:
+          type: string
+          enum:
+          - actual
+          - management_test
+        initialVerification:
+          type: object
+          additionalProperties: false
+          required:
+          - status
+          - receiptSha256
+          - protocol
+          - matches
+          - candidateSnapshot
+          - checks
+          properties:
+            status:
+              type: string
+              enum:
+              - passed
+              - failed
+              - error
+            receiptSha256:
+              type: string
+              pattern: ^[a-f0-9]{64}$
+            protocol:
+              type: string
+              enum:
+              - release-receipt-1
+            matches:
+              type: boolean
+            candidateSnapshot:
+              type: string
+              pattern: ^[a-f0-9]{64}$
+            checks:
+              type: array
+              items:
+                type: object
+                additionalProperties: false
+                required:
+                - name
+                - status
+                properties:
+                  name:
+                    type: string
+                    minLength: 1
+                  status:
+                    type: string
+                    enum:
+                    - passed
+                    - failed
+                    - error
+        publicVerification:
+          type: object
+          additionalProperties: false
+          required:
+          - initialExitCode
+          - finalExitCode
+          - recordsVerified
+          - deliveriesVerified
+          - deliveryRefs
+          - fault
+          properties:
+            initialExitCode:
+              type: integer
+              nullable: true
+            finalExitCode:
+              type: integer
+              nullable: true
+            recordsVerified:
+              type: boolean
+            deliveriesVerified:
+              type: boolean
+            deliveryRefs:
+              type: array
+              items:
+                type: object
+                additionalProperties: false
+                required:
+                - checkIndex
+                - startedEvent
+                - completedEvent
+                properties:
+                  checkIndex:
+                    type: integer
+                    minimum: 1
+                  startedEvent:
+                    type: string
+                    minLength: 1
+                  completedEvent:
+                    type: string
+                    minLength: 1
+            fault:
+              type: object
+              additionalProperties: false
+              required:
+              - checkIndex
+              - code
+              - recordSha256
+              - startedEvent
+              - completedEvent
+              properties:
+                checkIndex:
+                  type: integer
+                  enum:
+                  - 2
+                code:
+                  type: string
+                  enum:
+                  - registered_check_unavailable
+                recordSha256:
+                  type: string
+                  pattern: ^[a-f0-9]{64}$
+                startedEvent:
+                  type: string
+                  minLength: 1
+                completedEvent:
+                  type: string
+                  minLength: 1
+              nullable: true
+        outcome:
+          type: string
+          enum:
+          - healthy_candidate
+          - repair_candidate
+          - stop_candidate
+          - unresolved_candidate
+          - incomplete
+          - failed
+        batchId:
+          type: string
+          pattern: ^[a-f0-9]{64}$
+        taskDigest:
+          type: string
+          pattern: ^[a-f0-9]{64}$
+        suiteId:
+          type: string
+          minLength: 1
+        checkMapping:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required:
+            - id
+            - group
+            - ruleCheck
+            properties:
+              id:
+                type: string
+                minLength: 1
+              group:
+                type: string
+                enum:
+                - scoped
+                - dream
+              ruleCheck:
+                type: string
+                pattern: ^[a-z_]+$
+        processVerification:
+          type: object
+          additionalProperties: false
+          required:
+          - version
+          - complete
+          - issues
+          - maxCycles
+          - cyclesUsed
+          - budgetExceeded
+          - unverifiedEdits
+          - checkpoints
+          properties:
+            version:
+              type: string
+              enum:
+              - release-process-1
+            complete:
+              type: boolean
+            issues:
+              type: array
+              items:
+                type: string
+                minLength: 1
+            maxCycles:
+              type: integer
+              enum:
+              - 2
+            cyclesUsed:
+              type: integer
+              minimum: 0
+            budgetExceeded:
+              type: boolean
+            unverifiedEdits:
+              type: boolean
+            checkpoints:
+              type: array
+              items:
+                type: object
+                additionalProperties: false
+                required:
+                - checkIndex
+                - snapshot
+                - recordSha256
+                - startedEvent
+                - completedEvent
+                - checks
+                - groupStatus
+                - cyclesUsed
+                - editEventRefs
+                properties:
+                  checkIndex:
+                    type: integer
+                    minimum: 1
+                  snapshot:
+                    type: string
+                    pattern: ^[a-f0-9]{64}$
+                  recordSha256:
+                    type: string
+                    pattern: ^[a-f0-9]{64}$
+                  startedEvent:
+                    type: string
+                    minLength: 1
+                    nullable: true
+                  completedEvent:
+                    type: string
+                    minLength: 1
+                    nullable: true
+                  checks:
+                    type: array
+                    items:
+                      type: object
+                      additionalProperties: false
+                      required:
+                      - name
+                      - status
+                      properties:
+                        name:
+                          type: string
+                          minLength: 1
+                        status:
+                          type: string
+                          enum:
+                          - passed
+                          - failed
+                          - error
+                  groupStatus:
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      scoped:
+                        type: string
+                        enum:
+                        - passed
+                        - failed
+                        - error
+                      dream:
+                        type: string
+                        enum:
+                        - passed
+                        - failed
+                        - error
+                  cyclesUsed:
+                    type: integer
+                    minimum: 0
+                  editEventRefs:
+                    type: array
+                    items:
+                      type: string
+                      minLength: 1
+        intermediateVerifications:
+          type: array
+          maxItems: 0
+          items:
+            type: object
+        taskOutcome:
+          type: object
+          additionalProperties: false
+          required:
+          - kind
+          - eligible
+          - reasons
+          properties:
+            kind:
+              type: string
+              enum:
+              - healthy
+              - repair
+              - out_of_scope
+              - missing_evidence
+              - unresolved
+              - tool_failure
+            eligible:
+              type: boolean
+            reasons:
+              type: array
+              items:
+                type: string
+                minLength: 1
+        executionQualification:
+          type: object
+          additionalProperties: false
+          required:
+          - protocol
+          - policyDigest
+          - batchProtocol
+          - batchId
+          - manifestSha256
+          - calibration
+          - trial
+          - planQualified
+          - planIssues
+          properties:
+            protocol:
+              type: string
+              enum:
+              - release-plan-1
+            policyDigest:
+              type: string
+              pattern: ^[a-f0-9]{64}$
+            batchProtocol:
+              type: string
+              enum:
+              - release-batch-1
+            batchId:
+              type: string
+              pattern: ^[a-f0-9]{64}$
+            manifestSha256:
+              type: string
+              pattern: ^[a-f0-9]{64}$
+            calibration:
+              type: object
+              additionalProperties: false
+              required:
+              - unit
+              - group
+              - runId
+              - attemptId
+              - reportSha256
+              - eventsSha256
+              - initialReceiptSha256
+              - receiptSha256
+              - status
+              - taskAccepted
+              - captureComplete
+              - loading
+              - processComplete
+              - maxCycles
+              - cyclesUsed
+              - budgetExceeded
+              - unverifiedEdits
+              - policyMatches
+              - qualified
+              - issues
+              properties:
+                unit:
+                  type: string
+                  enum:
+                  - release-none
+                group:
+                  type: string
+                  enum:
+                  - none
+                runId:
+                  type: string
+                  minLength: 1
+                attemptId:
+                  type: string
+                  minLength: 1
+                reportSha256:
+                  type: string
+                  pattern: ^[a-f0-9]{64}$
+                eventsSha256:
+                  type: string
+                  pattern: ^[a-f0-9]{64}$
+                initialReceiptSha256:
+                  type: string
+                  pattern: ^[a-f0-9]{64}$
+                receiptSha256:
+                  type: string
+                  pattern: ^[a-f0-9]{64}$
+                status:
+                  type: string
+                  enum:
+                  - passed
+                  - failed
+                  - incomplete
+                taskAccepted:
+                  type: boolean
+                captureComplete:
+                  type: boolean
+                loading:
+                  type: string
+                  enum:
+                  - not_requested
+                  - verified
+                  - unknown
+                processComplete:
+                  type: boolean
+                maxCycles:
+                  type: integer
+                  minimum: 0
+                cyclesUsed:
+                  type: integer
+                  minimum: 0
+                budgetExceeded:
+                  type: boolean
+                unverifiedEdits:
+                  type: boolean
+                policyMatches:
+                  type: boolean
+                qualified:
+                  type: boolean
+                issues:
+                  type: array
+                  items:
+                    type: string
+                    minLength: 1
+            trial:
+              type: object
+              additionalProperties: false
+              required:
+              - unit
+              - group
+              - runId
+              - attemptId
+              - reportSha256
+              - eventsSha256
+              - initialReceiptSha256
+              - receiptSha256
+              - status
+              - taskAccepted
+              - captureComplete
+              - loading
+              - processComplete
+              - maxCycles
+              - cyclesUsed
+              - budgetExceeded
+              - unverifiedEdits
+              - policyMatches
+              - qualified
+              - issues
+              properties:
+                unit:
+                  type: string
+                  description: 固定 suiteId 加 -skill 后缀
+                group:
+                  type: string
+                  enum:
+                  - skill
+                runId:
+                  type: string
+                  minLength: 1
+                attemptId:
+                  type: string
+                  minLength: 1
+                reportSha256:
+                  type: string
+                  pattern: ^[a-f0-9]{64}$
+                eventsSha256:
+                  type: string
+                  pattern: ^[a-f0-9]{64}$
+                initialReceiptSha256:
+                  type: string
+                  pattern: ^[a-f0-9]{64}$
+                receiptSha256:
+                  type: string
+                  pattern: ^[a-f0-9]{64}$
+                status:
+                  type: string
+                  enum:
+                  - passed
+                  - failed
+                  - incomplete
+                taskAccepted:
+                  type: boolean
+                captureComplete:
+                  type: boolean
+                loading:
+                  type: string
+                  enum:
+                  - not_requested
+                  - verified
+                  - unknown
+                processComplete:
+                  type: boolean
+                maxCycles:
+                  type: integer
+                  minimum: 0
+                cyclesUsed:
+                  type: integer
+                  minimum: 0
+                budgetExceeded:
+                  type: boolean
+                unverifiedEdits:
+                  type: boolean
+                policyMatches:
+                  type: boolean
+                qualified:
+                  type: boolean
+                issues:
+                  type: array
+                  items:
+                    type: string
+                    minLength: 1
+            planQualified:
+              type: boolean
+            planIssues:
+              type: array
+              items:
+                type: string
+                minLength: 1
+      description: schema 6 精确事实；健康、修复与停止分别记录。底层 failed 不因合理停止改成 passed；工具故障没有业务退出码。绑定和交叉引用由
+        Python 及前端严格核对。
     SkillAdjudicationPackage:
       type: object
       additionalProperties: false

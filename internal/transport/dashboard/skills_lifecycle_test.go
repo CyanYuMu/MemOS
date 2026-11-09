@@ -9,9 +9,9 @@ import (
 )
 
 func TestLifecycleDigestArrayBound(t *testing.T) {
-	values := make([]any, 200)
-	for index := range values {
-		values[index] = fmt.Sprintf("%064x", index)
+	values := make([]any, 0, 201)
+	for index := range 200 {
+		values = append(values, fmt.Sprintf("%064x", index))
 	}
 	if err := validateSkillDigests(values); err != nil {
 		t.Fatalf("200 摘要应允许：%v", err)
