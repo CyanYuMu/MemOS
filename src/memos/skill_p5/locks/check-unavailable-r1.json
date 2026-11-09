@@ -1,0 +1,8 @@
+{
+  "digest": "29c941e4e763c1f05784efaf42ad465433f6764915ce8da4fae7f3baabc408bc",
+  "lineageId": "combined-shared-state-20261109",
+  "purpose": "release_asset_freeze",
+  "schemaVersion": 1,
+  "suiteId": "check-unavailable-r1",
+  "taskId": "p5-check-unavailable-r1"
+}

@@ -1,0 +1,8 @@
+{
+  "digest": "5157bb50b42dc6ff67cc8e6c1ea1d23754294b42d3ae5de557d93eb00868e617",
+  "lineageId": "combined-shared-state-20261109",
+  "purpose": "release_asset_freeze",
+  "schemaVersion": 1,
+  "suiteId": "contract-missing-r1",
+  "taskId": "p5-contract-missing-r1"
+}

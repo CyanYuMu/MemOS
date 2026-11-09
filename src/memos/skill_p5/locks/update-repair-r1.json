@@ -1,0 +1,8 @@
+{
+  "digest": "0ea515cfd4dae25d67c7ba4baa325056c66566f8bc5f2e9a29ce951ae50451c4",
+  "lineageId": "combined-shared-state-20261109",
+  "purpose": "release_asset_freeze",
+  "schemaVersion": 1,
+  "suiteId": "update-repair-r1",
+  "taskId": "p5-update-repair-r1"
+}
