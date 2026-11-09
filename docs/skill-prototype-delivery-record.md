@@ -179,3 +179,22 @@ authority 审查用真实临时 Git 仓库补足对象类型、replace 对象、
 inputs-001（217d4f2a…）在请求前被阻断，模型调用为零。规范引用原本只提供 UTF-8 摘要，缺少 contract_refs 所需 JSON 值摘要；新增从已验证 context 确定性派生的可复制引用表，并验证篡改后重新哈希仍会被拒绝。相关作者回归 149 passed（46.36 秒）、独立 149 passed（47.77 秒），限定 Ruff/格式通过、APPROVE。
 
 另发现原 Memory 及对应事实文本包含真实本机 Evidence URI。该问题尚未修复；不得把它描述为已脱敏占位符。原来源和准备清单保持不变，首次 v2 生成未执行，inputs-002 只有宿主脚本草案、尚未封存。按用户最新收尾要求，此扩展保持未接入现有管理服务、未发送模型；后续必须先冻结明确展示投影并保留原事实 ID/摘要，不能静默改写来源。当前运行服务仍使用已验证的旧候选与独立 loader。
+
+## 2026-11-09 基本可用原型最终验收
+
+按用户要求收口，未追加模型调用或降低发布门槛。实现基线 Python 1867e1c6、Go 7c0d2701、前端 dc76b147；本节及交付指南作为后续中文文档提交。
+
+| 检查 | 本轮实际结果 |
+| --- | --- |
+| Python 管理、生命周期及图谱 live | 独立 Skill Neo4j 配置，298 passed in 124.23s；隔离测试项目保留审计，不修改真实候选 |
+| 前端 `pnpm verify` | 37 个测试文件、251 tests passed，typecheck/lint/format、自检及生产构建全部通过；大 bundle 提示为已知非阻断优化项 |
+| Go 全量 | `go test -race -shuffle=on -count=1 ./...` 退出 0，所有有测试包通过 |
+| 入口 smoke | 独立执行 64 passed in 2.91s；不与以上重叠测试相加 |
+| 服务与存储 | Go healthz/readyz、前端 HTML、Memory health 均 200；Skill 私有 POST 正确拒绝无效凭据 401；Neo4j READ_ACCESS 查询成功 |
+| 原 Memory | 三来源真实 GET 回读，作用域、正文和内容摘要 3/3 匹配 |
+| 候选 CLI | 三个既有 schema 1 候选 inspect 全部退出 0；规则数分别 6、6、2 |
+| 浏览器 | Chrome 实际页面显示 e14：序号 22、六验证/六裁决、覆盖 2/6、待补证据、Release 0；无发布操作 |
+
+Neo4j 真实项目纯读观察为 120 个核心节点、Release 0。生命周期集成测试验证变化、依赖传播、恢复票据和撤回机制；不把合成管理测试记成已发布候选的真实 P5。当前服务继续运行，浏览器审阅页保持可访问。
+
+收尾交付入口为 [skill-prototype-handoff.md](skill-prototype-handoff.md)，统一给出启动、演示、代码模块、实验结论及未完成清单。本次交付为受控原型，实际正式发布及发布后 P5 仍未完成；不关闭原发布挑战，不自动关闭 GitHub issue，未推送或合并。

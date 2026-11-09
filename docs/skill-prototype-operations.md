@@ -2,6 +2,8 @@
 
 本手册对应生命周期与发布验证版本。实际通过项、发布身份及限制以 [交付记录](skill-prototype-delivery-record.md) 和 [P5 验收](skill-prototype-p5.md) 为准；命令存在不代表某次实际运行已通过。
 
+2026-11-09 收尾入口见 [交付指南](skill-prototype-handoff.md)。当前正式 Release 为零；下面的发布、normal 执行和恢复步骤是条件满足后的操作说明，不是已发生的成功记录。现有工作台未接入实验性的 `skill_release_v2`。
+
 ## 1 准备与启动
 
 使用仓库现有 `.venv`、Go 和 pnpm 环境，按各仓库 README、CONTRIBUTING 和 Makefile 完成检查。Python、Go、前端代码分别在三个工作区，运行前确认它们支持相同 API 和 schema 6。私有配置放在仓库外，文件权限 0600，工件外层目录 0700。不得把模型密钥、数据库密码、原生轨迹或部署路径写入 Git。
