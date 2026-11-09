@@ -15,6 +15,8 @@ from pathlib import Path
 from memos.skill_drafting.domain import hash_json
 from memos.skill_drafting.graph import SkillGraphRepository, edge_key, node_key
 from memos.skill_governance.repository import GovernanceMixin
+from memos.skill_lifecycle.repository import CATEGORIES as LIFECYCLE_CATEGORIES
+from memos.skill_lifecycle.repository import LifecycleMixin
 from memos.skill_management.domain import (
     ManagementError,
     digest,
@@ -45,7 +47,10 @@ _CATEGORIES = {
 }
 
 
-class ManagementRepository(GovernanceMixin, SkillGraphRepository):
+_CATEGORIES |= LIFECYCLE_CATEGORIES
+
+
+class ManagementRepository(LifecycleMixin, GovernanceMixin, SkillGraphRepository):
     """The trusted service owns these methods, never model-supplied graph writes."""
 
     max_management_records = 10000
@@ -100,7 +105,12 @@ class ManagementRepository(GovernanceMixin, SkillGraphRepository):
         return {"kind": kind, "key": node["key"], "payload": public_copy(payload)}
 
     def store_bundle(self, nodes, edges):
-        require(isinstance(nodes, list), "invalid_input")
+        require(isinstance(nodes, list) and isinstance(edges, list), "invalid_input")
+        require(
+            not any(isinstance(edge, dict) and edge.get("kind") == "SUPERSEDES" for edge in edges),
+            "authority_required",
+            403,
+        )
         require(
             not any(
                 isinstance(node, dict)
@@ -117,7 +127,30 @@ class ManagementRepository(GovernanceMixin, SkillGraphRepository):
         return super().store_bundle(nodes, edges)
 
     def _semantics(self, nodes, edges):
-        super()._semantics(nodes, edges)
+        replacements = {k: e for k, e in edges.items() if e["kind"] == "SUPERSEDES"}
+        super()._semantics(nodes, {k: e for k, e in edges.items() if k not in replacements})
+        if replacements:
+            surrogate = copy.deepcopy(nodes)
+            for edge in replacements.values():
+                left = (edge["source"]["kind"], edge["source"]["key"])
+                right = (edge["target"]["kind"], edge["target"]["key"])
+                require(left in nodes and right in nodes, "invalid_graph_record", 409)
+                approval = nodes.get(("Release", edge["payload"]["approval_ref"]))
+                if not all(
+                    nodes[k]["payload"].get("purpose") == "management_test" for k in (left, right)
+                ):
+                    require(
+                        approval is not None
+                        and approval["payload"].get("management_schema") == 1
+                        and approval["payload"].get("authorized") is True
+                        and approval["payload"]["approved_record"]["purpose"] == "actual",
+                        "replacement_actual_required",
+                        409,
+                    )
+                for key in (left, right):
+                    surrogate[key]["payload"]["purpose"] = "management_test"
+            # Preserve old cycle, identity and approval checks without changing its producer bytes.
+            super()._semantics(surrogate, edges)
         for key, node in nodes.items():
             payload = node["payload"]
             if payload.get("management_schema") != 1:
@@ -224,6 +257,7 @@ class ManagementRepository(GovernanceMixin, SkillGraphRepository):
         ]
 
     def _changed(self, records, state, action, actor, reason=None, *, details=None):
+        self._execution_ordinal(state)
         state["sequence"] += 1
         state["updatedAt"] = now()
         event = {
@@ -238,6 +272,7 @@ class ManagementRepository(GovernanceMixin, SkillGraphRepository):
         if details is not None:
             event["details"] = details
         self._put(records, "event", hash_json(event), event)
+        self._propagate_lifecycle(records, state, actor, action)
 
     def _core_node(self, nodes, kind, payload):
         key = node_key(kind, payload)
@@ -379,7 +414,7 @@ class ManagementRepository(GovernanceMixin, SkillGraphRepository):
         return {
             "candidate": candidate,
             "management": {
-                **summary(state, validations, jobs),
+                **summary(self._lifecycle_state(records, nodes, state), validations, jobs),
                 "challenges": state["challenges"],
                 "releaseId": state.get("releaseId"),
                 "exportHash": state.get("exportHash"),
@@ -389,6 +424,7 @@ class ManagementRepository(GovernanceMixin, SkillGraphRepository):
             "jobs": jobs,
             "releases": releases,
             "governance": self._governance_detail(records, state),
+            "lifecycle": self._lifecycle_projection(records, nodes, state),
             "artifactDirectory": state["artifactDirectory"],
         }
 
@@ -460,7 +496,7 @@ class ManagementRepository(GovernanceMixin, SkillGraphRepository):
         def read(records, nodes, edges):
             items = [
                 summary(
-                    value,
+                    self._lifecycle_state(records, nodes, value),
                     self._items(records, "validation", value),
                     self._items(records, "job", value),
                 )
@@ -571,6 +607,11 @@ class ManagementRepository(GovernanceMixin, SkillGraphRepository):
             require(state["exportHash"] in (None, value["exportHash"]), "artifact_mismatch", 409)
             state["exportHash"] = value["exportHash"]
             self._put(records, "validation", value["validationId"], value)
+            if state.get("lifecycleBinding"):
+                context = self._validation_lifecycle_context(records, nodes, state)
+                previous = state.setdefault("validationLifecycle", {}).get(value["validationId"])
+                require(previous in (None, context), "validation_context_frozen", 409)
+                state["validationLifecycle"][value["validationId"]] = context
             case = self._core_node(
                 nodes,
                 "CaseRevision",
@@ -671,7 +712,11 @@ class ManagementRepository(GovernanceMixin, SkillGraphRepository):
                 "validationIds": sorted(item["validationId"] for item in validations),
                 "assessmentIds": sorted(state.get("currentAssessments", {}).values()),
                 "adjudicationIds": state.get("qualification", {}).get("activeAdjudicationIds", []),
-                "readiness": readiness(state, validations, self._items(records, "job", state)),
+                "readiness": readiness(
+                    self._lifecycle_state(records, nodes, state),
+                    validations,
+                    self._items(records, "job", state),
+                ),
                 "reviewChecklist": [
                     {
                         "ruleId": rule["rule_id"],
@@ -685,6 +730,7 @@ class ManagementRepository(GovernanceMixin, SkillGraphRepository):
                 "actor": actor,
                 "preparedAt": now(),
             }
+            package.update(self._lifecycle_release_binding(records, nodes, state))
             package["packageId"] = hash_json(package)
             package["packageHash"] = hash_json(package)
             self._put(records, "package", package["packageId"], package)
@@ -750,7 +796,13 @@ class ManagementRepository(GovernanceMixin, SkillGraphRepository):
                 "review_mismatch",
                 409,
             )
-            gate = readiness(state, validations, self._items(records, "job", state))
+            binding = self._lifecycle_release_binding(records, nodes, state)
+            require(all(package.get(k) == v for k, v in binding.items()), "review_mismatch", 409)
+            gate = readiness(
+                self._lifecycle_state(records, nodes, state),
+                validations,
+                self._items(records, "job", state),
+            )
             require(
                 gate["status"] == "PASS" and package["readiness"]["status"] == "PASS",
                 "not_ready",
@@ -764,6 +816,16 @@ class ManagementRepository(GovernanceMixin, SkillGraphRepository):
                 if any(item["purpose"] == "management_test" for item in independent)
                 else "actual"
             )
+            if purpose == "actual":
+                require(
+                    all(
+                        nodes[("Release", d["releaseId"])]["payload"]["approved_record"]["purpose"]
+                        == "actual"
+                        for d in binding.get("dependencyReleases", [])
+                    ),
+                    "dependency_actual_release_required",
+                    422,
+                )
             approved = {
                 "projectId": self.project_id,
                 "skillId": skill_id,
@@ -790,6 +852,7 @@ class ManagementRepository(GovernanceMixin, SkillGraphRepository):
                 },
                 "approvedAt": now(),
             }
+            approved.update(binding)
             approved["releaseId"] = hash_json(approved)
             release = self._core_node(
                 nodes,
@@ -846,6 +909,13 @@ class ManagementRepository(GovernanceMixin, SkillGraphRepository):
                     409,
                 )
                 state["state"] = "paused" if action == "pause" else "withdrawn"
+                if action == "pause":
+                    state["pausedExecutionSequence"] = (
+                        max(state.get("lifecycleOrdinal", 0), state["sequence"]) + 1
+                    )
+                    state["pausedValidationIds"] = sorted(
+                        v["validationId"] for v in self._items(records, "validation", state)
+                    )
             else:
                 challenge = {
                     "reason": reason,
@@ -857,6 +927,13 @@ class ManagementRepository(GovernanceMixin, SkillGraphRepository):
                 }
                 challenge["challengeId"] = hash_json(challenge)
                 state["challenges"].append(challenge)
+                if state.get("releaseId"):
+                    state["pausedExecutionSequence"] = (
+                        max(state.get("lifecycleOrdinal", 0), state["sequence"]) + 1
+                    )
+                    state["pausedValidationIds"] = sorted(
+                        v["validationId"] for v in self._items(records, "validation", state)
+                    )
                 if state["state"] != "withdrawn":
                     state["state"] = (
                         "paused"
@@ -928,12 +1005,18 @@ class ManagementRepository(GovernanceMixin, SkillGraphRepository):
             state["state"] != "published"
             or not state.get("releaseId")
             or any(item["status"] == "open" for item in state["challenges"])
-            or candidate["requires"]
         ):
             return result
         # A pending additional run does not revoke an already granted release;
         # new contradictory facts or invalidated adjudication do revoke it.
-        if readiness(state, self._items(records, "validation", state), [])["status"] != "PASS":
+        if (
+            readiness(
+                self._lifecycle_state(records, nodes, state),
+                self._items(records, "validation", state),
+                [],
+            )["status"]
+            != "PASS"
+        ):
             result["reason"] = "qualification_unavailable"
             return result
         node = nodes.get(("Release", state["releaseId"]))
@@ -979,7 +1062,16 @@ class ManagementRepository(GovernanceMixin, SkillGraphRepository):
     def _job_request(skill_id, revision, *, case_id, actor, export_hash, mode):
         identity(skill_id, revision)
         text(case_id, maximum=300)
-        require(case_id.startswith("dev-") and mode in ("candidate_evaluation", "normal"))
+        if case_id.startswith("release-"):
+            from memos.skill_release.service_runtime import dev_case
+
+            try:
+                dev_case(case_id)
+            except ValueError:
+                raise ManagementError("invalid_input") from None
+        else:
+            require(case_id.startswith("dev-"))
+        require(mode in ("candidate_evaluation", "normal"))
         digest(export_hash)
         text(actor, maximum=300)
         return {

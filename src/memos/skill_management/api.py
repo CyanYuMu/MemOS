@@ -38,6 +38,32 @@ COMMANDS = {
     "publish": (_MUTATION | {"packageId", "packageHash"}, "manage"),
     "status": (_MUTATION | {"action"}, "manage"),
     "challenge": (_MUTATION, "manage"),
+    "impact_scan": (_MUTATION, "manage"),
+    "impact_prepare": (_KEY, "manage"),
+    "impact_review": (
+        _MUTATION
+        | {
+            "packageId",
+            "packageHash",
+            "decision",
+            "rootIds",
+            "validationIds",
+            "replacementRevision",
+        },
+        "manage",
+    ),
+    "challenge_resolve": (
+        _MUTATION
+        | {
+            "packageId",
+            "packageHash",
+            "challengeId",
+            "decision",
+            "evidenceIds",
+            "replacementRevision",
+        },
+        "manage",
+    ),
     "load_preview": (_KEY | {"caseId", "mode"}, "view"),
 }
 _CAPABILITIES = {"view": 1, "write": 2, "manage": 3}
@@ -72,10 +98,24 @@ def _validate(action, body):
     require(required <= set(body) <= required | optional)
     for key, value in body.items():
         if key == "judgment":
-            from memos.skill_governance.domain import validate_judgment_shape
-
+            if (
+                isinstance(value, dict)
+                and isinstance(value.get("taskDecision"), str)
+                and value.get("taskDecision")
+                in {
+                    "healthy_confirmed",
+                    "unresolved_confirmed",
+                }
+            ):
+                from memos.skill_release.governance import validate_judgment_shape
+            else:
+                from memos.skill_governance.domain import validate_judgment_shape
             validate_judgment_shape(value)
-        elif key == "supersedes":
+        elif key in {"rootIds", "validationIds", "evidenceIds"}:
+            from memos.skill_lifecycle.repository import digests
+
+            digests(value)
+        elif key in {"supersedes", "replacementRevision"}:
             if value is not None:
                 digest(value)
         elif key == "expectedSequence":
@@ -88,12 +128,24 @@ def _validate(action, body):
         identity(body["skillId"], body["revision"])
     if "operationId" in body:
         operation(body["operationId"])
-    if "packageHash" in body:
-        digest(body["packageHash"])
+    for key in ("packageHash", "packageId", "challengeId"):
+        if key in body:
+            digest(body[key])
     if "assessmentId" in body:
         digest(body["assessmentId"])
     if "experimentId" in body:
         digest(body["experimentId"])
+    if action == "impact_review":
+        require(body["decision"] in {"restore", "retain", "supersede"})
+        require((body["replacementRevision"] is not None) == (body["decision"] == "supersede"))
+        require(body["decision"] != "restore" or bool(body["validationIds"]))
+        require(
+            body["decision"] != "supersede" or (not body["rootIds"] and not body["validationIds"])
+        )
+    if action == "challenge_resolve":
+        require(body["decision"] in {"addressed", "upheld", "superseded"})
+        require((body["replacementRevision"] is not None) == (body["decision"] == "superseded"))
+        require(body["decision"] != "addressed" or bool(body["evidenceIds"]))
     if action == "review_decide":
         require(body["decision"] in {"needs_evidence", "block"})
     if action == "status":

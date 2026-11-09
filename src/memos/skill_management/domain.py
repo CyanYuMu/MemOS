@@ -281,17 +281,29 @@ def readiness(record: dict, validations: list[dict], jobs: list[dict]) -> dict:
     if open_challenges:
         reasons.append("open_challenges")
         hard_block = hard_block or any(item.get("severity") == "block" for item in open_challenges)
-    if candidate["requires"]:
+    lifecycle = record.get("lifecycle")
+    if candidate["requires"] and lifecycle is None:
         reasons.append("unsupported_dependencies")
+    if lifecycle and lifecycle["gate"]["status"] != "PASS":
+        reasons.extend(lifecycle["gate"]["reasons"])
+        hard_block = True
     if not record.get("exportHash"):
         reasons.append("export_missing")
     if any(job["status"] in {"queued", "running"} for job in jobs):
         reasons.append("evaluation_pending")
-    if any(item["status"] == "failed" for item in validations):
+    # This separate cache is derived only from a current schema 6 independent
+    # adjudication of an expected stop. Raw results and resolvedHistory remain
+    # untouched; old unknowns and unreviewed failures still block publication.
+    expected_stops = set(qualification.get("verifiedExpectedStopValidationIds", []))
+    if any(
+        item["status"] == "failed" and item.get("validationId") not in expected_stops
+        for item in validations
+    ):
         reasons.append("validation_failure_unresolved")
     if any(
         item["status"] == "unknown"
         and item.get("validationId") not in qualification.get("resolvedValidationIds", [])
+        and item.get("validationId") not in expected_stops
         for item in validations
     ):
         reasons.append("validation_unknown")

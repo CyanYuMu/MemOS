@@ -1,0 +1,8 @@
+{
+  "schemaVersion": 1,
+  "purpose": "release_asset_freeze",
+  "suiteId": "update-repair-r1",
+  "taskId": "release-update-repair-r1",
+  "lineageId": "combined-shared-state-20261109",
+  "digest": "d5c28cd91e945828f5049431b4efea88ee4d213c653248c5832c65d07f921487"
+}

@@ -1,0 +1,8 @@
+{
+  "schemaVersion": 1,
+  "purpose": "release_asset_freeze",
+  "suiteId": "update-healthy-r1",
+  "taskId": "release-update-healthy-r1",
+  "lineageId": "combined-shared-state-20261109",
+  "digest": "ef6a69e56566a6857225c9c05ed8be55c2ff9f92ccbb3be618b6f3dac628c99f"
+}

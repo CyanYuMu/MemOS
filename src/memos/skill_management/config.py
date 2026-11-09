@@ -120,6 +120,8 @@ def build_service(config):
     from memos.skill_drafting.sources import recheck_packet
     from memos.skill_experience.bridge import MemoryBridge
     from memos.skill_experience.client import ProductMemoryClient
+    from memos.skill_lifecycle.observers import HostObserver, subjects_for_packet
+    from memos.skill_management.domain import ManagementError
     from memos.skill_management.repository import ManagementRepository
     from memos.skill_management.runtime import export_identity
     from memos.skill_management.service import Project, SkillService
@@ -138,6 +140,11 @@ def build_service(config):
     client = ProductMemoryClient(
         memory["url"],
         timeout=20,
+        headers={"Authorization": "Bearer " + memory["token"]} if memory.get("token") else None,
+    )
+    observer_client = ProductMemoryClient(
+        memory["url"],
+        timeout=3,
         headers={"Authorization": "Bearer " + memory["token"]} if memory.get("token") else None,
     )
     projects = {}
@@ -180,13 +187,33 @@ def build_service(config):
                     user_id=scope["user_id"],
                     namespace=scope["namespace"],
                 )
-                import_candidate(directory, bridge, repo)
+                try:
+                    existing = repo.get_revision(
+                        loaded["candidate"]["skill_id"], loaded["candidate"]["revision"]
+                    )
+                except ManagementError as error:
+                    if error.code != "not_found":
+                        raise
+                    existing = None
+                if existing is None:
+                    import_candidate(directory, bridge, repo)
+                # Restart must retain a changed/unavailable source as an observed
+                # state; requiring a healthy source here would disable governance.
                 repo.register_candidate(
                     loaded["candidate"],
                     loaded["manifest"],
                     directory,
                     challenges=registration["challenges"],
                 )
+                if not repo.lifecycle_subjects(
+                    loaded["candidate"]["skill_id"], loaded["candidate"]["revision"]
+                ):
+                    repo.bind_lifecycle(
+                        loaded["candidate"]["skill_id"],
+                        loaded["candidate"]["revision"],
+                        subjects=subjects_for_packet(packet, run_config.cli_path),
+                        actor="host_lifecycle_registration",
+                    )
                 candidates.append(loaded["candidate"])
             repo.recover_jobs()
             for candidate in candidates:
@@ -210,7 +237,9 @@ def build_service(config):
                         actor="host_export_registration",
                         reason="Bind the fixed host projection; prior validation records remain immutable.",
                     )
-            projects[setting["projectId"]] = Project(repo, sources)
+            projects[setting["projectId"]] = Project(
+                repo, sources, observe=HostObserver(observer_client)
+            )
         service = SkillService(
             projects, Path(config["artifactsRoot"]), run_config, runtime["providerEnvironment"]
         )

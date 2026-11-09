@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 import re
 import threading
+import uuid
 
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
@@ -56,6 +57,7 @@ def evidence_projection(fact):
 class Project:
     repository: object
     check_sources: Callable[[dict], dict]
+    observe: Callable[[list], list] | None = None
 
 
 class SkillService:
@@ -180,7 +182,49 @@ class SkillService:
         require(project_id in self.projects, "project_not_found", 404)
         return self.projects[project_id]
 
+    def _scan(
+        self,
+        project,
+        skill_id,
+        revision,
+        *,
+        actor="host_lifecycle_scan",
+        reason="Fresh source and tool observations before admission",
+        operation_id=None,
+        expected_sequence=None,
+    ):
+        if project.observe is None:
+            return None
+        return project.repository.scan_lifecycle(
+            skill_id,
+            revision,
+            observer=project.observe,
+            actor=actor,
+            reason=reason,
+            operation_id=operation_id or "host-scan-" + uuid.uuid4().hex,
+            expected_sequence=expected_sequence,
+        )
+
+    @staticmethod
+    def _case(case_id):
+        if case_id.startswith("release-"):
+            from memos.skill_release.service_runtime import dev_case as release_case
+
+            return release_case(case_id)
+        return dev_case(case_id)
+
+    @staticmethod
+    def _case_options():
+        from memos.skill_release.service_runtime import case_options as release_options
+
+        return case_options() + release_options()
+
     def _sources(self, project, detail):
+        if any(
+            subject["kind"] == "memory" and subject["status"] not in {"healthy", "restored"}
+            for subject in detail.get("lifecycle", {}).get("subjects", [])
+        ):
+            raise ManagementError("source_unavailable", 503)
         try:
             packet = project.check_sources(detail)
             expected = sorted(source["source_id"] for source in detail["candidate"]["source_refs"])
@@ -190,16 +234,21 @@ class SkillService:
             raise ManagementError("source_unavailable", 503) from None
 
     def _grant(self, project, skill_id, revision, case_id, mode):
+        self._scan(project, skill_id, revision)
         detail = project.repository.get_revision(skill_id, revision)
-        self._sources(project, detail)
-        identity = export_identity(detail["candidate"])
         if mode == "normal":
             grant = project.repository.admission(skill_id, revision, case_id)
+            if not grant.get("allowed"):
+                return grant
+            self._sources(project, detail)
+            identity = export_identity(detail["candidate"])
             if grant.get("allowed") and any(
                 grant.get(k) != identity[k] for k in ("contentHash", "exportHash")
             ):
                 return {"allowed": False, "reason": "artifact_mismatch"}
             return grant
+        self._sources(project, detail)
+        identity = export_identity(detail["candidate"])
         return {
             "allowed": True,
             "sequence": detail["management"]["sequence"],
@@ -231,7 +280,11 @@ class SkillService:
         skill_id, revision = body["skillId"], body["revision"]
         detail = repo.get_revision(skill_id, revision)
         if action == "detail":
-            return {**public(detail), "projectId": body["projectId"], "caseOptions": case_options()}
+            return {
+                **public(detail),
+                "projectId": body["projectId"],
+                "caseOptions": self._case_options(),
+            }
         if action == "evidence":
             loaded = load_candidate(Path(detail["artifactDirectory"]))
             require(loaded["candidate"] == detail["candidate"], "artifact_mismatch", 409)
@@ -252,7 +305,7 @@ class SkillService:
             )
         if action in {"load_preview", "evaluate"}:
             try:
-                dev_case(body["caseId"])
+                self._case(body["caseId"])
             except ValueError:
                 raise ManagementError("invalid_input") from None
         if action == "load_preview":
@@ -267,6 +320,35 @@ class SkillService:
             return self.start(
                 body["projectId"], skill_id, revision, body["caseId"], body["operationId"], actor
             )
+        if action == "impact_scan":
+            require(project.observe is not None, "lifecycle_not_enabled", 409)
+            return public(
+                self._scan(
+                    project,
+                    skill_id,
+                    revision,
+                    actor=actor,
+                    reason=body["reason"],
+                    operation_id=body["operationId"],
+                    expected_sequence=body["expectedSequence"],
+                )
+            )
+        if action in {
+            "impact_prepare",
+            "impact_review",
+            "challenge_resolve",
+            "review_prepare",
+            "adjudication_prepare",
+            "publish",
+            "adjudicate",
+        }:
+            self._scan(project, skill_id, revision)
+            detail = repo.get_revision(skill_id, revision)
+        if action == "impact_prepare":
+            return {
+                **public(repo.prepare_impact(skill_id, revision, actor=actor)),
+                "projectId": body["projectId"],
+            }
         if action == "review_prepare":
             source = self._sources(project, detail)
             return public(
@@ -292,6 +374,34 @@ class SkillService:
             "actor": actor,
             "reason": body["reason"],
         }
+        if action == "impact_review":
+            return public(
+                repo.review_impact(
+                    skill_id,
+                    revision,
+                    package_id=body["packageId"],
+                    package_hash=body["packageHash"],
+                    decision=body["decision"],
+                    root_ids=body["rootIds"],
+                    validation_ids=body["validationIds"],
+                    replacement_revision=body["replacementRevision"],
+                    **kwargs,
+                )
+            )
+        if action == "challenge_resolve":
+            return public(
+                repo.resolve_challenge(
+                    skill_id,
+                    revision,
+                    package_id=body["packageId"],
+                    package_hash=body["packageHash"],
+                    challenge_id=body["challengeId"],
+                    decision=body["decision"],
+                    evidence_ids=body["evidenceIds"],
+                    replacement_revision=body["replacementRevision"],
+                    **kwargs,
+                )
+            )
         if action == "publish":
             source = self._sources(project, detail)
             return public(
@@ -342,7 +452,7 @@ class SkillService:
         require(mode in {"normal", "candidate_evaluation"})
         project = self._project(project_id)
         try:
-            dev_case(case_id)
+            self._case(case_id)
         except ValueError:
             raise ManagementError("invalid_input") from None
         grant = self._grant(project, skill_id, revision, case_id, mode)
@@ -402,7 +512,17 @@ class SkillService:
                 return
             detail = repo.get_revision(skill_id, revision)
             _LOG.info("skill evaluation started job=%s", job_id)
-            result = execute_task(
+            execute = execute_task
+            execution_options = {}
+            if case_id.startswith("release-"):
+                from memos.skill_lifecycle.execution import make_execution_guard
+                from memos.skill_release.service_runtime import execute_task as execute_release
+
+                execute = execute_release
+                execution_options["execution_guard"] = make_execution_guard(
+                    repo, project.observe, detail["candidate"], actor="host_normal_execution"
+                )
+            result = execute(
                 Path(detail["artifactDirectory"]),
                 case_id,
                 self.artifacts_root / "runs" / job_id,
@@ -410,6 +530,7 @@ class SkillService:
                 self.provider,
                 mode=mode,
                 authorize=lambda: self._grant(project, skill_id, revision, case_id, mode),
+                **execution_options,
             )
             validation = result.get("validation")
             validation_id = None

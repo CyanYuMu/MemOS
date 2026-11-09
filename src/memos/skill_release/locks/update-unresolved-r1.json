@@ -1,0 +1,8 @@
+{
+  "schemaVersion": 1,
+  "purpose": "release_asset_freeze",
+  "suiteId": "update-unresolved-r1",
+  "taskId": "release-update-unresolved-r1",
+  "lineageId": "combined-shared-state-20261109",
+  "digest": "75a164eff8afa1b88dfaf5f5ca68c704c2b18109efb11256b7d5258d5f8a87f6"
+}

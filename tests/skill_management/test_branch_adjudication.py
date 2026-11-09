@@ -2,6 +2,8 @@
 
 import copy
 
+from types import SimpleNamespace
+
 import pytest
 
 from management_fixtures import candidate_for, report
@@ -12,6 +14,46 @@ from memos.skill_drafting.domain import hash_json
 from memos.skill_governance import domain as legacy
 from memos.skill_governance.repository import _contract_for
 from memos.skill_management.domain import ManagementError, validate_report
+
+
+@pytest.mark.parametrize(
+    "schema,current,expected_stop,independent,expected",
+    [
+        (6, True, True, True, ["validation"]),
+        (5, True, True, True, []),
+        (6, False, True, True, []),
+        (6, True, False, True, []),
+        (6, True, True, False, []),
+    ],
+)
+def test_expected_stop_projection_never_resolves_old_or_unqualified_history(
+    schema, current, expected_stop, independent, expected
+):
+    from memos.skill_governance.repository import GovernanceMixin
+
+    row = {
+        "validationId": "validation",
+        "assessmentId": "assessment",
+        "adjudicationId": "adjudication",
+        "contribution": {
+            "resolvedHistory": False,
+            "qualifiedIndependent": independent,
+            "expectedStopConfirmed": expected_stop,
+            "branchCoverage": ["rule#0"],
+            "boundaryCoverage": ["needs_evidence"],
+            "counterexample": False,
+            "seriousViolation": False,
+        },
+    }
+    records = {("assessment", "assessment"): {"schemaVersion": schema, "exportHash": "export"}}
+    state = {
+        "exportHash": "export",
+        "currentAssessments": {"validation": "assessment" if current else "new-assessment"},
+    }
+    owner = SimpleNamespace(_active_adjudications=lambda records, state: [row])
+    GovernanceMixin._refresh_qualification(owner, records, state)
+    assert state["qualification"].get("verifiedExpectedStopValidationIds") == expected
+    assert state["qualification"]["resolvedValidationIds"] == []
 
 
 @pytest.fixture(autouse=True)
@@ -335,7 +377,7 @@ def test_missing_evidence_can_be_retained_without_confirming_or_covering():
     assert result["branchCoverage"] == [] and not result["taskResolved"]
 
 
-@pytest.mark.parametrize("version", [None, True, 0, 6, "2"])
+@pytest.mark.parametrize("version", [None, True, 0, 7, "2", "6", 6.0])
 def test_repository_rejects_unknown_or_noninteger_versions(version):
     with pytest.raises(ManagementError, match="unsupported_assessment_version"):
         _contract_for({"schemaVersion": version})
@@ -344,3 +386,11 @@ def test_repository_rejects_unknown_or_noninteger_versions(version):
 def test_repository_dispatch_preserves_legacy_contract_identity():
     assert _contract_for({"schemaVersion": 1}) is legacy
     assert _contract_for({"schemaVersion": 2}) is governance
+
+
+def test_repository_dispatches_release_facts_without_relabeling_old_schemas():
+    from memos.skill_branch_c2 import governance_v2
+    from memos.skill_release import governance as release_governance
+
+    assert _contract_for({"schemaVersion": 5}) is governance_v2
+    assert _contract_for({"schemaVersion": 6}) is release_governance

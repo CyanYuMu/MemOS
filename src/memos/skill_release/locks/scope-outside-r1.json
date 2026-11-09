@@ -1,0 +1,8 @@
+{
+  "schemaVersion": 1,
+  "purpose": "release_asset_freeze",
+  "suiteId": "scope-outside-r1",
+  "taskId": "release-scope-outside-r1",
+  "lineageId": "combined-shared-state-20261109",
+  "digest": "61242e2ffc2fcc8a9fdc807a7b14eecc5de280f1e728aec2eca343643ae6dc43"
+}
