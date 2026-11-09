@@ -395,6 +395,15 @@ def build_messages(
         "source_data": _public_packet(packet),
         "parent_candidate": parent["candidate"],
         "contract_contexts": contexts,
+        # 引用使用 JSON 字符串规范摘要，不能把原始 excerpt 字节摘要交给模型猜算。
+        "contract_reference_values": [
+            {
+                "context_id": context["context_id"],
+                "locator": "/excerpt",
+                "value_sha256": hash_json(context["excerpt"]),
+            }
+            for context in contexts
+        ],
         "source_review": feedback,
         "host_policy": host_policy,
     }
@@ -405,7 +414,8 @@ def build_messages(
         "Preserve every original source and its qualification. Every rule needs both MemorySnapshot and EvidenceRevision references. "
         "Non-contract facts from failed sources with unknown attribution are background only. "
         "ProjectContractContext is normative authority, never a Memory, independent lineage, or successful experience. "
-        "Use its exact context_id and /excerpt canonical value hash for contract_refs; cite evidence separately. "
+        "Copy context_id, locator, and value_sha256 exactly from contract_reference_values into contract_refs; "
+        "do not copy excerpt_sha256 and do not compute hashes. Cite Memory evidence separately. "
         "Use exactly two reachable acyclic rules with three branches each. The entry is normative and decides request scope, missing evidence, or processing. "
         "The processing rule is a hypothesis and distinguishes success, unavailable evidence, or unresolved outcome. "
         "Transfer beyond the observed source remains unverified. The observed repair only removes a redundant positional argument when supported; "

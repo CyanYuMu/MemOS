@@ -18,6 +18,7 @@ from memos.skill_release_v2.authority import CONTRACT_PATH, extract_contract_con
 from memos.skill_release_v2.inputs import (
     build_input_manifest,
     make_exposure_manifest,
+    request_identity,
     validate_exposure_manifest,
     validate_generation,
     validate_input_manifest,
@@ -218,6 +219,59 @@ def test_inputs_rebuild_allowed_messages_and_preserve_model_mismatch(tmp_path):
     assert "host-only-family" not in json.dumps(item["input_manifest"]["messages"])
     assert "exposure_manifest" not in public
     assert "independent_family_baseline" not in json.dumps(item["input_manifest"]["messages"])
+
+
+def test_messages_deliver_canonical_contract_reference_values_without_new_facts(tmp_path):
+    item = bundle(tmp_path)
+    context = item["contexts"][0]
+    canonical = hash_json(context["excerpt"])
+    assert context["excerpt_sha256"] == hashlib.sha256(context["excerpt"].encode()).hexdigest()
+    assert canonical != context["excerpt_sha256"]
+    messages = item["input_manifest"]["messages"]
+    public = json.loads(messages[1]["content"])
+    assert public["contract_reference_values"] == [
+        {"context_id": context["context_id"], "locator": "/excerpt", "value_sha256": canonical}
+    ]
+    assert public["contract_contexts"] == item["contexts"]
+    assert public["source_data"]["facts"] == item["packet"]["facts"]
+    assert "Copy" in messages[0]["content"]
+    assert "do not compute" in messages[0]["content"]
+    assert "do not copy excerpt_sha256" in messages[0]["content"]
+    check_inputs(item)
+
+
+@pytest.mark.parametrize(
+    "change", ["raw_hash", "forged_hash", "context_id", "locator", "extra_field"]
+)
+def test_rehashed_manifest_cannot_replace_host_derived_contract_reference_table(tmp_path, change):
+    item = bundle(tmp_path)
+    context = item["contexts"][0]
+    manifest = item["input_manifest"]
+    public = json.loads(manifest["messages"][1]["content"])
+    reference = {
+        "context_id": context["context_id"],
+        "locator": "/excerpt",
+        "value_sha256": hash_json(context["excerpt"]),
+    }
+    if change == "raw_hash":
+        reference["value_sha256"] = context["excerpt_sha256"]
+    elif change == "forged_hash":
+        reference["value_sha256"] = "a" * 64
+    elif change == "context_id":
+        reference["context_id"] = "a" * 64
+    elif change == "locator":
+        reference["locator"] = "/file_sha256"
+    else:
+        reference["source_id"] = item["packet"]["sources"][0]["source_id"]
+    public["contract_reference_values"] = [reference]
+    manifest["messages"][1]["content"] = json_bytes(public).decode()
+    manifest["prompt_sha256"] = hash_json(manifest["messages"])
+    manifest["request_sha256"] = request_identity(manifest)
+    manifest["input_manifest_id"] = hash_json(
+        {key: value for key, value in manifest.items() if key != "input_manifest_id"}
+    )
+    with pytest.raises(ValueError, match="manifest_mismatch"):
+        check_inputs(item)
 
 
 @pytest.mark.parametrize(

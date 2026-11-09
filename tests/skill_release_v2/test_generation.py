@@ -135,6 +135,22 @@ def test_exact_request_public_response_and_identity_limit_are_bound(tmp_path):
     assert len(client.calls) == 1
 
 
+def test_sdk_request_receives_the_host_derived_contract_reference_table(tmp_path):
+    item, generator, client, _ = prepared(tmp_path)
+    generate(generator, item)
+    context = item["contexts"][0]
+    delivered = json.loads(client.calls[0]["messages"][1]["content"])
+    assert delivered["contract_reference_values"] == [
+        {
+            "context_id": context["context_id"],
+            "locator": "/excerpt",
+            "value_sha256": hash_json(context["excerpt"]),
+        }
+    ]
+    assert delivered["contract_reference_values"][0]["value_sha256"] != context["excerpt_sha256"]
+    assert client.calls[0]["messages"] == item["input_manifest"]["messages"]
+
+
 @pytest.mark.parametrize(
     "field", ["messages", "schema", "producer", "service", "model", "parameters"]
 )
