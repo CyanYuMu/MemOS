@@ -20,11 +20,13 @@ umask 022
 
 在控制台选择项目和 Skill，核对 revision、contentHash、exportHash、sequence、发布状态和来源水位。规则详情可追溯到 EvidenceRevision 和 MemorySnapshot。原始 unknown、失败和受托裁决分别保留，不能从当前状态反推历史成功。
 
-来源或工具扫描由管理权限调用 `POST /api/v1/skills/lifecycle/scan`。正文为固定 KEY 加 expectedSequence、operationId、reason；浏览器不能自报观察结果、宿主路径或任意探针命令。相同 operationId 是幂等回读；想获取新观察必须使用新的 operationId。
+来源或工具扫描由管理权限调用 `POST /api/v1/skills/lifecycle/scan`。正文为固定 projectId、skillId、revision 加 expectedSequence、operationId、reason；浏览器不能自报观察结果、宿主路径或任意探针命令。相同 operationId 是幂等回读；想获取新观察必须使用新的 operationId。
 
 ## 3 独立资格与固定批次
 
-资格检查不调用模型。输出目录必须全新，所有运行及失败记录保留。
+资格检查不调用模型。输出目录必须全新，所有运行及失败记录保留。真实运行前，候选须已由管理服务登记，绑定固定导出及生命周期主体；执行票据要求当前观察健康。
+
+`branch-plan.json` 是六个 suite ID 到非空分支 ID 数组的映射，例如 `{"update-repair-r1":["check_update_contract#2","repair_and_verify_update#0"], ...}`。六项必须齐全，每项无重复且只引用候选真实分支，全部数组的并集覆盖候选所有分支。recovery 仍保留完整映射，实际只执行校准和修复单元。
 
 ```sh
 .venv/bin/python -m memos.skill_release qualify --output /private/qualification-001
@@ -55,7 +57,7 @@ umask 022
 
 准备当前 assessment 的固定裁决包，逐条核对实际事件、同一补丁的检查、规则声明和动作顺序。实际有修改的入口分支必须有修改前的规则选择证据。勾选分支只是待提交决定，服务器仍重算资格。
 
-准备发布包后检查缺口、来源/工具状态、挑战和固定依赖 release IDs。提交时绑定 packageId、packageHash、expectedSequence、operationId 和具体理由。409 表示包已陈旧，应重新读取、重新判断，不自动重复原决定。自动检查通过仍需有权限的审阅者完成语义决定；助手受托执行时必须如实记录授权与审阅主体。
+准备发布包后检查缺口、来源/工具状态、挑战和固定依赖 release IDs。提交时绑定 packageId、packageHash、expectedSequence、operationId 和具体理由。409 应按 error.code 处理：陈旧包或序号冲突需要重新读取和判断；operation_conflict 表示同一操作 ID 被用于不同请求，应核对原操作；immutable_conflict 或图合同异常必须先排查证据与存储冲突。不能统一换包重试。自动检查通过仍需有权限的审阅者完成语义决定；助手受托执行时必须如实记录授权与审阅主体。
 
 正常加载预览为 `POST /api/v1/skills/load-preview`，mode 固定 normal，版本和 caseId 必须属于实际发布范围。正常执行使用宿主 `SkillService.start(..., mode="normal")`，任务前后均扫描并核对固定准入。HTTP 的候选评测入口不能代替正常执行。宿主须遵守同一服务锁，不另开共享工件目录的第二个服务进程。当前没有管理进程内的宿主命令通道：独占演示时先停止管理服务，再在 service_lock 内 build_service 一次，调用 start、轮询作业、close 后释放锁，最后重启服务展示记录。正常使用回收为 dev/反馈，不产生独立分支覆盖。
 
@@ -63,7 +65,7 @@ umask 022
 
 扫描区分 changed、unavailable、invalid、restored。外部条件恢复后根因仍为 restored_pending。固定 REQUIRES 反向传播全部根因，RELATED_TO 不传播；依赖或来源恢复不能自动清除其他根因。
 
-恢复先取得新的实际验证：服务器在执行前签发票据、执行后绑定原生报告和回执摘要。故障发生前执行但恢复后才导入的旧任务不能用于恢复。准备生命周期包，逐项选择根因和合格新验证，提交 restore；剩余任一根因仍阻断正常加载。暂停亦需重新验证，撤回版本不能恢复。
+恢复顺序为：先恢复外部条件并扫描为 healthy/restored，再冻结和执行新的 recovery 批次、import 事实、完成当前 schema 6 合格裁决，最后准备生命周期包并提交 restore。主体仍 unavailable 时不会签发执行票据。服务器在执行前签发票据、执行后绑定原生报告和回执摘要；故障发生前执行但恢复后才导入的旧任务不能用于恢复。逐项选择根因和合格新验证，剩余任一根因仍阻断正常加载。暂停亦需重新验证，撤回版本不能恢复。
 
 历史挑战可追加 addressed、upheld 或 superseded 处置。addressed 必须有对应事实证据；upheld 保留阻断；superseded 必须关联当前健康、真实发布的新版本。新版本替代不证明旧规则正确，也不改变固定依赖的目标。原正文、unknown、批次及裁决始终保留。
 
