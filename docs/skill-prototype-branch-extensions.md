@@ -1,6 +1,6 @@
 # 42-A4e 组合与边界任务开发合同
 
-日期：2026-11-09。基于 `codex/skill-prototype-branch-validation@75540c0a`，开发分支为 `codex/skill-prototype-branch-extensions`。本文件先冻结下一增量的范围与验收，尚未声明实现或测试完成。
+日期：2026-11-09。基于 `codex/skill-prototype-branch-validation@75540c0a`，开发分支为 `codex/skill-prototype-branch-extensions`。第 1–6 节先于实现冻结开发合同；第 7 节记录已完成的 A4e-1 验收，执行协议与后续增量仍未完成。
 
 ## 1 当前依据与目标
 
@@ -22,7 +22,7 @@
 
 ## 3 冻结边界与组织
 
-新增 `src/memos/skill_branch_extensions/`，不修改旧 `skill_branch_validation` 的任何源文件或两任务锁，也不修改原适配器、P4 资产/实验、P4.1 执行器、旧经验证据、schema 1 domain/collector 和管理投影。现有旧报告、schema 1/2 事实及 H4/H6/scoped 裁决必须继续可回读。
+新增 `src/memos/skill_branch_extensions/`，不修改旧 `skill_branch_validation` 的任何源文件或两任务锁，也不修改原适配器、P4 资产/实验、P4.1 执行器、旧经验证据、schema 1 domain/collector 和管理投影。现有旧报告、schema 1/2 事实及 H4/H6/scoped/Dream 裁决必须继续可回读。
 
 组合任务使用独立套件 `combined-c1-v1`。每个套件固定自己的任务清单、资产摘要、检查分组、变体、预期失败、可编辑文件、目标分支、谱系及来源说明；身份只绑定选定套件，不绑定未来整个扩展目录。加载只核验锁，绝不自动重写锁。新增 C2 或健康套件不得改变 C1 身份。
 
@@ -65,7 +65,7 @@ scoped 组保留六项：caller_contract、fake_scope_contract、scope_generaliz
 | E08 | 自检不调用模型、不写图、不授予覆盖；新结果不能被旧 qualification 当作模型运行资格 |
 | E09 | 已有三次核心运行与当前 schema 1/2 事实仍可回读；原 P4 52 份记录不改写 |
 
-先补有意义的失败测试，再实现；使用现有 `.venv`，不改依赖。完成定向测试、Ruff、真实自检和代码审阅后再以中文提交实现及验收记录。当前此表是验收要求，没有新增测试通过数。
+先补有意义的失败测试，再实现；使用现有 `.venv`，不改依赖。完成定向测试、Ruff、真实自检和代码审阅后再以中文提交实现及验收记录。此表在开发前冻结，实际验证结果另记于第 7 节。
 
 ## 6 后续增量及进入条件
 
@@ -76,3 +76,38 @@ scoped 组保留六项：caller_contract、fake_scope_contract、scope_generaliz
 **C2/H/S/F**：C2 要求读修复后重新检查原本健康的 Dream。H 要求初始和最终均正确且过程无无关编辑，修复数为零；不能仅靠最终相同哈希排除改后撤销。S 区分范围外、合同缺项、无法解决和有限修复后停止，保留实际失败及最终补丁，合理停止不等于修复通过。F 在运行前固定故障类型与调用序号，绑定实际送达和进入阶段时工具可用的证据；未执行的检查不能生成正常执行凭条。
 
 上述增量先分别确定合同与验收后再实现。健康与停止需要新的结果类型，工具故障依赖停止合同和故障送达能力；不将它们硬塞进当前仅支持初始失败→最终通过的 schema 2。42-B 及 P5 的入口仍遵守治理开发合同，新增资产完成不代表这些阶段完成。
+
+## 7 A4e-1 实现与实际验收
+
+已新增独立 `skill_branch_extensions` 命名空间：`tasks.py` 管理套件身份、分组映射及仅初始资产导出；`combined.py` 提供共享状态任务、六变体和两套检查；`selftest.py` 管理完整快照、固定检查、执行异常与统一版本核验；CLI 提供 list / prepare / audit。`locks/combined-c1-v1.json` 已显式固定，加载不自动更新。provenance 明确派生于两个核心探针的实现模式，不作为第三个独立来源样本。
+
+TDD 与独立审阅先实际发现，再关闭以下漏检：只记 scoped 写日志而不更新存储、存储嵌套字段与输入共享引用、MERGE 只记归档日志而不改变 source 状态。公开和隐藏检查均补实际完整状态与深复制断言；这三类错误解复验均在对应分组失败。另验证仅对公开 ID 特判的实现公开通过、隐藏失败。
+
+运行结果缺失、检查重复/缺项、畸形状态、启动失败、后台进程与资源异常不能当作预期业务失败。每个入口固定起始套件摘要，核验物化、预期、执行行与结束回读一致；单次跨版本、矩阵混合版本、结束换版本和对象内部字典原地变化都不能汇总为通过。当前执行后端为 macOS Seatbelt；CLI 对不可用后端返回结构化错误和退出码 2，不退回无隔离执行，相应实际执行测试在其他平台跳过。
+
+验证结果：
+
+| 检查 | 实际结果 |
+| --- | --- |
+| `.venv/bin/python -m pytest tests/skill_branch_extensions -q` | **45 passed，7.23 秒**；8 项资产/CLI/身份测试和 37 项独立反向测试 |
+| Ruff 与显式新路径 pre-commit | 全部适用检查通过；未执行会修改全仓的格式化或依赖安装 |
+| 正式 CLI audit | **12/12 符合预期**，suiteDigest `9f5e64776f12…`，bindingIntact=true |
+| 完整参考解 | 公开/隐藏两次通过，两个分组均通过 |
+| 初始、部分修复及 unsafe | 十次失败均符合精确检查列表；部分修复和 unsafe 的另一组仍通过 |
+| CLI prepare | 仅导出 TASK.md、caller.py、fake_graph.py、visible_checks.py 四个初始文件 |
+| 旧版本兼容 | 74 个冻结源码/锁文件字节不变；原 P4 52 份记录哈希不变；旧三次核心运行、双 skill 事实、none 双凭条/送达及四条人工裁决均能回读或重算 |
+| 最终代码复审 | APPROVE；没有未解决的必改问题 |
+
+正式自检工件保存在私有实验目录，模型调用、图写入、人工批准和新增分支覆盖均为 0。当前管理状态仍为 Dream 已确认的 **3/22** 覆盖、序号 **23**、发布 **0**，普通加载因 `release_unavailable` 拒绝。新的组合资产尚未获得 Agent 执行资格，不能用本次自检结果去登记独立任务覆盖。
+
+复现入口（输出目标须为新目录）：
+
+```bash
+PYTHONPATH=src .venv/bin/python -m memos.skill_branch_extensions list --suite combined-c1-v1
+PYTHONPATH=src .venv/bin/python -m memos.skill_branch_extensions prepare \
+  --suite combined-c1-v1 --workspace /private/new-public-workspace
+PYTHONPATH=src .venv/bin/python -m memos.skill_branch_extensions audit \
+  --suite combined-c1-v1 --output /private/new-audit-directory
+```
+
+下一步按第 6 节实现选定套件的固定执行协议、公开结果送达和资格校验，再运行 Claude 并接入 schema 3 的中间状态证据；之后处理健康/停止/工具故障、其余覆盖与挑战、42-B 失效传播和新版发布，最后进入 P5。

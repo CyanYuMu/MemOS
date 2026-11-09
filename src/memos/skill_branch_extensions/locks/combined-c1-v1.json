@@ -1,0 +1,8 @@
+{
+  "schemaVersion": 1,
+  "purpose": "branch_extension_asset_freeze",
+  "suiteId": "combined-c1-v1",
+  "taskId": "branch-combined-state",
+  "lineageId": "combined-shared-state-20261109",
+  "digest": "9f5e64776f12d1ea147bbd4d52a633d04d0a6a928a28fd54d5d9d0203257f832"
+}
