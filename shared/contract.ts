@@ -107,6 +107,85 @@ export interface SkillDetail {
   releases: Record<string, unknown>[]
   caseOptions: { caseId: string; title: string }[]
   governance?: SkillGovernanceState
+  lifecycle?: SkillLifecycle
+}
+
+export type SkillObservationStatus = 'healthy' | 'changed' | 'unavailable' | 'invalid' | 'restored'
+export interface SkillDependencyRelease {
+  skillId: string
+  revision: string
+  releaseId: string
+}
+export interface SkillLifecycle {
+  schemaVersion: 1
+  enabled: boolean
+  watermark: string
+  subjects: {
+    subjectId: string
+    kind: 'memory' | 'tool'
+    expectedDigest: string
+    observedDigest: string | null
+    status: SkillObservationStatus
+    observationId: string | null
+  }[]
+  roots: {
+    rootId: string
+    originSkillId: string
+    originRevision: string
+    subjectId: string
+    kind: 'memory' | 'tool'
+    status: 'active' | 'restored_pending'
+    latestObservationId: string
+    paths: string[][]
+    reason: string
+  }[]
+  observations: {
+    observationId: string
+    subjectId: string
+    kind: 'memory' | 'tool'
+    expectedDigest: string
+    observedDigest: string | null
+    status: SkillObservationStatus
+    previousObservationId: string | null
+    detectorVersion: string
+    reason: string
+    observedAt: string
+  }[]
+  decisions: { decisionId: string; action: string; actor: string; reason: string; decidedAt: string; evidenceIds: string[] }[]
+  dependencies: { skillId: string; revision: string; releaseId: string | null; state: string; allowed: boolean }[]
+  gate: { status: 'PASS' | 'BLOCK'; reasons: string[] }
+}
+export interface SkillLifecyclePackage extends SkillRef {
+  kind: 'lifecycle'
+  sequence: number
+  contentHash: string
+  exportHash: string | null
+  sourceWatermark: string[]
+  lifecycleWatermark: string
+  activeRootIds: string[]
+  currentChallengeIds: string[]
+  evidenceIds: string[]
+  dependencyReleases: SkillDependencyRelease[]
+  actor: string
+  preparedAt: string
+  packageId: string
+  packageHash: string
+}
+export interface SkillImpactReview extends SkillMutation {
+  packageId: string
+  packageHash: string
+  decision: 'restore' | 'retain' | 'supersede'
+  rootIds: string[]
+  validationIds: string[]
+  replacementRevision: string | null
+}
+export interface SkillChallengeResolution extends SkillMutation {
+  packageId: string
+  packageHash: string
+  challengeId: string
+  decision: 'addressed' | 'upheld' | 'superseded'
+  evidenceIds: string[]
+  replacementRevision: string | null
 }
 
 export interface SkillBranchClaim {
@@ -328,6 +407,8 @@ export interface SkillAdjudicationPackage {
 }
 
 export interface SkillReviewPackage {
+  lifecycleWatermark?: string
+  dependencyReleases?: SkillDependencyRelease[]
   projectId?: string
   packageId: string
   packageHash: string

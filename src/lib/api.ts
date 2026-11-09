@@ -3,6 +3,8 @@
 import { z } from 'zod'
 import { API_BASE } from './config'
 import { skillAdjudicationPackage, skillAdjudicationResult } from './skill-governance.contract'
+import { skillImpactScan, skillLifecyclePackage, skillLifecycleMutation } from './skill-lifecycle.contract'
+import type { SkillImpactReview, SkillChallengeResolution } from '../../shared/contract'
 import type { SkillJudgment } from '../../shared/contract'
 import {
   skillDetail,
@@ -433,6 +435,11 @@ export const api = {
       call<SkillMutationResult>('/api/v1/skills/publish', { body }),
     status: (body: SkillMutation & { action: 'pause' | 'withdraw' }) => call<SkillMutationResult>('/api/v1/skills/status', { body }),
     challenge: (body: SkillMutation) => call<SkillMutationResult>('/api/v1/skills/challenges', { body }),
+    scanImpact: (body: SkillMutation) => callValidated(skillImpactScan, '/api/v1/skills/lifecycle/scan', { body }),
+    prepareImpact: (body: SkillRef) => callValidated(skillLifecyclePackage, '/api/v1/skills/lifecycle/prepare', { body }),
+    reviewImpact: (body: SkillImpactReview) => callValidated(skillLifecycleMutation, '/api/v1/skills/lifecycle/review', { body }),
+    resolveChallenge: (body: SkillChallengeResolution) =>
+      callValidated(skillLifecycleMutation, '/api/v1/skills/challenges/resolve', { body }),
     loadPreview: (body: SkillRef & { caseId: string; mode: 'normal' }) => call<SkillLoadPreview>('/api/v1/skills/load-preview', { body }),
   },
   onboarding: {

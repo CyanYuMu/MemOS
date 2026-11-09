@@ -6,6 +6,7 @@ afterEach(() => {
 })
 const reference = { projectId: 'project-a', skillId: 'fixture-repair', revision: 'a'.repeat(64) }
 const mutation = { ...reference, expectedSequence: 7, operationId: 'operation-1', reason: '已核对' }
+const lifecycleBinding = { ...mutation, packageId: 'b'.repeat(64), packageHash: 'c'.repeat(64), replacementRevision: null }
 
 it('Skill 列表按 items 信封解析，保留项目边界与同源 POST', async () => {
   const fetcher = vi.fn().mockResolvedValue(new Response(JSON.stringify({ code: 0, data: { items: [], total: 0 }, message: 'ok' })))
@@ -68,6 +69,13 @@ it.each([
   ['publish', () => api.skills.publish({ ...mutation, packageId: 'package-1', packageHash: 'hash-1' })],
   ['status', () => api.skills.status({ ...mutation, action: 'pause' })],
   ['challenges', () => api.skills.challenge(mutation)],
+  ['lifecycle/scan', () => api.skills.scanImpact(mutation)],
+  ['lifecycle/prepare', () => api.skills.prepareImpact(reference)],
+  ['lifecycle/review', () => api.skills.reviewImpact({ ...lifecycleBinding, decision: 'retain', rootIds: [], validationIds: [] })],
+  [
+    'challenges/resolve',
+    () => api.skills.resolveChallenge({ ...lifecycleBinding, decision: 'upheld', challengeId: 'd'.repeat(64), evidenceIds: [] }),
+  ],
   ['load-preview', () => api.skills.loadPreview({ ...reference, caseId: 'dev-1', mode: 'normal' })],
 ] as const)('冻结端点 %s 只发送显式项目和允许的操作参数', async (route, run) => {
   const fetcher = vi.fn().mockResolvedValue(new Response(JSON.stringify({ code: 40300, message: '无权限' }), { status: 403 }))

@@ -15,6 +15,7 @@ import { PageHeader } from '../components/ui'
 import { Button } from '../components/ui/button'
 import { SkillExperiments } from './SkillExperiments'
 import { SkillGovernance } from './SkillGovernance'
+import { SkillLifecyclePanel } from './SkillLifecycle'
 
 const states: Record<string, string> = {
   candidate: '候选',
@@ -400,6 +401,22 @@ function SkillWorkspace({
           }}
         />
       )}
+      {detail.lifecycle && (
+        <SkillLifecyclePanel
+          key={`lifecycle-${management.sequence}-${detail.lifecycle.watermark}`}
+          reference={{ projectId, skillId, revision }}
+          data={detail.lifecycle}
+          sequence={management.sequence}
+          contentHash={candidate.content_hash}
+          exportHash={management.exportHash}
+          validations={detail.validations}
+          canManage={canManage}
+          onRefresh={() => {
+            refresh()
+            onChange()
+          }}
+        />
+      )}
       <Review
         key={management.sequence}
         detail={detail}
@@ -697,7 +714,8 @@ function Review({
         value.skillId !== reference.skillId ||
         value.revision !== reference.revision ||
         value.sequence !== detail.management.sequence ||
-        value.contentHash !== detail.candidate.content_hash
+        value.contentHash !== detail.candidate.content_hash ||
+        (detail.lifecycle?.enabled && value.lifecycleWatermark !== detail.lifecycle.watermark)
       )
         throw new Error('审阅包绑定内容已变化')
       setProposal(value)
@@ -814,7 +832,14 @@ function Review({
           </div>
           <details>
             <summary>绑定的验证报告与来源水位</summary>
-            <JsonText value={{ validationIds: proposal.validationIds, sourceWatermark: proposal.sourceWatermark }} />
+            <JsonText
+              value={{
+                validationIds: proposal.validationIds,
+                sourceWatermark: proposal.sourceWatermark,
+                lifecycleWatermark: proposal.lifecycleWatermark,
+                dependencyReleases: proposal.dependencyReleases,
+              }}
+            />
           </details>
           <label className="skills-confirm">
             <input
