@@ -57,3 +57,22 @@ attempt-005 生成 `e14c3e73ba8e72d1337423e8b3bff94af916e68cc21f4b28e2b2b3e843ff
 - Python 局部 Ruff、格式及 pre-commit 通过；13 个冻结源码和 192 个旧 C2 工件逐项摘要仍一致。
 
 控制面新提交 `7c0d2701`，前端新提交 `dc76b147`。上述均非真实 Claude 独立验证。浏览器工具仍报告 Work 设置禁用本地浏览器，已提供官方设置入口；真实前端验收尚待权限恢复。宿主正常执行手册见 [操作文档](skill-prototype-operations.md)，保留现有服务锁，不另开冲突的管理实例。
+
+## 真实首发资格批次 release-batch-001 预登记
+
+代码基线 `7b6b58ef`，候选仍为 `e14c3e73ba8e72d1337423e8b3bff94af916e68cc21f4b28e2b2b3e843ffd995`，内容和导出身份见 P5 合同，不替换任何旧批次。真实服务已导入该候选，初次扫描 sequence=3，三个 Memory 主体和固定工具主体均 healthy；尚未发布。
+
+六任务独立 OS 隔离自检全部成功，模型调用为零。固定资格如下：
+
+| 任务 | qualificationId |
+| --- | --- |
+| update-repair-r1 | `424a38a771daefbc909a4e82b2a76ae146a895229028474feefeccd6581d0e62` |
+| update-healthy-r1 | `8d9f90a85dca573479fc1cfa27eb9bdf173db18ddd11e96674af5cfcb18dd816` |
+| scope-outside-r1 | `22e33f6352105b038e2b750d04166cd46341d4093332d115f03baa77833c94bf` |
+| contract-missing-r1 | `25dc251f79e06c681e3466c032c63f4b4de167f11cf624eef8b3b075bde49dca` |
+| update-unresolved-r1 | `3d7252fc05660e3c30dbf2ede72c456a92d35a2e5a0044db896aacc0601109c5` |
+| check-unavailable-r1 | `c1302e7f8f37490b139ab947be807d3b1738d3730eba1741ce32ef8d3e86c334` |
+
+计划为一次无 Skill 修复校准，再按表顺序各一次 Skill 运行，最多七次。固定 Claude Code 2.1.296、claude-opus-5-5、low、Read/Edit/Write 和宿主公开 MCP，每次 240 秒/12 轮/3 USD，最多两次修复周期。批次随机身份及全部摘要由运行器在第一次调用前写入 manifest；完成前后回读固定身份，禁止继续使用变更后的配置。服务器票据绑定实际运行和开始/完成观察。
+
+分支意图：repair 与 healthy 覆盖入口 #2、处理 #0；outside 覆盖入口 #0；missing 覆盖入口 #1；unresolved 覆盖入口 #2、处理 #2；tool-failure 覆盖入口 #2、处理 #1。意图不是覆盖结果，仍需实际时序、行为和受托语义裁决。校准失败阻止后续；任务失败保留且不自动重试。新增独立来源数为零，不宣称效果优势。
