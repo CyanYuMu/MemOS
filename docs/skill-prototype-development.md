@@ -136,7 +136,7 @@ P0a 的普通子进程及只读文件是测试隔离手段，不是防恶意代�
 
 计划运行：新增模块测试、`tests/api/test_public_no_skill.py`、与案例依据相关的 Dream 和租户更新回归，以及新增路径的 Ruff lint/format 检查。执行命令、结果与已知限制在完成后补入本节，未执行前不填写通过数。
 
-当前状态（2026-11-09）：**P0a、P0b、P1a、P1b、P2、P3 已实现并完成本地验收；P4 固定实验已执行，P4.1 验收器修正和隔离自检已完成；42-A4 人工分支审阅进行中**。P0b 的 [具体开发与验收记录](skill-prototype-p0b.md) 包含真实来源函数副本、七个独立验证任务和用途注册；[P1a 实施记录](skill-prototype-p1a.md) 包含真实 Claude 修复、固定 Skill 加载、公开事件记录和 OS 隔离；[P1b 实施记录](skill-prototype-p1b.md) 包含 EvidenceRevision、真实 MemOS 入库回读、故障恢复及 519 项最终回归结果；[P2 实施记录](skill-prototype-p2.md) 包含真实三来源提炼、六次开发生成作业、固定候选及独立 Skill Graph 的实际写入和重启回读；[P3 实施记录](skill-prototype-p3.md) 包含管理/审阅页面、发布事务与准入、真实候选隔离执行和发布拒绝。[P4 实施记录](skill-prototype-p4.md) 与 [实验报告](skill-prototype-p4-results.md) 包含来源约束修订、历史未知归属、冻结三组 21 次真实执行、分层评分和完整成本；三组主修复率均 3/3，尚未证明收益。H4/H6 的真人裁决已保存，旧 unknown 和评分保留。新 scoped/Dream 独立任务的实际事实已登记，补丁均通过，新人工裁决尚未提交，覆盖仍为 0/22。候选未发布；42-B 失效传播与新版资格、P5 尚未实施。
+当前状态（2026-11-09）：**P0a、P0b、P1a、P1b、P2、P3 已实现并完成本地验收；P4 固定实验已执行，P4.1 验收器修正和隔离自检已完成；42-A4 人工分支审阅进行中**。P0b 的 [具体开发与验收记录](skill-prototype-p0b.md) 包含真实来源函数副本、七个独立验证任务和用途注册；[P1a 实施记录](skill-prototype-p1a.md) 包含真实 Claude 修复、固定 Skill 加载、公开事件记录和 OS 隔离；[P1b 实施记录](skill-prototype-p1b.md) 包含 EvidenceRevision、真实 MemOS 入库回读、故障恢复及 519 项最终回归结果；[P2 实施记录](skill-prototype-p2.md) 包含真实三来源提炼、六次开发生成作业、固定候选及独立 Skill Graph 的实际写入和重启回读；[P3 实施记录](skill-prototype-p3.md) 包含管理/审阅页面、发布事务与准入、真实候选隔离执行和发布拒绝。[P4 实施记录](skill-prototype-p4.md) 与 [实验报告](skill-prototype-p4-results.md) 包含来源约束修订、历史未知归属、冻结三组 21 次真实执行、分层评分和完整成本；三组主修复率均 3/3，尚未证明收益。H4/H6 的真人裁决已保存，旧 unknown 和评分保留。新 scoped/Dream 独立任务的实际事实已登记，补丁均通过；scoped 真人裁决已保存为使用不当、无覆盖，Dream 三个正常分支待确认，当前覆盖仍为 0/22。候选未发布；42-B 失效传播与新版资格、P5 尚未实施。
 
 ### 8.1 实际验证记录
 
