@@ -98,3 +98,11 @@ attempt-005 生成 `e14c3e73ba8e72d1337423e8b3bff94af916e68cc21f4b28e2b2b3e843ff
 六项受托裁决依次保留：healthy `ae93e3de7b8a7b44285c75b412e7a1792d8fd66cd1b5473f4d3b10907a1e53d1`；repair `cb54f1b637b156fd9728acbd09e2d9475349c6e238707e099d8e05aa08c8ffea`；outside `8d6b2be01d993b6d716f1872f1537cef8f943d739a1daac9ab72af97fdc5f615`；missing `6b6e8e6c85148d8cccdd5f3591ad705efdc207b0a2336df4cc65bb2ec52c5042`；unresolved `006e5effa9daabf619ed4a0321cd6740699fcb9fbd550f24ddecdb13e8284600`；fault `f45553740adc4210fd11e57cd38bf8e60559956b12440b91b94f0b1498f11fea`。全部明确用户授权、助手受托审阅，不冒称用户逐项亲审。
 
 当前 e14 候选 sequence=22、needs_evidence、覆盖 2/6、Release 数为零；发布门槛仍提示失败待解决、unknown、分支和边界缺口。P5 的真实发布后正常使用与恢复回归尚未发生，不能据自动测试把它们写为通过。后续必须保留本协议生产者及本批全部工件，先设计新的过程门禁、错误传输适配及未污染验证任务，再决定新候选和新批次。
+
+## 历史挑战处置与前端合同回读
+
+五项历史挑战逐项准备生命周期包后追加 upheld，保留开放阻断，不标为 addressed。f929 的 `abf2c7d6…`（范围、健康与使用缺口）及 `2efcf433…`（原批次超两轮）分别在 sequence 35、36 处置；9a3 的 `8cd693ec…`（缺回归检查）、`2c9c0c95…`（缺健康路径）、`e77cca7a…`（无具体周期上限）分别在 sequence 24、25、26 处置。后续合规运行不能改写这些冻结正文或历史超预算事实；新 e14 尚未发布，也未用于版本替代。
+
+六项实际 assessment 和六项裁决组成的真实服务详情，经前端 Vite SSR 的完整 `skillDetail` parser 回读通过，包含实际 incomplete 故障记录。这证明当前跨端合同能够读取真实批次，仍不代替被浏览器权限阻挡的页面实测。
+
+下一阶段分支为 `codex/skill-prototype-protocol-v2`，先实施 [G0 门禁与错误送达合同](skill-prototype-protocol-v2.md)。旧发布包源码与工件已另行冻结，保留为回归和已曝光反馈。新候选跨模块适用只是待验证迁移假设，不把新任务家族名称当成独立性证明。
