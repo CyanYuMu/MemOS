@@ -335,7 +335,7 @@ def test_missing_evidence_can_be_retained_without_confirming_or_covering():
     assert result["branchCoverage"] == [] and not result["taskResolved"]
 
 
-@pytest.mark.parametrize("version", [None, True, 0, 5, "2"])
+@pytest.mark.parametrize("version", [None, True, 0, 6, "2"])
 def test_repository_rejects_unknown_or_noninteger_versions(version):
     with pytest.raises(ManagementError, match="unsupported_assessment_version"):
         _contract_for({"schemaVersion": version})
