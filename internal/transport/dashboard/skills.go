@@ -37,6 +37,7 @@ var skillRoutes = []skillRoute{
 	{path: "evaluations/start", action: "evaluate", capability: domain.CapProjectWrite, required: []string{"skillId", "revision", "caseId", "operationId"}},
 	{path: "runs/start", action: "run", capability: domain.CapProjectWrite, required: []string{"skillId", "revision", "caseId", "operationId"}},
 	{path: "jobs/detail", action: "job", capability: domain.CapProjectView, required: []string{"jobId"}},
+	{path: "jobs/reconcile", action: "job_reconcile", capability: domain.CapProjectManage, required: []string{"jobId", "operationId"}},
 	{path: "reviews/prepare", action: "review_prepare", capability: domain.CapProjectManage, required: []string{"skillId", "revision"}},
 	{path: "adjudications/prepare", action: "adjudication_prepare", capability: domain.CapProjectManage, required: []string{"skillId", "revision", "assessmentId"}},
 	{path: "adjudications/submit", action: "adjudicate", capability: domain.CapProjectManage, required: []string{"skillId", "revision", "packageId", "packageHash", "expectedSequence", "operationId", "reason", "judgment"}, optional: []string{"supersedes"}},

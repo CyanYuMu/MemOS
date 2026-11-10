@@ -65,6 +65,7 @@ func TestSkillRoutesCapabilities(t *testing.T) {
 		{"load-preview", "load_preview", false},
 		{"evaluations/start", "evaluate", true},
 		{"runs/start", "run", true},
+		{"jobs/reconcile", "job_reconcile", true},
 		{"reviews/prepare", "review_prepare", true},
 		{"reviews/decide", "review_decide", true},
 		{"publish", "publish", true},
@@ -141,6 +142,9 @@ func skillTestBody(action string) string {
 	}
 	if action == "experiment_start" {
 		return "{" + base + `,"experimentId":"experiment-1","operationId":"op-1"}`
+	}
+	if action == "job_reconcile" {
+		return "{" + base + `,"jobId":"job-1","operationId":"recover-1"}`
 	}
 	if action == "job" {
 		return "{" + base + `,"jobId":"job-1"}`

@@ -2105,6 +2105,67 @@ paths:
                 $ref: '#/components/schemas/SkillErrorEnvelope'
         '503':
           $ref: '#/components/responses/ErrorUnavailable'
+  /api/v1/skills/jobs/reconcile:
+    post:
+      tags: [Skill 管理]
+      operationId: skill_job_reconcile
+      summary: 核验已完成工件并追加历史反馈
+      description: |-
+        必须显式 projectId，要求项目 manage 能力；身份从已认证会话获取。
+        只接受列出的字段。服务端代理到固定 Python Skill 服务，不接受 actor、路径或任意命令。
+        409 必须重新读取状态和审阅包，禁止自动重试人工批准。评测只返回 jobId，由后续轮询取结果。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [projectId, jobId, operationId]
+              properties:
+                projectId:
+                  type: string
+                  pattern: "^[A-Za-z0-9][A-Za-z0-9._:-]{0,299}$"
+                operationId:
+                  type: string
+                  pattern: "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
+                jobId:
+                  type: string
+                  pattern: "^[A-Za-z0-9][A-Za-z0-9._:-]{0,299}$"
+      responses:
+        '200':
+          description: 成功；candidate 保留规范 snake_case 正文
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/SkillJobData'
+        '400':
+          $ref: '#/components/responses/ErrorBadRequest'
+        '401':
+          $ref: '#/components/responses/ErrorUnauthorized'
+        '403':
+          $ref: '#/components/responses/ErrorForbidden'
+        '404':
+          $ref: '#/components/responses/ErrorNotFound'
+        '409':
+          description: 状态、操作 ID 或发布证据冲突；data 含 errorCode，可选 currentSequence
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillErrorEnvelope'
+        '422':
+          description: Skill 业务校验未通过；不回显原始异常或端点
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillErrorEnvelope'
+        '503':
+          $ref: '#/components/responses/ErrorUnavailable'
   /api/v1/skills/adjudications/prepare:
     post:
       tags:
@@ -3921,6 +3982,31 @@ components:
         errorCode:
           type: string
           nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        feedbackRecovery:
+          type: object
+          description: 追加恢复记录；原 unknown 和 errorCode 保留，不计独立分支覆盖。
+          required: [recoveryId, validationId, evidenceDigest, actor, recoveredAt, status, taskResult, skillUsage]
+          properties:
+            recoveryId:
+              type: string
+            validationId:
+              type: string
+            evidenceDigest:
+              type: string
+            actor:
+              type: string
+            recoveredAt:
+              type: string
+              format: date-time
+            status:
+              type: string
+            taskResult:
+              type: object
+            skillUsage:
+              type: object
     SkillBranchClaim:
       type: object
       additionalProperties: false
