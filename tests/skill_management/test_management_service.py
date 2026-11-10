@@ -138,6 +138,18 @@ def test_source_failure_blocks_evaluation_before_job(service):
     assert repo.created == 0
 
 
+def test_reconciliation_refuses_busy_slot_before_reading_evidence(service):
+    svc, repo, _ = service
+    svc.experiments = SimpleNamespace(busy=True)
+    with pytest.raises(ManagementError, match="busy"):
+        svc.call(
+            "job_reconcile",
+            {"projectId": "public-project", "jobId": "a" * 64, "operationId": "recover"},
+            "owner",
+        )
+    assert repo.created == repo.validated == 0
+
+
 def test_worker_exception_is_unknown_and_not_validation(service, monkeypatch):
     import memos.skill_management.service as module
 

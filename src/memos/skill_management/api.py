@@ -32,6 +32,7 @@ COMMANDS = {
     "evaluate": (_KEY | {"caseId", "operationId"}, "write"),
     "run": (_KEY | {"caseId", "operationId"}, "write"),
     "job": ({"projectId", "jobId"}, "view"),
+    "job_reconcile": ({"projectId", "jobId", "operationId"}, "manage"),
     "review_prepare": (_KEY, "manage"),
     "adjudication_prepare": (_KEY | {"assessmentId"}, "manage"),
     "adjudicate": (_MUTATION | {"packageId", "packageHash", "judgment"}, "manage"),

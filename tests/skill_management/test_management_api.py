@@ -71,6 +71,14 @@ def test_run_requires_write_and_does_not_accept_client_mode_or_paths():
         assert request("run", {**body, field: "forged"})[0] == 400
 
 
+def test_reconcile_is_manage_only_and_cannot_upload_evidence():
+    body = {"projectId": "project-one", "jobId": "a" * 64, "operationId": "recovery-one"}
+    assert request("job_reconcile", body, **{"X-Skill-Capability": "write"})[0] == 403
+    assert request("job_reconcile", body)[0] == 200
+    for key in ("path", "report", "mode", "validation"):
+        assert request("job_reconcile", {**body, key: "forged"})[0] == 400
+
+
 @pytest.mark.parametrize(
     "body",
     [

@@ -282,6 +282,8 @@ class SkillService:
             return public(repo.list_candidates(body.get("query", "")))
         if action == "job":
             return public(repo.get_job(body["jobId"]))
+        if action == "job_reconcile":
+            return self.reconcile(body["projectId"], body["jobId"], body["operationId"], actor)
         skill_id, revision = body["skillId"], body["revision"]
         detail = repo.get_revision(skill_id, revision)
         if action == "detail":
@@ -448,6 +450,40 @@ class SkillService:
         if action == "challenge":
             return public(repo.challenge(skill_id, revision, **kwargs))
         raise ManagementError("not_found", 404)
+
+    def reconcile(self, project_id, job_id, operation_id, actor):
+        from memos.skill_management.feedback import read_feedback
+
+        repo = self._project(project_id).repository
+        with self._lock:
+            require(
+                not self._active and not (self.experiments and self.experiments.busy), "busy", 409
+            )
+            job = repo.get_job(job_id)
+            detail = repo.get_revision(job["skillId"], job["revision"])
+            try:
+                proof = read_feedback(self.artifacts_root, job, detail["candidate"])
+                repo.verify_feedback_execution(job_id, proof)
+            except (ValueError, OSError, KeyError, TypeError):
+                raise ManagementError("feedback_unverified", 422) from None
+            # Use the original operation identity; a crash between the following
+            # transactions is safely resumable and cannot duplicate validation.
+            record = repo.record_validation(
+                job["skillId"],
+                job["revision"],
+                report=proof["validation"],
+                actor=job["actor"],
+                operation_id="validation-" + job_id,
+            )
+            return public(
+                repo.record_feedback_recovery(
+                    job_id,
+                    validation_id=record["validationId"],
+                    evidence_digest=proof["evidenceDigest"],
+                    actor=actor,
+                    operation_id=operation_id,
+                )
+            )
 
     def start(
         self,

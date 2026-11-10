@@ -32,10 +32,12 @@ from memos.skill_management.domain import (
     validate_registration,
     validate_report,
 )
+from memos.skill_management.feedback import FeedbackMixin
 from memos.skill_management.maintenance import MaintenanceMixin
 
 
 _CATEGORIES = {
+    "feedback_recovery",
     "state",
     "validation",
     "job",
@@ -51,7 +53,9 @@ _CATEGORIES = {
 _CATEGORIES |= LIFECYCLE_CATEGORIES
 
 
-class ManagementRepository(MaintenanceMixin, LifecycleMixin, GovernanceMixin, SkillGraphRepository):
+class ManagementRepository(
+    FeedbackMixin, MaintenanceMixin, LifecycleMixin, GovernanceMixin, SkillGraphRepository
+):
     """The trusted service owns these methods, never model-supplied graph writes."""
 
     max_management_records = 10000
@@ -422,7 +426,7 @@ class ManagementRepository(MaintenanceMixin, LifecycleMixin, GovernanceMixin, Sk
                 "projectionVersion": state.get("projectionVersion"),
             },
             "validations": validations,
-            "jobs": jobs,
+            "jobs": [self._job_view(records, job) for job in jobs],
             "releases": releases,
             "governance": self._governance_detail(records, state),
             "lifecycle": self._lifecycle_projection(records, nodes, state),
@@ -1176,7 +1180,9 @@ class ManagementRepository(MaintenanceMixin, LifecycleMixin, GovernanceMixin, Sk
         return job
 
     def get_job(self, job_id):
-        return self._run(lambda records, nodes, edges: self._job(records, job_id))[0]
+        return self._run(
+            lambda records, nodes, edges: self._job_view(records, self._job(records, job_id))
+        )[0]
 
     def claim_job(self, job_id):
         def perform(records, nodes, edges):
