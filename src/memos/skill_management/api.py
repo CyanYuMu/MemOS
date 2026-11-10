@@ -30,6 +30,7 @@ COMMANDS = {
     "detail": (_KEY, "view"),
     "evidence": (_KEY | {"ruleId"}, "view"),
     "evaluate": (_KEY | {"caseId", "operationId"}, "write"),
+    "run": (_KEY | {"caseId", "operationId"}, "write"),
     "job": ({"projectId", "jobId"}, "view"),
     "review_prepare": (_KEY, "manage"),
     "adjudication_prepare": (_KEY | {"assessmentId"}, "manage"),

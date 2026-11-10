@@ -308,7 +308,7 @@ class SkillService:
                     ],
                 }
             )
-        if action in {"load_preview", "evaluate"}:
+        if action in {"load_preview", "evaluate", "run"}:
             try:
                 self._case(body["caseId"])
             except ValueError:
@@ -321,9 +321,15 @@ class SkillService:
                     "reasons": [] if grant.get("allowed") else [grant.get("reason", "not_ready")],
                 }
             )
-        if action == "evaluate":
+        if action in {"evaluate", "run"}:
             return self.start(
-                body["projectId"], skill_id, revision, body["caseId"], body["operationId"], actor
+                body["projectId"],
+                skill_id,
+                revision,
+                body["caseId"],
+                body["operationId"],
+                actor,
+                mode="normal" if action == "run" else "candidate_evaluation",
             )
         if action == "impact_scan":
             require(project.observe is not None, "lifecycle_not_enabled", 409)

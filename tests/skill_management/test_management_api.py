@@ -57,6 +57,20 @@ def test_viewer_cannot_evaluate_and_editor_cannot_review():
         assert status == 403 and not calls
 
 
+def test_run_requires_write_and_does_not_accept_client_mode_or_paths():
+    body = {
+        "projectId": "project-one",
+        "skillId": "skill",
+        "revision": "a" * 64,
+        "caseId": "dev-one",
+        "operationId": "normal-one",
+    }
+    assert request("run", body, **{"X-Skill-Capability": "view"})[0] == 403
+    assert request("run", body, **{"X-Skill-Capability": "write"})[0] == 200
+    for field in ("mode", "path", "command"):
+        assert request("run", {**body, field: "forged"})[0] == 400
+
+
 @pytest.mark.parametrize(
     "body",
     [

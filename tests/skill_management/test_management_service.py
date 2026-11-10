@@ -105,6 +105,29 @@ def test_normal_denial_does_not_create_job(service):
     assert repo.created == 0
 
 
+def test_normal_http_route_cannot_fall_back_to_candidate_mode(service):
+    svc, repo, _ = service
+    with pytest.raises(ManagementError, match="not_ready"):
+        svc.call("run", body(caseId="dev-one", operationId="normal"), "owner")
+    assert repo.created == 0
+
+
+def test_normal_http_route_uses_same_bounded_slot_and_fixed_mode(service):
+    svc, repo, pool = service
+    repo.admission = lambda *_: {
+        "allowed": True,
+        "exportHash": "c" * 64,
+        "contentHash": "b" * 64,
+        "releaseId": "d" * 64,
+        "sequence": 4,
+    }
+    svc.call("run", body(caseId="dev-one", operationId="normal"), "owner")
+    assert pool.pending[1][-2] == "normal"
+    with pytest.raises(ManagementError, match="busy"):
+        svc.call("evaluate", body(caseId="dev-one", operationId="eval"), "owner")
+    assert repo.created == 1
+
+
 def test_source_failure_blocks_evaluation_before_job(service):
     svc, repo, _ = service
     svc.projects["public-project"].check_sources = lambda _: (_ for _ in ()).throw(
