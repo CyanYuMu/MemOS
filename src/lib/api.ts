@@ -425,6 +425,8 @@ export const api = {
       callValidated(skillJob, '/api/v1/skills/evaluations/start', { body }),
     run: (body: SkillRef & { caseId: string; operationId: string }) => callValidated(skillJob, '/api/v1/skills/runs/start', { body }),
     job: (body: { projectId: string; jobId: string }) => callValidated(skillJob, '/api/v1/skills/jobs/detail', { body }),
+    reconcileJob: (body: { projectId: string; jobId: string; operationId: string }) =>
+      callValidated(skillJob, '/api/v1/skills/jobs/reconcile', { body }),
     prepareReview: (body: SkillRef) => callValidated(skillReview, '/api/v1/skills/reviews/prepare', { body }),
     prepareAdjudication: (body: SkillRef & { assessmentId: string }) =>
       callValidated(skillAdjudicationPackage, '/api/v1/skills/adjudications/prepare', { body }),

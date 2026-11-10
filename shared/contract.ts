@@ -96,6 +96,17 @@ export interface SkillJob {
   skillUsage?: { loading: string; capture: string; usageReview: string; declaredRuleIds: string[]; endedAdmission?: string } | null
   validationId?: string | null
   errorCode?: string | null
+  createdAt?: string
+  feedbackRecovery?: {
+    recoveryId: string
+    validationId: string
+    evidenceDigest: string
+    actor: string
+    recoveredAt: string
+    status: string
+    taskResult: NonNullable<SkillJob['taskResult']>
+    skillUsage: NonNullable<SkillJob['skillUsage']>
+  }
 }
 
 export interface SkillDetail {

@@ -40,6 +40,14 @@ const summary: z.ZodType<SkillSummary> = z.object({
   validationCount: z.number().int().nonnegative(),
 })
 export const skillList = z.object({ items: z.array(summary), total: z.number().int().nonnegative() })
+const taskResult = z.object({ status: z.string(), accepted: z.boolean(), receiptMatches: z.boolean() })
+const skillUsage = z.object({
+  loading: z.string(),
+  capture: z.string(),
+  usageReview: z.string(),
+  declaredRuleIds: texts,
+  endedAdmission: z.string().optional(),
+})
 export const skillJob: z.ZodType<SkillJob> = z
   .object({
     jobId: z.string(),
@@ -48,16 +56,21 @@ export const skillJob: z.ZodType<SkillJob> = z
     revision: z.string().optional(),
     caseId: z.string().optional(),
     mode: z.string().optional(),
-    taskResult: z.object({ status: z.string(), accepted: z.boolean(), receiptMatches: z.boolean() }).nullish(),
-    skillUsage: z
+    createdAt: z.string().optional(),
+    taskResult: taskResult.nullish(),
+    skillUsage: skillUsage.nullish(),
+    feedbackRecovery: z
       .object({
-        loading: z.string(),
-        capture: z.string(),
-        usageReview: z.string(),
-        declaredRuleIds: texts,
-        endedAdmission: z.string().optional(),
+        recoveryId: z.string(),
+        validationId: z.string(),
+        evidenceDigest: z.string(),
+        actor: z.string(),
+        recoveredAt: z.string(),
+        status: z.string(),
+        taskResult,
+        skillUsage,
       })
-      .nullish(),
+      .optional(),
     validationId: z.string().nullish(),
     errorCode: z.string().nullish(),
   })

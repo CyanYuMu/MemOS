@@ -100,6 +100,28 @@ it('正式运行使用独立服务端入口，候选评测不被替代', async (
   expect(run.mock.calls[0][0]).not.toHaveProperty('mode')
   expect(screen.getByRole('button', { name: '开始隔离评测' })).toBeTruthy()
 })
+
+it('历史 unknown 补回反馈后仍保留原始错误和独立验证限制', async () => {
+  const original = { jobId: 'unknown-job', status: 'unknown', errorCode: 'execution_unverified', createdAt: '2026-11-09T00:00:00Z' }
+  const feedbackRecovery = {
+    recoveryId: 'recovery',
+    validationId: 'validation',
+    evidenceDigest: 'digest',
+    actor: 'owner',
+    recoveredAt: '2026-11-11T00:00:00Z',
+    status: 'passed',
+    taskResult: { status: 'passed', accepted: true, receiptMatches: true },
+    skillUsage: { loading: 'verified', capture: 'complete', usageReview: 'unreviewed', declaredRuleIds: [] },
+  }
+  vi.spyOn(api.skills, 'detail').mockResolvedValue({ ...detail(), jobs: [original] })
+  const recover = vi.spyOn(api.skills, 'reconcileJob').mockResolvedValue({ ...original, feedbackRecovery })
+  render(<Skills />)
+  fireEvent.click(await screen.findByRole('button', { name: '核验并补回反馈' }))
+  await screen.findByText('补回反馈：外部任务验收通过')
+  expect(screen.getAllByText(/运行错误：execution_unverified/).length).toBeGreaterThan(0)
+  expect(screen.getByText(/原 unknown 保留，不计独立分支覆盖/)).toBeTruthy()
+  expect(recover).toHaveBeenCalledWith({ projectId: 'project-a', jobId: 'unknown-job', operationId: expect.any(String) })
+})
 beforeEach(() => {
   identity.projectId = 'project-a'
   identity.role = 'owner'

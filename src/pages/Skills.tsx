@@ -385,7 +385,7 @@ function SkillWorkspace({
           <JsonText value={candidate.source_refs} />
         </details>
       </section>
-      <Evaluation detail={detail} reference={{ projectId, skillId, revision }} canWrite={canWrite} />
+      <Evaluation detail={detail} reference={{ projectId, skillId, revision }} canWrite={canWrite} canManage={canManage} />
       {detail.governance && (
         <SkillGovernance
           key={`governance-${management.sequence}`}
@@ -491,7 +491,17 @@ function RuleEvidence({ rule, reference }: { rule: SkillRule; reference: SkillRe
   )
 }
 
-function Evaluation({ detail, reference, canWrite }: { detail: SkillDetail; reference: SkillRef; canWrite: boolean }) {
+function Evaluation({
+  detail,
+  reference,
+  canWrite,
+  canManage,
+}: {
+  detail: SkillDetail
+  reference: SkillRef
+  canWrite: boolean
+  canManage: boolean
+}) {
   const [caseId, setCaseId] = useState(detail.caseOptions[0]?.caseId ?? '')
   const [job, setJob] = useState<SkillJob | null>(null)
   const [busy, setBusy] = useState(false)
@@ -500,6 +510,22 @@ function Evaluation({ detail, reference, canWrite }: { detail: SkillDetail; refe
   const [previewBusy, setPreviewBusy] = useState(false)
   const [pollError, setPollError] = useState('')
   const [pollRetry, setPollRetry] = useState(0)
+  const [recovered, setRecovered] = useState<Record<string, SkillJob>>({})
+  const [recovering, setRecovering] = useState(false)
+  async function reconcile(jobId: string) {
+    if (!canManage || recovering) return
+    setRecovering(true)
+    setError('')
+    try {
+      const result = await api.skills.reconcileJob({ projectId: reference.projectId, jobId, operationId: crypto.randomUUID() })
+      setRecovered((previous) => ({ ...previous, [jobId]: result }))
+      if (job?.jobId === jobId) setJob(result)
+    } catch (cause) {
+      setError(errorText(cause))
+    } finally {
+      setRecovering(false)
+    }
+  }
   const jobId = job?.jobId
   // 只轮询查询端点。发起任务与发布操作均不自动重试。
   useEffect(() => {
@@ -605,7 +631,13 @@ function Evaluation({ detail, reference, canWrite }: { detail: SkillDetail; refe
           </details>
         </div>
       )}
-      {job && <JobResult job={job} />}
+      {job && (
+        <JobResult
+          job={recovered[job.jobId] ?? job}
+          reconcile={canManage ? reconcile : undefined}
+          recovering={recovering || busy || running}
+        />
+      )}
       {pollError && (
         <div role="alert" className="skills-notice skills-notice--warning">
           <p>运行状态读取失败：{pollError}</p>
@@ -618,9 +650,16 @@ function Evaluation({ detail, reference, canWrite }: { detail: SkillDetail; refe
         <summary>
           历史运行（{detail.jobs.length}）与验证记录（{detail.validations.length}）
         </summary>
-        {detail.jobs.map((item) => (
-          <JobResult key={item.jobId} job={item} />
-        ))}
+        {[...detail.jobs]
+          .sort((a, b) => (b.createdAt ?? '').localeCompare(a.createdAt ?? ''))
+          .map((item) => (
+            <JobResult
+              key={item.jobId}
+              job={recovered[item.jobId] ?? item}
+              reconcile={canManage ? reconcile : undefined}
+              recovering={recovering || busy || running}
+            />
+          ))}
         {detail.validations.map((item, i) => (
           <JsonText key={i} value={item} />
         ))}
@@ -630,7 +669,7 @@ function Evaluation({ detail, reference, canWrite }: { detail: SkillDetail; refe
   )
 }
 
-function JobResult({ job }: { job: SkillJob }) {
+function JobResult({ job, reconcile, recovering }: { job: SkillJob; reconcile?: (id: string) => void; recovering?: boolean }) {
   const accepted = job.taskResult?.status === 'passed' && job.taskResult.accepted === true && job.taskResult.receiptMatches === true
   return (
     <article className="skills-job">
@@ -663,6 +702,32 @@ function JobResult({ job }: { job: SkillJob }) {
         <p className="skills-notice skills-notice--warning">运行期间准入条件变化，结果需要复核。</p>
       )}
       {job.errorCode && <p role="alert">运行错误：{job.errorCode}</p>}
+      {job.createdAt && <p className="skills-muted">创建时间：{job.createdAt}</p>}
+      {job.feedbackRecovery && (
+        <section className="skills-notice">
+          <strong>
+            补回反馈：
+            {job.feedbackRecovery.taskResult.accepted && job.feedbackRecovery.taskResult.receiptMatches
+              ? '外部任务验收通过'
+              : '外部任务验收未通过'}
+          </strong>
+          <p>原 unknown 保留，不计独立分支覆盖；规则使用仍需审阅。</p>
+          <p>
+            加载：{job.feedbackRecovery.skillUsage.loading} · 状态：{job.feedbackRecovery.status}
+          </p>
+          <p>
+            验证记录：<code>{job.feedbackRecovery.validationId}</code>
+          </p>
+          <p>
+            核验人：{job.feedbackRecovery.actor} · {job.feedbackRecovery.recoveredAt}
+          </p>
+        </section>
+      )}
+      {job.status === 'unknown' && !job.feedbackRecovery && reconcile && (
+        <Button size="sm" disabled={recovering} onClick={() => reconcile(job.jobId)}>
+          核验并补回反馈
+        </Button>
+      )}
     </article>
   )
 }
