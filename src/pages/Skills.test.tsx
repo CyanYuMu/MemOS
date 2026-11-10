@@ -122,6 +122,19 @@ it('历史 unknown 补回反馈后仍保留原始错误和独立验证限制', a
   expect(screen.getByText(/原 unknown 保留，不计独立分支覆盖/)).toBeTruthy()
   expect(recover).toHaveBeenCalledWith({ projectId: 'project-a', jobId: 'unknown-job', operationId: expect.any(String) })
 })
+
+it('已发布版本默认选择发布范围内的任务', async () => {
+  const value = detail('PASS', 'published')
+  vi.spyOn(api.skills, 'detail').mockResolvedValue({
+    ...value,
+    management: { ...value.management, releaseId: 'published-release' },
+    releases: [{ releaseId: 'published-release', scope: { caseIds: ['p5-update-repair-r1'] } }],
+    caseOptions: [...value.caseOptions, { caseId: 'p5-update-repair-r1', title: 'Dream UPDATE repair' }],
+  })
+  render(<Skills />)
+  const select = (await screen.findByRole('combobox', { name: '服务器许可的开发任务' })) as HTMLSelectElement
+  expect(select.value).toBe('p5-update-repair-r1')
+})
 beforeEach(() => {
   identity.projectId = 'project-a'
   identity.role = 'owner'

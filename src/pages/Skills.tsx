@@ -502,7 +502,12 @@ function Evaluation({
   canWrite: boolean
   canManage: boolean
 }) {
-  const [caseId, setCaseId] = useState(detail.caseOptions[0]?.caseId ?? '')
+  const [caseId, setCaseId] = useState(() => {
+    const release = detail.releases.find((item) => item.releaseId === detail.management.releaseId)
+    const scope = release?.scope as { caseIds?: unknown } | undefined
+    const approved = Array.isArray(scope?.caseIds) ? scope.caseIds : []
+    return detail.caseOptions.find((item) => approved.includes(item.caseId))?.caseId ?? detail.caseOptions[0]?.caseId ?? ''
+  })
   const [job, setJob] = useState<SkillJob | null>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')

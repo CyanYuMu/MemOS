@@ -106,6 +106,7 @@ export const skillDetail: z.ZodType<SkillDetail> = z.object({
     .object({
       state: z.string(),
       sequence: z.number().int().nonnegative(),
+      releaseId: z.string().nullish(),
       projectionVersion: z.string().nullable(),
       exportHash: z.string().nullable(),
       readiness,
