@@ -127,6 +127,7 @@ def build_service(config):
     from memos.skill_experience.client import ProductMemoryClient
     from memos.skill_lifecycle.observers import HostObserver, subjects_for_packet
     from memos.skill_management.domain import ManagementError
+    from memos.skill_management.maintenance import normal_monitor_subject
     from memos.skill_management.repository import ManagementRepository
     from memos.skill_management.runtime import export_identity
     from memos.skill_management.service import Project, SkillService
@@ -214,14 +215,17 @@ def build_service(config):
                 if not repo.lifecycle_subjects(
                     loaded["candidate"]["skill_id"], loaded["candidate"]["revision"]
                 ):
+                    subjects = (
+                        p5_subjects
+                        if registration.get("executionProfile") == "p5"
+                        else subjects_for_packet
+                    )(packet, run_config.cli_path)
+                    if registration.get("executionProfile") == "p5":
+                        subjects.append(normal_monitor_subject(run_config.cli_path))
                     repo.bind_lifecycle(
                         loaded["candidate"]["skill_id"],
                         loaded["candidate"]["revision"],
-                        subjects=(
-                            p5_subjects
-                            if registration.get("executionProfile") == "p5"
-                            else subjects_for_packet
-                        )(packet, run_config.cli_path),
+                        subjects=subjects,
                         actor="host_lifecycle_registration",
                     )
                 candidates.append(loaded["candidate"])

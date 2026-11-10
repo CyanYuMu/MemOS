@@ -110,3 +110,20 @@ def test_normal_monitor_detects_file_drift(tmp_path):
     assert observe_tool(subject)["status"] == "healthy"
     implementation.write_text("version = 2\n")
     assert observe_tool(subject)["status"] == "changed"
+
+
+def test_upgrade_rejects_pre_upgrade_validation_and_requires_new_execution(repo):
+    from test_execution import begin, finish, qualified_ticket
+    from test_repository import review
+
+    c = setup_paused(repo)
+    old = qualify(repo, c, "before-upgrade", actual=True)
+    upgrade(repo, c)
+    scan(repo, c, ("healthy", "healthy", "healthy"))
+    with pytest.raises(ManagementError):
+        review(repo, c, "restore", validation_ids=[old["validationId"]], root_ids=[])
+    ticket = begin(repo, c)
+    finish(repo, ticket)
+    fresh = qualified_ticket(repo, c, ticket)
+    review(repo, c, "restore", validation_ids=[fresh["validationId"]], root_ids=[])
+    assert repo.get_revision(c["skill_id"], c["revision"])["management"]["state"] == "published"
