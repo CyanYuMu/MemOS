@@ -32,6 +32,7 @@ from memos.skill_management.domain import (
     validate_registration,
     validate_report,
 )
+from memos.skill_management.maintenance import MaintenanceMixin
 
 
 _CATEGORIES = {
@@ -50,7 +51,7 @@ _CATEGORIES = {
 _CATEGORIES |= LIFECYCLE_CATEGORIES
 
 
-class ManagementRepository(LifecycleMixin, GovernanceMixin, SkillGraphRepository):
+class ManagementRepository(MaintenanceMixin, LifecycleMixin, GovernanceMixin, SkillGraphRepository):
     """The trusted service owns these methods, never model-supplied graph writes."""
 
     max_management_records = 10000
