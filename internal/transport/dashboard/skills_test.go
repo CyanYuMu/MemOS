@@ -64,6 +64,7 @@ func TestSkillRoutesCapabilities(t *testing.T) {
 		{"jobs/detail", "job", false},
 		{"load-preview", "load_preview", false},
 		{"evaluations/start", "evaluate", true},
+		{"runs/start", "run", true},
 		{"reviews/prepare", "review_prepare", true},
 		{"reviews/decide", "review_decide", true},
 		{"publish", "publish", true},
@@ -96,6 +97,7 @@ func TestSkillRoutesRejectUnknownAndInvalidInput(t *testing.T) {
 	for _, entry := range []struct{ path, body string }{
 		{"list", `{"projectId":"cube-a","actor":"forged"}`},
 		{"list", `{"projectId":"cube-a","path":"/tmp/oracle"}`},
+		{"runs/start", strings.TrimSuffix(skillTestBody("run"), "}") + `,"mode":"candidate_evaluation"}`},
 		{"experiments/start", `{"projectId":"cube-a","experimentId":"experiment-1","operationId":"op-1","path":"/tmp/oracle"}`},
 		{"experiments/start", `{"projectId":"cube-a","experimentId":"experiment-1","operationId":"op-1","report":{"status":"passed"}}`},
 		{"experiments/detail", `{"projectId":"cube-a"}`},
@@ -147,7 +149,7 @@ func skillTestBody(action string) string {
 	switch action {
 	case "evidence":
 		base += `,"ruleId":"r1"`
-	case "evaluate":
+	case "evaluate", "run":
 		base += `,"caseId":"dev-mock","operationId":"op-1"`
 	case "load_preview":
 		base += `,"caseId":"dev-mock","mode":"normal"`
