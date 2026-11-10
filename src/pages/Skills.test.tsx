@@ -87,6 +87,19 @@ const reviewPackage = {
   contentHash: 'content-hash',
   reviewChecklist: [{ ruleId: 'diagnose', branchCount: 1, coveredBranches: ['diagnose#0'] }],
 }
+
+it('正式运行使用独立服务端入口，候选评测不被替代', async () => {
+  vi.spyOn(api.skills, 'detail').mockResolvedValue(detail('PASS', 'published'))
+  const run = vi.spyOn(api.skills, 'run').mockResolvedValue({ jobId: 'normal-job', status: 'queued', mode: 'normal' })
+  vi.spyOn(api.skills, 'job').mockResolvedValue({ jobId: 'normal-job', status: 'passed', mode: 'normal' })
+  render(<Skills />)
+  const button = await screen.findByRole('button', { name: '使用已发布版本运行' })
+  fireEvent.click(button)
+  await waitFor(() => expect(run).toHaveBeenCalledOnce())
+  expect(run).toHaveBeenCalledWith(expect.objectContaining({ projectId: 'project-a', caseId: 'dev-fixture' }))
+  expect(run.mock.calls[0][0]).not.toHaveProperty('mode')
+  expect(screen.getByRole('button', { name: '开始隔离评测' })).toBeTruthy()
+})
 beforeEach(() => {
   identity.projectId = 'project-a'
   identity.role = 'owner'

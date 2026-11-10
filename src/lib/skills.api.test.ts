@@ -63,6 +63,7 @@ it.each([
   ['detail', () => api.skills.detail(reference)],
   ['evidence', () => api.skills.evidence({ ...reference, ruleId: 'rule-1' })],
   ['evaluations/start', () => api.skills.evaluate({ ...reference, caseId: 'dev-1', operationId: 'op-1' })],
+  ['runs/start', () => api.skills.run({ ...reference, caseId: 'dev-1', operationId: 'op-1' })],
   ['jobs/detail', () => api.skills.job({ projectId: 'project-a', jobId: 'job-1' })],
   ['reviews/prepare', () => api.skills.prepareReview(reference)],
   ['reviews/decide', () => api.skills.decide({ ...mutation, decision: 'needs_evidence' })],

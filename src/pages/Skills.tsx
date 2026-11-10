@@ -523,12 +523,13 @@ function Evaluation({ detail, reference, canWrite }: { detail: SkillDetail; refe
       clearTimeout(timer)
     }
   }, [jobId, reference.projectId, pollRetry])
-  async function evaluate() {
+  async function evaluate(mode: 'candidate_evaluation' | 'normal' = 'candidate_evaluation') {
     if (!canWrite || !caseId) return
     setBusy(true)
     setError('')
     try {
-      setJob(await api.skills.evaluate({ ...reference, caseId, operationId: crypto.randomUUID() }))
+      const start = mode === 'normal' ? api.skills.run : api.skills.evaluate
+      setJob(await start({ ...reference, caseId, operationId: crypto.randomUUID() }))
     } catch (cause) {
       setError(errorText(cause))
     } finally {
@@ -549,7 +550,7 @@ function Evaluation({ detail, reference, canWrite }: { detail: SkillDetail; refe
   const running = job?.status === 'queued' || job?.status === 'running'
   return (
     <section className="skills-panel">
-      <h2>候选隔离评测</h2>
+      <h2>任务运行与隔离评测</h2>
       <p className="skills-muted">isolated_dev 仅验证固定版本加载、隔离与回收链，不能单独支持普通发布，也不代表 Skill 有因果收益。</p>
       <label className="skills-field" htmlFor="skill-case">
         服务器许可的开发任务
@@ -571,13 +572,22 @@ function Evaluation({ detail, reference, canWrite }: { detail: SkillDetail; refe
         </select>
       </label>
       <div className="skills-actions">
-        <Button variant="primary" loading={busy} disabled={!canWrite || !caseId || running || !!error} onClick={evaluate}>
+        <Button
+          variant="primary"
+          loading={busy}
+          disabled={!canWrite || !caseId || running || !!error || detail.management.state !== 'published'}
+          onClick={() => evaluate('normal')}
+        >
+          使用已发布版本运行
+        </Button>
+        <Button loading={busy} disabled={!canWrite || !caseId || running || !!error} onClick={() => evaluate()}>
           开始隔离评测
         </Button>
         <Button loading={previewBusy} disabled={!caseId} onClick={loadPreview}>
           检查 normal 加载准入
         </Button>
       </div>
+      <p className="skills-muted">正式运行由服务端再次核对发布范围和当前状态；预览许可不能替代启动时校验。</p>
       {!canWrite && <p className="skills-muted">当前角色无评测权限（需要 editor、owner 或平台管理员）。权限未知时禁用写入。</p>}
       {error && (
         <div role="alert" className="skills-notice skills-notice--warning">

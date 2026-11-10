@@ -423,6 +423,7 @@ export const api = {
     evidence: (body: SkillRef & { ruleId: string }) => callValidated(skillEvidence, '/api/v1/skills/evidence', { body }),
     evaluate: (body: SkillRef & { caseId: string; operationId: string }) =>
       callValidated(skillJob, '/api/v1/skills/evaluations/start', { body }),
+    run: (body: SkillRef & { caseId: string; operationId: string }) => callValidated(skillJob, '/api/v1/skills/runs/start', { body }),
     job: (body: { projectId: string; jobId: string }) => callValidated(skillJob, '/api/v1/skills/jobs/detail', { body }),
     prepareReview: (body: SkillRef) => callValidated(skillReview, '/api/v1/skills/reviews/prepare', { body }),
     prepareAdjudication: (body: SkillRef & { assessmentId: string }) =>
