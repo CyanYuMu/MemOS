@@ -2,6 +2,17 @@
 
 日期：2026-11-11。对应 [开发计划](skill-prototype-usability-v1.md)，补充 [原型交付入口](skill-prototype-handoff.md)。本轮代码仅在本机三个优化分支提交，未推送或更新原 PR。原 P4/P5 批次、Skill 内容、Release 和来源记录不改写。
 
+配套分支为 `codex/skill-usability-v1`、`codex/skill-usability-v1-be`、`codex/skill-usability-v1-fe`。后两者当前提交分别为 `c0b474bc`、`f2129825`；Python 生产改动包括 `68c3c910`、`c6e41a7e`、`9cdae826`、`c1306c37` 和实验模块 `5c034c8f`，后续中文提交记录测试与验收资料。
+
+| 代码入口 | 责任 |
+| --- | --- |
+| [maintenance.py](../src/memos/skill_management/maintenance.py) | 追加监测主体，保留旧绑定，推进新验证的执行水位 |
+| [feedback.py](../src/memos/skill_management/feedback.py) | 回读保留工件、核对图中票据、追加恢复记录及作业展示投影 |
+| [service.py](../src/memos/skill_management/service.py)、[api.py](../src/memos/skill_management/api.py) | 正常运行准入、唯一执行槽、恢复编排及字段/权限边界 |
+| [tasks.py](../src/memos/skill_transfer/tasks.py)、[verification.py](../src/memos/skill_transfer/verification.py) | 新任务实例、保护文件策略、独立检查、最终补丁收据和自检资格 |
+| [broker.py](../src/memos/skill_transfer/broker.py)、[runner.py](../src/memos/skill_transfer/runner.py) | 固定公开检查代理、Claude 原生加载与隔离执行 |
+| [实验命令入口](../src/memos/skill_transfer/__main__.py) | 冻结任务/来源/预算、六单元不可重复启动、分离行为与执行合规评分 |
+
 ## 1 已完成的产品改进
 
 | 工作包 | 本轮行为 | 实际验收 |
@@ -58,6 +69,8 @@
   --config "$skill_private_config" --candidate "$skill_candidate" \
   --qualification "$skill_run_root/qualification" --output "$skill_run_root/batch"
 ```
+
+仓库提供任务、验收器、公开 Skill 导出和结果摘要；完全重放本批次还需要操作者保管的候选与来源事实包及提供方配置。仅有仓库不能恢复私有 Memory 快照。其他使用者可先运行不依赖模型/Memory 的 qualify 自检，再按照既有来源收集与提炼流程生成自己的候选并运行新批次；其身份和结果应单独记录。
 
 `started.json` 使用独占创建，部分失败或中断后再次 run 会拒绝，防止悄悄重试到成功。需要新运行时建立新批次并保留旧批次。实际试验期间不并行运行其他模型任务，以免干扰耗时；此 CLI 尚不通过管理服务执行槽调度。
 
