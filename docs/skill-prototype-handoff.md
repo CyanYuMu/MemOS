@@ -2,6 +2,8 @@
 
 日期：2026-11-09。对应 [Issue #6](https://github.com/hugegraph/MemOS/issues/6)。本原型完成从受控任务经验、Memory 回读、候选提炼与图谱，到独立验证、受托审阅和正式发布的链路。当前范围是 **Dream UPDATE 调用中移除多余位置参数**；不声称具备通用 Python mock/fixture 修复能力。
 
+2026-11-11 本机增量：[可用性优化操作与验收](skill-prototype-usability-results.md)。新增常驻服务正常运行、未知反馈恢复、追加监测绑定及同合同新任务探测；下文保留原交付批次和 PR 的历史记录。本轮优化分支尚未推送。
+
 ## 1 当前交付结论
 
 Python 数据面、Go 控制面和 React 审阅工作台可共同运行。真实 Claude 任务形成三条 MemorySnapshot，来源包含成功、失败及未确定归因；候选规则可追溯到固定来源和执行证据。新 `skill_p5` 七单元批次通过发布资格，六分支、三种停止边界完成“用户授权、助手受托审阅”，发布事务已产生真实 Release：

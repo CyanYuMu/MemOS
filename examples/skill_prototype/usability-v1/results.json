@@ -1,0 +1,374 @@
+{
+  "date": "2026-11-11",
+  "feedbackRecovery": {
+    "evidenceDigest": "315f3633671bde24ba87cd0abbfdfa9b68abc338c371a9fa98cc0a20459ee6f5",
+    "originalJobId": "9c5ad97cb96efad02bdfae1293b6c1e16a34ebcb9ffee24dbc3373723dcb9fce",
+    "originalStatus": "unknown",
+    "recoveryId": "b20ab7b7d6aacf1f6e1c4fd377af51bb1db4cc72cc2ff2c72ccf77efaf898bcd",
+    "skillUsage": {
+      "capture": "complete",
+      "declaredRuleIds": [
+        "check_update_contract",
+        "repair_and_verify_update"
+      ],
+      "endedAdmission": "allowed",
+      "loading": "verified",
+      "usageReview": "unreviewed"
+    },
+    "status": "passed",
+    "taskResult": {
+      "accepted": true,
+      "receiptMatches": true,
+      "status": "passed"
+    },
+    "validationId": "289b9f0bd74848d499f0c923733af37b7d9f7653b36aa0529db1327272165321"
+  },
+  "finalAdmissionAllowed": true,
+  "incompleteFeedbackProbe": {
+    "errorCode": "feedback_unverified",
+    "httpStatus": 422,
+    "originalJobUnchanged": true
+  },
+  "localOnly": true,
+  "monitoringUpgrade": {
+    "bindingId": "4d08c8ef8f3201d85109bc8a886361679ec4dbdde459f9e1521fa9b15e2fde98",
+    "previousBindingId": "24d65e3dd17c433fddee43c67cd5891afb476bf42017b09d04b34b436be37a1d",
+    "sequence": 39,
+    "state": "paused"
+  },
+  "normalRun": {
+    "caseId": "p5-update-repair-r1",
+    "jobId": "27c7578804f6079faeed746ac075f1f3469028e269a04136c050a8716a504020",
+    "mode": "normal",
+    "skillUsage": {
+      "capture": "complete",
+      "declaredRuleIds": [
+        "check_update_contract",
+        "repair_and_verify_update"
+      ],
+      "endedAdmission": "allowed",
+      "loading": "verified",
+      "usageReview": "unreviewed"
+    },
+    "status": "passed",
+    "taskResult": {
+      "accepted": true,
+      "receiptMatches": true,
+      "status": "passed"
+    },
+    "validationId": "2c41367430dd886f06553d1d4f380294db5c357a629d39992d52976c14bd9434"
+  },
+  "recoveryBatchId": "f70de5c450435156f31868e089bdb528189e31804b211954e9fb0e2eb2731ecd",
+  "releaseId": "b23912814a518f795dd4598b3f009e514f779eda9873b8255ff7c81da84e951b",
+  "revision": "c7fb3c895b2d49edc82c2808d551224d7c5ef705529d966b7973c6c042b3b8d6",
+  "schemaVersion": 1,
+  "skillId": "python-mock-fixture-contract-repair",
+  "transfer": {
+    "aggregates": [
+      {
+        "elapsedSeconds": 95.623,
+        "group": "none",
+        "passed": 2,
+        "reportedCostUsd": 0.1023762,
+        "total": 2
+      },
+      {
+        "elapsedSeconds": 131.225,
+        "group": "raw_memory",
+        "passed": 2,
+        "reportedCostUsd": 0.3036052,
+        "total": 2
+      },
+      {
+        "elapsedSeconds": 113.825,
+        "group": "skill",
+        "passed": 2,
+        "reportedCostUsd": 0.211825,
+        "total": 2
+      }
+    ],
+    "independentBranchCoverage": [],
+    "limitations": [
+      "Two same-contract instances, not new problem families or developer-blind tasks.",
+      "Different public check inventory; correct Skill use remains unreviewed.",
+      "All three arms pass; no success-rate benefit established.",
+      "Costs are native provider reports, not billing reconciliation."
+    ],
+    "manifest": {
+      "adapterDigest": "81cf4bc22601fc45e99c94422cd2cc3b2d5749647964f26b4e40196b180ba670",
+      "experimentId": "6184b13fdfd7630317c02d61753b022d6b4ab48573328dab0c39773c416d9caa",
+      "maxAgentRuns": 6,
+      "newProblemFamilies": 0,
+      "projection": {
+        "contentHash": "c338a0593bb00f109391f36da621861587e5a4a0b2191a4fcaf97636608e7458",
+        "exportHash": "d8f6bf61cd7ac6bafbe8df465f4ad77995fac4dff2f8a9ea9175b8fbc4dcf947",
+        "manifest": {
+          "canonical_digest": "10c46854f64fb5199e6d7ddbc1a63e49b6daf90b964d8f19456507a4d229ee37",
+          "export_hash": "d8f6bf61cd7ac6bafbe8df465f4ad77995fac4dff2f8a9ea9175b8fbc4dcf947",
+          "exporter_version": "0.1",
+          "files": {
+            "SKILL.md": "191423d8072babd26d2ac6a6cc954d5357458cd5ef9873c164dff3f8d8e87d22"
+          },
+          "requires": [],
+          "revision": "c7fb3c895b2d49edc82c2808d551224d7c5ef705529d966b7973c6c042b3b8d6",
+          "rule_ids": [
+            "check_update_contract",
+            "repair_and_verify_update"
+          ],
+          "runtime_alias": "mem-python-mock-fixture-cont-rc7fb3c895b-10c46854f64f",
+          "schema_version": 1,
+          "skill_id": "python-mock-fixture-contract-repair"
+        },
+        "projectionVersion": "management-native-3",
+        "runtimeAlias": "mem-python-mock-fixture-cont-rc7fb3c895b-10c46854f64f"
+      },
+      "protocol": "transfer-six-units-1",
+      "publicationEvidence": false,
+      "qualification": {
+        "qualificationId": "eee95cae409e6ccc9337b6bdc3f6e9ebc5010ac4925dce013ca3e09fde7a9af0",
+        "verifierDigest": "153403428690cbad20224643bc104f52367b0c7d74ae7d8e9da2aa8cf3a42b62"
+      },
+      "rawSelection": {
+        "bytes": 32524,
+        "method": "source_id_fact_id_complete_records_v1",
+        "omittedFactIds": [
+          "f60c96bbdc2fb680296a59eebe4b77696c096a0151cf68c119660fd09c7e183c",
+          "feb41f8cf141d464e9ededc649377497dd193b99c53d3f5990e8b841f39bc716"
+        ],
+        "selectedFactIds": [
+          "0825782676e4c2083317b7108f33e4b20cab0adbd01a8ee9d6b249f85f55db67",
+          "0b1907c218ace21648755ffebb5e0dc7b7170a299c8901e33f68b25b00aa2538",
+          "13c2e47d72a6dc7f964e6c2b3609634db8019e4548dd24d479c3184c7d11ebfc",
+          "32b938506638ffb9c84c0a5a808f738d86cc602b61bbb643dde0c780615d85b3",
+          "38433312d98637e2ca0eced09fb04767d423524e37cea6998380aa041bffb517",
+          "3f7dfabb3ed9cb2727a5341aee0bb27efe7bd8695370f0ac0874cc34a16e7bc4",
+          "4a0b1d5530c7fc3c66c92a6f60bab1a5b42bbe69e91c6c111e9a0595a3810590",
+          "4ad9d87572f5d0e1700ac7d3a8f862197ad96877117fdf0bd6fb1806e5860a48",
+          "55b4d30e3a7fc707ddfb687db98f978eb6acab152ec796e3338558174f3befcf",
+          "60e771d97bc8c170aa2c79c96b46179371099c8d5c9e3a978da0fbd15736a702",
+          "6a6d0a0e11d5e1042d0752286938c99ecfd6e7c7f165001ae28a0f172de601b7",
+          "6bd84d17a84df9ee093469ba4f55b73f74d5b89e3b2d38b3e5a9429009164986",
+          "6d402bdbfe8631ef4d547cffbcbfec133fa1b109c975b9e915118bb13acbad6f",
+          "75ec5db4e1e90ccaea3dcfd7f3557bd1dfc944a90c690d617036200cddb7ac41",
+          "7bd53fb3ecfcdea9604d9842e41b4815c280628ccd74a8f13d52753bba19fb26",
+          "854521500284ad1ddba2c3bf0e9c2f70d75b9375cac6b94d6b3baf608c2f1500",
+          "8db1d139e3eaf79c92ec930bbc4aaeff13635714af339877a6d5d36e79f94000",
+          "a5053430e1e7b04c424644a629e3f34289d261082a8db467083bbc5c04a93e1e",
+          "aa32be7552395c53bce62e60f14e629356772bdd494546dac946ee69b4664588",
+          "d9852c2d56264fec949a913a08671e74c1224c9de7879497ef4318ea508d8d6f",
+          "e2e7cdce9ff9c5a8e0018ffdc5347190e586c88b10d8521c95c5b6d306e102f0",
+          "01024aad649f26c996f3e4e2b15df4b38e40a130492efe0c7ba6bee4bac0f274",
+          "053b595e67ef23490f89b5d98949bafac59ea6d5db5e94163c42181f8901ac10",
+          "0eb92376aad9dadf25e5fc31b40451d2c53ea428e84c2b3d846cc8f421c593b6",
+          "16e5c01ff935377fa4090023cde03508d6e7e6228c4d4645bda14226e7af5c7b",
+          "22ca7b808aaba0dbb5d09e61a63de8086cfbf9b69595a91fe628f00dff5d8385",
+          "22f9bd772bf0db9768cdad40c4551293adda14873745dd6da3a7f5ec176026b6",
+          "328d25c8dc2e01f37b15eace1b161de1b22ef38361d0b9343f1393da1b2e3f0f",
+          "3ce539d386f1f8c95a981dbb105c817e4598b58d6f75063d07e9b8b13948cad1",
+          "3eb39bc4ce1101aa58ad8c6897f18057ac3392df3936965fc26f47b829247aaa",
+          "3fd9cd38a0a608131ff3eaf90b28796e40cc086deb4f31582305996a27ce752a",
+          "538b52e1814219b6e97dfcb9ddaca02fb35defa81f0fd90d4760f2ce85e695e4",
+          "9100e66c79e7d948a056973683e58727f3fd5d2ea5313824d01bc1a5a02e0a6c",
+          "a2def5b2531a4a0e5b927ace8826df5483b197dc09c23fb8b8eefa1512c88660",
+          "a54e4a67a3d043d15a4fceef625d22c74c83bf0fabb79130c3e80c67ef4ac136",
+          "aa285e44b2d9d2b74246c5bfc57045986c7cc0a35a66b643de6fbbc977aef1ac",
+          "c70c17c477a2a780148eaba4cdce27785cd8e161b31abecc666868cf1b3de905",
+          "ce0dff7bb68155745f251e94df0887f889d74647c34fee002a8c8b947a703df6",
+          "d5c5c5399cf63ff29d9db479812da66d30e968b512b4ba26f3a90a5d671c5436",
+          "d62c3362fec57af9f4f61fe859494ff3c01e89c47f5171e47adcadc2b63fb496",
+          "e2174f56477b22193fad97449381878ead15cb90dc6b25d1bb9799045ade8703",
+          "f9a0369f3ac2c735a2e9b912b8ffd83312e7887ad228560c44ebcfb9a7023391",
+          "073c7acb51a25702d7b9634b4a3c59b7bb1217ea3d2a1bd4b94fb8a7f754df38",
+          "0d225ed4c4470aa5623cdc93e299c35e4c841276de02beba3a42e832ac9ad93e",
+          "27d505dffc06b34d56c523aea26a9f7a2312f3753d40ddcbe03ea39f952f8d02",
+          "2fd8645c84ffc3bb3e04f2cd8ea8f5f7c58b511a42910c9e0dc5bf6b1e9ea5cb",
+          "2ff897cc22b9f518ec2b6141cf123738d19e86f9c7043c2e8237611ad0a6a30c",
+          "3562349962d50bdc57b99fcd31bc2279a708309eaabe9ee6684a587d73d7ae18",
+          "3e74a3c82a09e10a37c7ebc2084a6a2b11b3d939fc704d09a35701379f5098a2",
+          "5a606b408fa79a90f87e363947abfaace154da226d42d6dcbb6ca3891167351f",
+          "698300fcf84af36cd0be4fd8d756cbd0361454f752f0612aae84a7f7b135ea27",
+          "6bb5253919488dfc8ff025f1ef35dd7f8dcaf19de3aca4f5ce67af471320b8ec",
+          "9d8b45de9d776951cbd2584217fe511a8d3954b4e31d8ee660f8a184e361d8be",
+          "a7b3f5a66c86d46dbdf288f4a904e6be0a8d30ff32eb8c4519bdbf1aa5edaf18",
+          "baa21e07d704f1826b9c4984c41a0882338a284c7e54270fb3fc5672b5f4fea9",
+          "bb971403d0670b50657e77e981bb31e070962901d926288aab2ffee6fc2a59b3",
+          "bd1b2d77382d473ec39cc36f9a0ab0ecf865dc86afcdf8ea5be7db533efe0b09",
+          "d94d91925033ab0015976c544392a9ec28159c41c852af5aef3c90d77c068701",
+          "e4f977c991b44a028d4b98d0774488cf147e5f28e2092b2da532a102d5ef3e2f"
+        ],
+        "sha256": "153a5a9e7451caf59086a6888c1d4398ee694cb8a18ba2d9e3f98b438b70744b"
+      },
+      "revision": "c7fb3c895b2d49edc82c2808d551224d7c5ef705529d966b7973c6c042b3b8d6",
+      "runtime": {
+        "cliHash": "c9b5341637becbd423ddffc5b254afb645682a3868cb708bbc6cc0e7bb419937",
+        "cliVersion": "2.1.296",
+        "effort": "low",
+        "maxBudgetUsd": 3,
+        "maxTurns": 20,
+        "model": "claude-opus-5-5",
+        "timeoutSeconds": 240,
+        "tools": [
+          "Read",
+          "Edit",
+          "Write"
+        ]
+      },
+      "skillId": "python-mock-fixture-contract-repair",
+      "units": [
+        {
+          "caseId": "transfer-batch-update",
+          "group": "none",
+          "id": "transfer-batch-update-none",
+          "taskDigest": "06b08210ac69057e551a48ebd38b5dbe061487fd2827639eac338071b64734a1"
+        },
+        {
+          "caseId": "transfer-batch-update",
+          "group": "raw_memory",
+          "id": "transfer-batch-update-raw_memory",
+          "taskDigest": "06b08210ac69057e551a48ebd38b5dbe061487fd2827639eac338071b64734a1"
+        },
+        {
+          "caseId": "transfer-batch-update",
+          "group": "skill",
+          "id": "transfer-batch-update-skill",
+          "taskDigest": "06b08210ac69057e551a48ebd38b5dbe061487fd2827639eac338071b64734a1"
+        },
+        {
+          "caseId": "transfer-version-update",
+          "group": "skill",
+          "id": "transfer-version-update-skill",
+          "taskDigest": "90867cc23cf31bb8eb82adbb710f593b863f138b28327188a52a1493524ca5f1"
+        },
+        {
+          "caseId": "transfer-version-update",
+          "group": "raw_memory",
+          "id": "transfer-version-update-raw_memory",
+          "taskDigest": "90867cc23cf31bb8eb82adbb710f593b863f138b28327188a52a1493524ca5f1"
+        },
+        {
+          "caseId": "transfer-version-update",
+          "group": "none",
+          "id": "transfer-version-update-none",
+          "taskDigest": "90867cc23cf31bb8eb82adbb710f593b863f138b28327188a52a1493524ca5f1"
+        }
+      ]
+    },
+    "publicationEvidence": false,
+    "results": {
+      "complete": true,
+      "experimentId": "6184b13fdfd7630317c02d61753b022d6b4ab48573328dab0c39773c416d9caa",
+      "newProblemFamilies": 0,
+      "publicationEvidence": false,
+      "rows": [
+        {
+          "branchCoverage": [],
+          "capture": "complete",
+          "caseId": "transfer-batch-update",
+          "contextMatches": true,
+          "elapsedSeconds": 44.403,
+          "experienceRead": false,
+          "group": "none",
+          "id": "transfer-batch-update-none",
+          "loading": "not_requested",
+          "receiptVerified": true,
+          "reportSha256": "05bb934a3ae3b8035179cd185fb741f5ebb371ae619e5f96a6eacce6855ce7c0",
+          "reportedCostUsd": 0.043354199999999996,
+          "ruleUsageReview": "unreviewed",
+          "status": "passed",
+          "taskAccepted": true,
+          "taskDigest": "06b08210ac69057e551a48ebd38b5dbe061487fd2827639eac338071b64734a1"
+        },
+        {
+          "branchCoverage": [],
+          "capture": "complete",
+          "caseId": "transfer-batch-update",
+          "contextMatches": true,
+          "elapsedSeconds": 76.747,
+          "experienceRead": true,
+          "group": "raw_memory",
+          "id": "transfer-batch-update-raw_memory",
+          "loading": "not_requested",
+          "receiptVerified": true,
+          "reportSha256": "d52c4ba3dc04882ab6f786402e1598ecb5a6ebf6e7a715c684f1fca5171323cb",
+          "reportedCostUsd": 0.1558686,
+          "ruleUsageReview": "unreviewed",
+          "status": "passed",
+          "taskAccepted": true,
+          "taskDigest": "06b08210ac69057e551a48ebd38b5dbe061487fd2827639eac338071b64734a1"
+        },
+        {
+          "branchCoverage": [],
+          "capture": "complete",
+          "caseId": "transfer-batch-update",
+          "contextMatches": true,
+          "elapsedSeconds": 54.72,
+          "experienceRead": true,
+          "group": "skill",
+          "id": "transfer-batch-update-skill",
+          "loading": "verified",
+          "receiptVerified": true,
+          "reportSha256": "cbfd9af06df2c81608c91341650bcfea547f33ee3a308843712f15724304c2e8",
+          "reportedCostUsd": 0.1016974,
+          "ruleUsageReview": "unreviewed",
+          "status": "passed",
+          "taskAccepted": true,
+          "taskDigest": "06b08210ac69057e551a48ebd38b5dbe061487fd2827639eac338071b64734a1"
+        },
+        {
+          "branchCoverage": [],
+          "capture": "complete",
+          "caseId": "transfer-version-update",
+          "contextMatches": true,
+          "elapsedSeconds": 59.105,
+          "experienceRead": true,
+          "group": "skill",
+          "id": "transfer-version-update-skill",
+          "loading": "verified",
+          "receiptVerified": true,
+          "reportSha256": "c4510ce6f4a5d2162621423e128f5dbc868463960e636f456d72d33491a834f0",
+          "reportedCostUsd": 0.11012759999999999,
+          "ruleUsageReview": "unreviewed",
+          "status": "passed",
+          "taskAccepted": true,
+          "taskDigest": "90867cc23cf31bb8eb82adbb710f593b863f138b28327188a52a1493524ca5f1"
+        },
+        {
+          "branchCoverage": [],
+          "capture": "complete",
+          "caseId": "transfer-version-update",
+          "contextMatches": true,
+          "elapsedSeconds": 54.478,
+          "experienceRead": true,
+          "group": "raw_memory",
+          "id": "transfer-version-update-raw_memory",
+          "loading": "not_requested",
+          "receiptVerified": true,
+          "reportSha256": "ec77f98581d8a5b1a0106aa5d13d54ea7040156683e4c4a4a1b96627158a2c28",
+          "reportedCostUsd": 0.1477366,
+          "ruleUsageReview": "unreviewed",
+          "status": "passed",
+          "taskAccepted": true,
+          "taskDigest": "90867cc23cf31bb8eb82adbb710f593b863f138b28327188a52a1493524ca5f1"
+        },
+        {
+          "branchCoverage": [],
+          "capture": "complete",
+          "caseId": "transfer-version-update",
+          "contextMatches": true,
+          "elapsedSeconds": 51.22,
+          "experienceRead": false,
+          "group": "none",
+          "id": "transfer-version-update-none",
+          "loading": "not_requested",
+          "receiptVerified": true,
+          "reportSha256": "8bdcf93a738903fb61d00f33c198687ac42f569c21809cec91839ba3149f3129",
+          "reportedCostUsd": 0.059022000000000005,
+          "ruleUsageReview": "unreviewed",
+          "status": "passed",
+          "taskAccepted": true,
+          "taskDigest": "90867cc23cf31bb8eb82adbb710f593b863f138b28327188a52a1493524ca5f1"
+        }
+      ]
+    }
+  }
+}
