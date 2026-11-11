@@ -235,3 +235,69 @@ def test_secondary_pairs_use_the_process_independent_result():
     groups = {g["group"]: g for g in summary["groups"]}
     assert groups["none"]["passedIgnoringProcess"] == 1
     assert groups["none"]["processIssueRuns"] == 0
+
+
+def _skill_process_gap(discovered=True, expanded=True):
+    report = _report(
+        "skill",
+        status="incomplete",
+        accepted=False,
+        capture="partial",
+        loading="unknown",
+        capture_reasons=["process_evidence_incomplete"],
+        process_issues=["check_edit_overlap"],
+        reasons=["process_incomplete"],
+    )
+    report["loading"].update(discovered=discovered, native_expanded=expanded)
+    return report
+
+
+def test_skill_arm_gets_the_same_secondary_view_as_none_arm(tmp_path):
+    """The P5 runner withholds 'verified' loading whenever capture is partial.
+
+    A process-order gap must not therefore deny only the Skill arm a secondary
+    result while the none arm with the identical gap keeps one.
+    """
+    result = experiment.score(_write_run(tmp_path, _skill_process_gap()), "skill", 1)
+    assert result["status"] == "unknown"
+    assert result["outcomeIgnoringProcess"] == "passed"
+
+
+@pytest.mark.parametrize(("discovered", "expanded"), [(False, True), (True, False)])
+def test_unobserved_skill_load_still_has_no_secondary_result(tmp_path, discovered, expanded):
+    report = _skill_process_gap(discovered, expanded)
+    result = experiment.score(_write_run(tmp_path, report), "skill", 1)
+    assert result["outcomeIgnoringProcess"] is None
+
+
+def test_rescore_appends_a_new_view_and_never_rewrites_results(tmp_path):
+    output = tmp_path / "batch"
+    unit = {"id": "u-skill-r1", "suiteId": "s", "group": "skill", "repetition": 1}
+    run_dir = output / "runs" / unit["id"]
+    run_dir.mkdir(parents=True)
+    _write_run(run_dir, _skill_process_gap())
+    original = {
+        "experimentId": "e" * 64,
+        "rows": [
+            {**unit, "status": "unknown", "outcomeIgnoringProcess": None, "elapsedSeconds": 9.5},
+            {
+                **unit,
+                "id": "u-none-r1",
+                "group": "none",
+                "status": "unknown",
+                "failureType": "TimeoutError",
+                "elapsedSeconds": 1.0,
+            },
+        ],
+    }
+    (output / "results.json").write_text(json.dumps(original))
+    before = (output / "results.json").read_bytes()
+    rescored = experiment.rescore(output)
+    assert (output / "results.json").read_bytes() == before
+    rows = {r["id"]: r for r in rescored["rows"]}
+    assert rows["u-skill-r1"]["outcomeIgnoringProcess"] == "passed"
+    assert rows["u-skill-r1"]["elapsedSeconds"] == 9.5
+    assert rows["u-none-r1"]["failureType"] == "TimeoutError"
+    assert rescored["originalResultsSha256"] == experiment._sha(output / "results.json")
+    with pytest.raises(FileExistsError):
+        experiment.rescore(output)

@@ -178,11 +178,16 @@ def score(report_path, group, elapsed):
     # Secondary view only: when the sole capture gap is the order of checks and
     # edits, the retained patch result is still meaningful. The primary status
     # stays unknown so neither arm gains from an unprovable process.
+    loading = report.get("loading") if isinstance(report.get("loading"), dict) else {}
     process_only = (
-        set(issues) <= {"capture_incomplete", "process_incomplete"}
+        set(issues) <= {"capture_incomplete", "process_incomplete", "loading_unverified"}
         and set(capture.get("reasons") or ()) <= {"process_evidence_incomplete"}
         and bool(reasons)
         and isinstance(outcome.get("kind"), str)
+        # The P5 runner withholds "verified" whenever capture is partial, so the
+        # Skill arm reports loading_unverified for this same gap. Require that the
+        # Skill was actually seen being discovered and expanded.
+        and (group == "none" or (loading.get("discovered") and loading.get("native_expanded")))
     )
     if behaviour in ("passed", "failed") and not issues:
         secondary = behaviour
@@ -211,6 +216,9 @@ def score(report_path, group, elapsed):
 def _pairs(rows, key):
     cells = {}
     for row in rows:
+        # A unit that never produced a report cannot contribute to either view.
+        if "failureType" in row:
+            continue
         cells.setdefault((row["suiteId"], row["repetition"]), {})[row["group"]] = row.get(key)
     names = {
         ("passed", "passed"): "bothPassed",
@@ -254,6 +262,41 @@ def aggregate(rows):
         "pairs": _pairs(rows, "status"),
         "pairsIgnoringProcess": _pairs(rows, "outcomeIgnoringProcess"),
     }
+
+
+def rescore(output):
+    """Recompute the secondary view from retained reports; never rewrite results.json."""
+    output = Path(output)
+    original = _read(output / "results.json")
+    rows = []
+    for row in original["rows"]:
+        if "failureType" in row:
+            rows.append(row)
+            continue
+        try:
+            fresh = score(
+                output / "runs" / row["id"] / "report.json", row["group"], row["elapsedSeconds"]
+            )
+        except (OSError, ValueError):
+            rows.append(row)
+            continue
+        rows.append({**row, "outcomeIgnoringProcess": fresh["outcomeIgnoringProcess"]})
+    view = {
+        "protocol": PROTOCOL,
+        "experimentId": original["experimentId"],
+        "revision": original.get("revision"),
+        "originalResultsSha256": _sha(output / "results.json"),
+        "rescoringVersion": _sha(__file__),
+        "rows": rows,
+        **aggregate(rows),
+        "managementTickets": False,
+        "publicationEvidence": False,
+        "branchCoverage": [],
+        "statisticalBenefitEstablished": False,
+    }
+    path = output / "rescored.json"
+    _write(path, view)
+    return view
 
 
 def run(config_path, candidate_directory, qualification_directory, output, progress=None):
