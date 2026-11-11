@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "projectId": "my-skill-demo-001",
+  "skillId": "demo-dream-contract",
+  "cliPath": "/absolute/path/to/pinned/claude",
+  "agentModel": "your-configured-model",
+  "cubeId": "your-writable-cube",
+  "userId": "your-memory-user"
+}
