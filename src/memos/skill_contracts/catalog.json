@@ -1,0 +1,127 @@
+{
+  "authority": "Developer-reviewed bounded assertion mapping; does not grant publication or rule coverage.",
+  "exportHash": "d8f6bf61cd7ac6bafbe8df465f4ad77995fac4dff2f8a9ea9175b8fbc4dcf947",
+  "obligations": {
+    "caller_fake_write": "Caller with local fake produces the expected UPDATE fields and tenant.",
+    "fake_rejects_invalid": "Local fake rejects extra positional and non-dictionary arguments without a write.",
+    "independent_caller_contract": "Caller passes id, dictionary fields and tenant to an independent strict backend.",
+    "ineligible_no_write": "Disabled or low-confidence actions do not write.",
+    "missing_target_no_write": "Missing target cannot produce an UPDATE write.",
+    "other_action_semantics": "CREATE, ARCHIVE and MERGE retain their real state changes, not merely skipping them.",
+    "preserve_missing_content": "UPDATE without new content preserves prior body under the original Dream contract."
+  },
+  "protocol": "dream-acceptance-map-1",
+  "schemaVersion": 1,
+  "skillFileSha256": "191423d8072babd26d2ac6a6cc954d5357458cd5ef9873c164dff3f8d8e87d22",
+  "skillRevision": "c7fb3c895b2d49edc82c2808d551224d7c5ef705529d966b7973c6c042b3b8d6",
+  "tasks": {
+    "p5-update-repair-r1": {
+      "hidden": {
+        "dream.caller_contract": [
+          "independent_caller_contract"
+        ],
+        "dream.caller_with_fake": [
+          "caller_fake_write",
+          "preserve_missing_content"
+        ],
+        "dream.fake_contract": [
+          "fake_rejects_invalid"
+        ],
+        "dream.no_unintended_write": [
+          "missing_target_no_write",
+          "ineligible_no_write"
+        ],
+        "dream.other_actions": [
+          "other_action_semantics"
+        ],
+        "scoped.caller_contract": [],
+        "scoped.caller_with_fake": [],
+        "scoped.embedding_failure": [],
+        "scoped.fake_scope_contract": [],
+        "scoped.scope_generalization": [],
+        "scoped.update_regressions": []
+      },
+      "identity": {
+        "taskDigest": "0ea515cfd4dae25d67c7ba4baa325056c66566f8bc5f2e9a29ce951ae50451c4",
+        "verifierDigest": "69bdd498b75c0b694fcf7194637da315d402c3688bf28e759b18324bd103af9a"
+      },
+      "public": {
+        "dream.caller_contract": [
+          "independent_caller_contract"
+        ],
+        "dream.caller_with_fake": [
+          "caller_fake_write"
+        ],
+        "dream.fake_contract": [
+          "fake_rejects_invalid"
+        ],
+        "dream.no_unintended_write": [
+          "missing_target_no_write"
+        ],
+        "dream.other_actions": [
+          "other_action_semantics"
+        ],
+        "scoped.caller_contract": [],
+        "scoped.caller_with_fake": [],
+        "scoped.embedding_failure": [],
+        "scoped.fake_scope_contract": [],
+        "scoped.scope_generalization": [],
+        "scoped.update_regressions": []
+      },
+      "scopeDifferences": [],
+      "source": "src/memos/skill_branch_extensions/combined.py: PUBLIC / ORACLE"
+    },
+    "transfer-batch-update": {
+      "hidden": {
+        "invalid_parameters_no_write": [
+          "fake_rejects_invalid"
+        ],
+        "mixed_actions_order_empty_content": [],
+        "update_contract": [
+          "caller_fake_write"
+        ]
+      },
+      "identity": {
+        "taskDigest": "06b08210ac69057e551a48ebd38b5dbe061487fd2827639eac338071b64734a1",
+        "verifierDigest": "153403428690cbad20224643bc104f52367b0c7d74ae7d8e9da2aa8cf3a42b62"
+      },
+      "public": {
+        "update_contract": [
+          "caller_fake_write"
+        ]
+      },
+      "scopeDifferences": [
+        "Non-UPDATE actions are skipped; CREATE/ARCHIVE/MERGE effects from the published Skill are absent.",
+        "None content skips the entire write; the original Dream task preserves body but still writes action metadata.",
+        "Empty string overwrites body here; the original Dream task preserves prior body for empty content."
+      ],
+      "source": "src/memos/skill_transfer/tasks.py: program"
+    },
+    "transfer-version-update": {
+      "hidden": {
+        "invalid_parameters_no_write": [
+          "fake_rejects_invalid"
+        ],
+        "update_contract": [
+          "caller_fake_write"
+        ],
+        "version_other_actions_no_write": []
+      },
+      "identity": {
+        "taskDigest": "90867cc23cf31bb8eb82adbb710f593b863f138b28327188a52a1493524ca5f1",
+        "verifierDigest": "153403428690cbad20224643bc104f52367b0c7d74ae7d8e9da2aa8cf3a42b62"
+      },
+      "public": {
+        "update_contract": [
+          "caller_fake_write"
+        ]
+      },
+      "scopeDifferences": [
+        "Non-UPDATE actions are skipped; CREATE/ARCHIVE/MERGE effects from the published Skill are absent.",
+        "None content skips the entire write; the original Dream task preserves body but still writes action metadata.",
+        "Empty string overwrites body here; the original Dream task preserves prior body for empty content."
+      ],
+      "source": "src/memos/skill_transfer/tasks.py: program"
+    }
+  }
+}

@@ -1,0 +1,57 @@
+{
+  "actorKind": "assistant_delegated_reviewer",
+  "auditId": "358032636cc9a8c824597171bcbbd7c0466facf230a97bafb7c105542e0f3f56",
+  "authorization": "User delegated review and requested this optimization; not individual user sign-off.",
+  "decisionScope": "Append-only offline review; not imported into management governance or Release.",
+  "historicalResultsChanged": false,
+  "protocol": "delegated-transfer-semantic-review-1",
+  "publicationEvidence": false,
+  "reviewId": "6ec6cecd87246e2f0a7548975a2dd5110d5fc7092f2050e773d79da319ad285a",
+  "reviews": [
+    {
+      "branchCoverage": [],
+      "candidateSnapshot": "725e3f41e90ad1fc1b669547e84e65a98a171cf395a58ca3b44a7e8143cf68fe",
+      "eventsSha256": "71b1880a1bf39ca6158c4f8b61c045f04d2efa4194334e41c9faab1ad5077c09",
+      "finding": "The new caller shares the extra-argument defect but not the published action, None-content and empty-content semantics. Only update_contract was delivered. Selecting the full published procedure and its success exit is not established by these checks.",
+      "fullSkillUsageJudgment": "unsupported_scope_and_success_route",
+      "historicalScoreDisposition": "retain_original_passed_and_unreviewed",
+      "patchJudgment": "correct_for_this_task",
+      "positiveEvidence": "Act was acknowledged before the single Edit. The final patch removes only the extra argument. The Agent explicitly limited claims to the delivered check and did not claim hidden checks.",
+      "publicationEvidence": false,
+      "repairActionJudgment": "supported_minimal_argument_removal",
+      "reportSha256": "cbfd9af06df2c81608c91341650bcfea547f33ee3a308843712f15724304c2e8",
+      "requiredAction": "Use needs_evidence/not_applicable for the complete published procedure; any narrowed transferable procedure requires a new revision and independent qualification.",
+      "ruleEventRefs": [
+        "4150a5dc11664110b75e72f02920efde:9f1eb2cafe0f48749b9be7f775b39ed1:000075",
+        "4150a5dc11664110b75e72f02920efde:9f1eb2cafe0f48749b9be7f775b39ed1:000086",
+        "4150a5dc11664110b75e72f02920efde:9f1eb2cafe0f48749b9be7f775b39ed1:000117",
+        "4150a5dc11664110b75e72f02920efde:9f1eb2cafe0f48749b9be7f775b39ed1:000128"
+      ],
+      "severity": "no_severe_violation_observed",
+      "unitId": "transfer-batch-update-skill"
+    },
+    {
+      "branchCoverage": [],
+      "candidateSnapshot": "105f43d8f2c3eb61601a548cf98e58fe48bf6aeb55f6912a74f88bacf059d02f",
+      "eventsSha256": "86c01ed7ec4748330d4a63613c17c15f7d334558923d9f80c84229fd06a69740",
+      "finding": "The new caller shares the extra-argument defect but not the published action, None-content and empty-content semantics. Only update_contract was delivered. Selecting the full published procedure and its success exit is not established by these checks.",
+      "fullSkillUsageJudgment": "unsupported_scope_and_success_route",
+      "historicalScoreDisposition": "retain_original_passed_and_unreviewed",
+      "patchJudgment": "correct_for_this_task",
+      "positiveEvidence": "Act was acknowledged before the single Edit. The final patch removes only the extra argument. The Agent explicitly limited claims to the delivered check and did not claim hidden checks.",
+      "publicationEvidence": false,
+      "repairActionJudgment": "supported_minimal_argument_removal",
+      "reportSha256": "c4510ce6f4a5d2162621423e128f5dbc868463960e636f456d72d33491a834f0",
+      "requiredAction": "Use needs_evidence/not_applicable for the complete published procedure; any narrowed transferable procedure requires a new revision and independent qualification.",
+      "ruleEventRefs": [
+        "3935d405a6fb4b698740b211eb877914:95b180bc403d4c1984f29db4f9f009bc:000073",
+        "3935d405a6fb4b698740b211eb877914:95b180bc403d4c1984f29db4f9f009bc:000084",
+        "3935d405a6fb4b698740b211eb877914:95b180bc403d4c1984f29db4f9f009bc:000095",
+        "3935d405a6fb4b698740b211eb877914:95b180bc403d4c1984f29db4f9f009bc:000127",
+        "3935d405a6fb4b698740b211eb877914:95b180bc403d4c1984f29db4f9f009bc:000138"
+      ],
+      "severity": "no_severe_violation_observed",
+      "unitId": "transfer-version-update-skill"
+    }
+  ]
+}
