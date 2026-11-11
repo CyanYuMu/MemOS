@@ -4,7 +4,7 @@ import json
 
 import pytest
 
-from memos.skill_contracts.audit import read_json, verified_receipt
+from memos.skill_contracts.audit import audit_batch, read_json, verified_receipt
 from memos.skill_transfer.tasks import TASKS, materialize_case
 from memos.skill_transfer.verification import verify_candidate
 
@@ -24,6 +24,16 @@ def test_symlink_input_is_rejected(tmp_path):
     link.symlink_to(path)
     with pytest.raises(ValueError):
         read_json(link)
+
+
+def test_output_alias_cannot_write_inside_original_batch(tmp_path):
+    batch = tmp_path / "batch"
+    batch.mkdir()
+    alias = tmp_path / "alias"
+    alias.symlink_to(batch, target_is_directory=True)
+    with pytest.raises(ValueError, match="contract_output_inside_history"):
+        audit_batch(batch, alias / "new-audit")
+    assert list(batch.iterdir()) == []
 
 
 def test_final_patch_or_receipt_changes_cannot_support_audit(tmp_path):

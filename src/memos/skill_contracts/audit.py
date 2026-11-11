@@ -57,7 +57,7 @@ def _rows(checks):
 
 
 def audit_batch(batch, output):
-    batch, output = Path(batch).resolve(), Path(output).absolute()
+    batch, output = Path(batch).resolve(), Path(output).resolve()
     require(not output.exists() and not output.is_symlink(), "contract_output_exists")
     require(not output.is_relative_to(batch), "contract_output_inside_history")
     manifest = read_json(batch / "manifest.json")
@@ -86,6 +86,22 @@ def audit_batch(batch, output):
         require(unit["taskDigest"] == profile["identity"]["taskDigest"])
         require(
             report["experiment_id"] == manifest["experimentId"] and report["group"] == unit["group"]
+        )
+        require(report["adapter_sha256"] == manifest["adapterDigest"])
+        for report_key, manifest_key in (
+            ("cli_sha256", "cliHash"),
+            ("cli_version", "cliVersion"),
+            ("requested_model", "model"),
+            ("max_turns", "maxTurns"),
+            ("timeout_seconds", "timeoutSeconds"),
+            ("max_budget_usd", "maxBudgetUsd"),
+            ("effort", "effort"),
+            ("tools", "tools"),
+        ):
+            require(report[report_key] == manifest["runtime"][manifest_key])
+        require(
+            report["skill_export"]
+            == (manifest["projection"]["manifest"] if unit["group"] == "skill" else None)
         )
         require(report["case_asset_digest"] == unit["taskDigest"])
         require(report["events_sha256"] == sha(root / "events.jsonl"))
