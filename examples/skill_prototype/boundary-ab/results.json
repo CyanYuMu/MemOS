@@ -1,0 +1,561 @@
+{
+  "schemaVersion": 1,
+  "protocol": "p5-boundary-ab-1",
+  "experimentId": "3a7896b00873870f81e3a519d17612275422869d0715db62099c88f3cb4cd9fa",
+  "manifestSha256": "dea51f788a17d09de5a4aac85b939785325bac8a6f74dd2e14db33ab3e764a4b",
+  "originalResultsSha256": "cacf95c86e3970f59c8b875331bf47dcafcf0c2edb4c014af8c93df3f7307b95",
+  "rescoredSha256": "a8ad9658b2dbafd021352a7f35a5b8c5eac5105792b9ecba2ab17480ba654714",
+  "experimentCode": "ab8ee4759fb2f80df1e39d87c3615e683b38447cbacc0b644687fe606fc276e5",
+  "adapterDigest": "f84e1268bbeda4246e0d7a1a913e8c520e4cbda81aaed25b419acaeed14e45cd",
+  "executionPolicy": {
+    "cycleDefinition": "edit_attempt_batch_between_delivered_checks",
+    "digest": "d2520b946cc400e9f1cfffbeaefb43d41209a45ff9da63729ecc9e293b115fa6",
+    "implementationSha256": "2ce9d5545bb9443b1f5a73abb46f6c25092c0d2364df0b4ae63698fc6eaf3524",
+    "maxRepairCycles": 2,
+    "promptSha256": "00cb89858f68ed1254e52fdd6a96e8680fdaa863c5bd46f223ba1037e4d0f93d",
+    "protocol": "p5-execution-policy-1",
+    "stopWhenAllChecksPass": true
+  },
+  "skillId": "python-mock-fixture-contract-repair",
+  "revision": "c7fb3c895b2d49edc82c2808d551224d7c5ef705529d966b7973c6c042b3b8d6",
+  "contentHash": "c338a0593bb00f109391f36da621861587e5a4a0b2191a4fcaf97636608e7458",
+  "exportHash": "d8f6bf61cd7ac6bafbe8df465f4ad77995fac4dff2f8a9ea9175b8fbc4dcf947",
+  "runtime": {
+    "cliHash": "c9b5341637becbd423ddffc5b254afb645682a3868cb708bbc6cc0e7bb419937",
+    "cliVersion": "2.1.296",
+    "effort": "low",
+    "maxBudgetUsd": 3,
+    "maxTurns": 20,
+    "model": "claude-opus-5-5",
+    "timeoutSeconds": 240,
+    "tools": [
+      "Read",
+      "Edit",
+      "Write"
+    ]
+  },
+  "repetitions": 2,
+  "plannedUnits": 24,
+  "observedUnits": 24,
+  "complete": true,
+  "groups": [
+    {
+      "elapsedSeconds": 197.959,
+      "failed": 0,
+      "group": "none",
+      "passed": 8,
+      "passedIgnoringProcess": 12,
+      "processIssueRuns": 4,
+      "reportedCostUsd": 0.646846,
+      "total": 12,
+      "unknown": 4
+    },
+    {
+      "elapsedSeconds": 317.021,
+      "failed": 0,
+      "group": "skill",
+      "passed": 9,
+      "passedIgnoringProcess": 12,
+      "processIssueRuns": 3,
+      "reportedCostUsd": 1.222562,
+      "total": 12,
+      "unknown": 3
+    }
+  ],
+  "pairs": {
+    "bothFailed": 0,
+    "bothPassed": 8,
+    "comparable": 8,
+    "noneOnlyPassed": 0,
+    "skillOnlyPassed": 0,
+    "withUnknown": 4
+  },
+  "pairsIgnoringProcess": {
+    "bothFailed": 0,
+    "bothPassed": 12,
+    "comparable": 12,
+    "noneOnlyPassed": 0,
+    "skillOnlyPassed": 0,
+    "withUnknown": 0
+  },
+  "rows": [
+    {
+      "id": "check-unavailable-r1-none-r1",
+      "suiteId": "check-unavailable-r1",
+      "group": "none",
+      "repetition": 1,
+      "status": "unknown",
+      "outcomeIgnoringProcess": "passed",
+      "processIssues": [
+        "check_edit_overlap"
+      ],
+      "executionIssues": [
+        "capture_incomplete",
+        "process_incomplete"
+      ],
+      "outcomeKind": "tool_failure",
+      "outcomeReasons": [
+        "process_incomplete"
+      ],
+      "failureType": null,
+      "elapsedSeconds": 17.713,
+      "reportedCostUsd": 0.0549786,
+      "numTurns": 7,
+      "reportSha256": "ba17a446f071b2d5c8aae0f21b28f3d84158ec9b07802e06d0dcdfa01896f1c7"
+    },
+    {
+      "id": "check-unavailable-r1-skill-r1",
+      "suiteId": "check-unavailable-r1",
+      "group": "skill",
+      "repetition": 1,
+      "status": "unknown",
+      "outcomeIgnoringProcess": "passed",
+      "processIssues": [
+        "check_edit_overlap"
+      ],
+      "executionIssues": [
+        "capture_incomplete",
+        "loading_unverified",
+        "process_incomplete"
+      ],
+      "outcomeKind": "tool_failure",
+      "outcomeReasons": [
+        "process_incomplete"
+      ],
+      "failureType": null,
+      "elapsedSeconds": 29.536,
+      "reportedCostUsd": 0.10947600000000002,
+      "numTurns": 11,
+      "reportSha256": "6392930d508f6888b321cec3ddbf8fcdfd343c4f2110c9f39def18d27b999072"
+    },
+    {
+      "id": "check-unavailable-r1-none-r2",
+      "suiteId": "check-unavailable-r1",
+      "group": "none",
+      "repetition": 2,
+      "status": "passed",
+      "outcomeIgnoringProcess": "passed",
+      "processIssues": [],
+      "executionIssues": [],
+      "outcomeKind": "tool_failure",
+      "outcomeReasons": [],
+      "failureType": null,
+      "elapsedSeconds": 15.899,
+      "reportedCostUsd": 0.0496086,
+      "numTurns": 7,
+      "reportSha256": "bc8ce8b44ad22522592c6eec9a0aa4b358d2851fa8c24e3561aeb39f2537500e"
+    },
+    {
+      "id": "check-unavailable-r1-skill-r2",
+      "suiteId": "check-unavailable-r1",
+      "group": "skill",
+      "repetition": 2,
+      "status": "passed",
+      "outcomeIgnoringProcess": "passed",
+      "processIssues": [],
+      "executionIssues": [],
+      "outcomeKind": "tool_failure",
+      "outcomeReasons": [],
+      "failureType": null,
+      "elapsedSeconds": 26.023,
+      "reportedCostUsd": 0.10331119999999999,
+      "numTurns": 10,
+      "reportSha256": "23b8c46f714d8eff11d700b48ed235a780cb0792adb2b5e8c8624971d11ed067"
+    },
+    {
+      "id": "contract-missing-r1-none-r1",
+      "suiteId": "contract-missing-r1",
+      "group": "none",
+      "repetition": 1,
+      "status": "passed",
+      "outcomeIgnoringProcess": "passed",
+      "processIssues": [],
+      "executionIssues": [],
+      "outcomeKind": "missing_evidence",
+      "outcomeReasons": [],
+      "failureType": null,
+      "elapsedSeconds": 11.989,
+      "reportedCostUsd": 0.032865000000000005,
+      "numTurns": 5,
+      "reportSha256": "50525dd4e33a0544c46934b0bdddbb9aa64453e0091691ec1857c9cedca74ed9"
+    },
+    {
+      "id": "contract-missing-r1-skill-r1",
+      "suiteId": "contract-missing-r1",
+      "group": "skill",
+      "repetition": 1,
+      "status": "passed",
+      "outcomeIgnoringProcess": "passed",
+      "processIssues": [],
+      "executionIssues": [],
+      "outcomeKind": "missing_evidence",
+      "outcomeReasons": [],
+      "failureType": null,
+      "elapsedSeconds": 20.071,
+      "reportedCostUsd": 0.0747774,
+      "numTurns": 7,
+      "reportSha256": "4baba83c6f7630fafc763bf1d8e94d5ac9095d69ba53111f07f5be4db45f945a"
+    },
+    {
+      "id": "contract-missing-r1-none-r2",
+      "suiteId": "contract-missing-r1",
+      "group": "none",
+      "repetition": 2,
+      "status": "passed",
+      "outcomeIgnoringProcess": "passed",
+      "processIssues": [],
+      "executionIssues": [],
+      "outcomeKind": "missing_evidence",
+      "outcomeReasons": [],
+      "failureType": null,
+      "elapsedSeconds": 13.556,
+      "reportedCostUsd": 0.0336448,
+      "numTurns": 5,
+      "reportSha256": "655a8c4aa0e5c7b9439e82c152152ddaace2c9ac141d0712879e29fcf00b3200"
+    },
+    {
+      "id": "contract-missing-r1-skill-r2",
+      "suiteId": "contract-missing-r1",
+      "group": "skill",
+      "repetition": 2,
+      "status": "passed",
+      "outcomeIgnoringProcess": "passed",
+      "processIssues": [],
+      "executionIssues": [],
+      "outcomeKind": "missing_evidence",
+      "outcomeReasons": [],
+      "failureType": null,
+      "elapsedSeconds": 18.065,
+      "reportedCostUsd": 0.0760702,
+      "numTurns": 7,
+      "reportSha256": "401ee9f241d44265ef15a8c441e1e50c6ffbacc6da66db480010fe30ba60d6ea"
+    },
+    {
+      "id": "scope-outside-r1-none-r1",
+      "suiteId": "scope-outside-r1",
+      "group": "none",
+      "repetition": 1,
+      "status": "passed",
+      "outcomeIgnoringProcess": "passed",
+      "processIssues": [],
+      "executionIssues": [],
+      "outcomeKind": "out_of_scope",
+      "outcomeReasons": [],
+      "failureType": null,
+      "elapsedSeconds": 14.154,
+      "reportedCostUsd": 0.0468862,
+      "numTurns": 5,
+      "reportSha256": "ab384c053a955a88ad64486c2596b0e750b396f474bd9ded0f54c32269db920b"
+    },
+    {
+      "id": "scope-outside-r1-skill-r1",
+      "suiteId": "scope-outside-r1",
+      "group": "skill",
+      "repetition": 1,
+      "status": "passed",
+      "outcomeIgnoringProcess": "passed",
+      "processIssues": [],
+      "executionIssues": [],
+      "outcomeKind": "out_of_scope",
+      "outcomeReasons": [],
+      "failureType": null,
+      "elapsedSeconds": 24.359,
+      "reportedCostUsd": 0.09303039999999999,
+      "numTurns": 7,
+      "reportSha256": "32aef0154de4bef9600d56e529387110d069f84e9ad7be7386c6c9eb49fb8ac5"
+    },
+    {
+      "id": "scope-outside-r1-none-r2",
+      "suiteId": "scope-outside-r1",
+      "group": "none",
+      "repetition": 2,
+      "status": "passed",
+      "outcomeIgnoringProcess": "passed",
+      "processIssues": [],
+      "executionIssues": [],
+      "outcomeKind": "out_of_scope",
+      "outcomeReasons": [],
+      "failureType": null,
+      "elapsedSeconds": 15.214,
+      "reportedCostUsd": 0.04432900000000001,
+      "numTurns": 5,
+      "reportSha256": "e13e2a502e05da6c6976a252e0a075aaab55d7e57f52c3bfa66840d223b8c4f1"
+    },
+    {
+      "id": "scope-outside-r1-skill-r2",
+      "suiteId": "scope-outside-r1",
+      "group": "skill",
+      "repetition": 2,
+      "status": "passed",
+      "outcomeIgnoringProcess": "passed",
+      "processIssues": [],
+      "executionIssues": [],
+      "outcomeKind": "out_of_scope",
+      "outcomeReasons": [],
+      "failureType": null,
+      "elapsedSeconds": 31.306,
+      "reportedCostUsd": 0.0935398,
+      "numTurns": 7,
+      "reportSha256": "f74333d3b45aed66c3e59e9100be032978e0c73fdd765d2bbf46e0830afe7be5"
+    },
+    {
+      "id": "update-healthy-r1-none-r1",
+      "suiteId": "update-healthy-r1",
+      "group": "none",
+      "repetition": 1,
+      "status": "passed",
+      "outcomeIgnoringProcess": "passed",
+      "processIssues": [],
+      "executionIssues": [],
+      "outcomeKind": "healthy",
+      "outcomeReasons": [],
+      "failureType": null,
+      "elapsedSeconds": 15.926,
+      "reportedCostUsd": 0.0441648,
+      "numTurns": 5,
+      "reportSha256": "bd4959fa206001dfd02545c9f80a90c8152b58c535dc00e9c60a324ce6c0b8d3"
+    },
+    {
+      "id": "update-healthy-r1-skill-r1",
+      "suiteId": "update-healthy-r1",
+      "group": "skill",
+      "repetition": 1,
+      "status": "passed",
+      "outcomeIgnoringProcess": "passed",
+      "processIssues": [],
+      "executionIssues": [],
+      "outcomeKind": "healthy",
+      "outcomeReasons": [],
+      "failureType": null,
+      "elapsedSeconds": 19.129,
+      "reportedCostUsd": 0.0813228,
+      "numTurns": 7,
+      "reportSha256": "b9b97167260d1fe1d77f40796d549026c569b98e46579e46f246e0a7693ce17c"
+    },
+    {
+      "id": "update-healthy-r1-none-r2",
+      "suiteId": "update-healthy-r1",
+      "group": "none",
+      "repetition": 2,
+      "status": "passed",
+      "outcomeIgnoringProcess": "passed",
+      "processIssues": [],
+      "executionIssues": [],
+      "outcomeKind": "healthy",
+      "outcomeReasons": [],
+      "failureType": null,
+      "elapsedSeconds": 15.628,
+      "reportedCostUsd": 0.043445,
+      "numTurns": 5,
+      "reportSha256": "8bbebcc55ea3c89f303cdb8a786e3044f3083d3f2ebe2837e8fabceb64664393"
+    },
+    {
+      "id": "update-healthy-r1-skill-r2",
+      "suiteId": "update-healthy-r1",
+      "group": "skill",
+      "repetition": 2,
+      "status": "passed",
+      "outcomeIgnoringProcess": "passed",
+      "processIssues": [],
+      "executionIssues": [],
+      "outcomeKind": "healthy",
+      "outcomeReasons": [],
+      "failureType": null,
+      "elapsedSeconds": 21.135,
+      "reportedCostUsd": 0.0808764,
+      "numTurns": 7,
+      "reportSha256": "0785bc198958ab20118c54549460d2e57d3b79ba1632f69b3e9bb7c3e218e96e"
+    },
+    {
+      "id": "update-repair-r1-none-r1",
+      "suiteId": "update-repair-r1",
+      "group": "none",
+      "repetition": 1,
+      "status": "unknown",
+      "outcomeIgnoringProcess": "passed",
+      "processIssues": [
+        "check_edit_overlap"
+      ],
+      "executionIssues": [
+        "capture_incomplete",
+        "process_incomplete"
+      ],
+      "outcomeKind": "repair",
+      "outcomeReasons": [
+        "process_incomplete"
+      ],
+      "failureType": null,
+      "elapsedSeconds": 16.014,
+      "reportedCostUsd": 0.0740478,
+      "numTurns": 7,
+      "reportSha256": "e5e7b8557ea3e0374a70605b616f3771ba5252c630bba74442f6ae2fe0980ba2"
+    },
+    {
+      "id": "update-repair-r1-skill-r1",
+      "suiteId": "update-repair-r1",
+      "group": "skill",
+      "repetition": 1,
+      "status": "unknown",
+      "outcomeIgnoringProcess": "passed",
+      "processIssues": [
+        "check_edit_overlap"
+      ],
+      "executionIssues": [
+        "capture_incomplete",
+        "loading_unverified",
+        "process_incomplete"
+      ],
+      "outcomeKind": "repair",
+      "outcomeReasons": [
+        "process_incomplete"
+      ],
+      "failureType": null,
+      "elapsedSeconds": 29.44,
+      "reportedCostUsd": 0.12702639999999998,
+      "numTurns": 11,
+      "reportSha256": "2b5d481fb5db5232bd021ffc1cab82d26a68c3f92f0ac846b5eb8ee5c750fa1e"
+    },
+    {
+      "id": "update-repair-r1-none-r2",
+      "suiteId": "update-repair-r1",
+      "group": "none",
+      "repetition": 2,
+      "status": "passed",
+      "outcomeIgnoringProcess": "passed",
+      "processIssues": [],
+      "executionIssues": [],
+      "outcomeKind": "repair",
+      "outcomeReasons": [],
+      "failureType": null,
+      "elapsedSeconds": 15.549,
+      "reportedCostUsd": 0.0541938,
+      "numTurns": 7,
+      "reportSha256": "09dc6177a072123cc948c670f0108de0aa46948ba4563df54ae736582e8285ca"
+    },
+    {
+      "id": "update-repair-r1-skill-r2",
+      "suiteId": "update-repair-r1",
+      "group": "skill",
+      "repetition": 2,
+      "status": "passed",
+      "outcomeIgnoringProcess": "passed",
+      "processIssues": [],
+      "executionIssues": [],
+      "outcomeKind": "repair",
+      "outcomeReasons": [],
+      "failureType": null,
+      "elapsedSeconds": 27.863,
+      "reportedCostUsd": 0.10953779999999999,
+      "numTurns": 11,
+      "reportSha256": "e4467e6ec60766dfab75bcfeb471cfd0a6ef6d888ea269816164d80468effe42"
+    },
+    {
+      "id": "update-unresolved-r1-none-r1",
+      "suiteId": "update-unresolved-r1",
+      "group": "none",
+      "repetition": 1,
+      "status": "unknown",
+      "outcomeIgnoringProcess": "passed",
+      "processIssues": [
+        "check_edit_overlap"
+      ],
+      "executionIssues": [
+        "capture_incomplete",
+        "process_incomplete"
+      ],
+      "outcomeKind": "unresolved",
+      "outcomeReasons": [
+        "process_incomplete"
+      ],
+      "failureType": null,
+      "elapsedSeconds": 22.258,
+      "reportedCostUsd": 0.08307600000000001,
+      "numTurns": 8,
+      "reportSha256": "6350546a72add59bf90246581d9798a00ef2c86d4d5a301891a664d314e09788"
+    },
+    {
+      "id": "update-unresolved-r1-skill-r1",
+      "suiteId": "update-unresolved-r1",
+      "group": "skill",
+      "repetition": 1,
+      "status": "unknown",
+      "outcomeIgnoringProcess": "passed",
+      "processIssues": [
+        "check_edit_overlap"
+      ],
+      "executionIssues": [
+        "capture_incomplete",
+        "loading_unverified",
+        "process_incomplete"
+      ],
+      "outcomeKind": "unresolved",
+      "outcomeReasons": [
+        "process_incomplete"
+      ],
+      "failureType": null,
+      "elapsedSeconds": 36.853,
+      "reportedCostUsd": 0.1470692,
+      "numTurns": 12,
+      "reportSha256": "6689c728fabfb1e2ec4aa8028058397d993664d2825d75f7264593175195c06b"
+    },
+    {
+      "id": "update-unresolved-r1-none-r2",
+      "suiteId": "update-unresolved-r1",
+      "group": "none",
+      "repetition": 2,
+      "status": "unknown",
+      "outcomeIgnoringProcess": "passed",
+      "processIssues": [
+        "check_edit_overlap"
+      ],
+      "executionIssues": [
+        "capture_incomplete",
+        "process_incomplete"
+      ],
+      "outcomeKind": "unresolved",
+      "outcomeReasons": [
+        "process_incomplete"
+      ],
+      "failureType": null,
+      "elapsedSeconds": 24.059,
+      "reportedCostUsd": 0.0856066,
+      "numTurns": 8,
+      "reportSha256": "3089626db68841331c43e8e89c3f2c27cf567393834070e6787a6e0603d96447"
+    },
+    {
+      "id": "update-unresolved-r1-skill-r2",
+      "suiteId": "update-unresolved-r1",
+      "group": "skill",
+      "repetition": 2,
+      "status": "passed",
+      "outcomeIgnoringProcess": "passed",
+      "processIssues": [],
+      "executionIssues": [],
+      "outcomeKind": "unresolved",
+      "outcomeReasons": [],
+      "failureType": null,
+      "elapsedSeconds": 33.241,
+      "reportedCostUsd": 0.12652439999999998,
+      "numTurns": 11,
+      "reportSha256": "c54585576528cde026102b6f837f1976c92cb2742dcc86c857e3b01bb9cabfed"
+    }
+  ],
+  "abortedBatch": {
+    "experimentId": "bce5d4d895229f700f17df5879671f458eee98c9d556b04016e21020cab76990",
+    "reason": "stopped during the second unit: the experiment code digest changed by a formatting commit",
+    "completedUnits": [
+      "update-repair-r1-none-r1"
+    ],
+    "counted": false
+  },
+  "managementTickets": false,
+  "publicationEvidence": false,
+  "branchCoverage": [],
+  "statisticalBenefitEstablished": false,
+  "limitations": [
+    "Two repetitions per task and group; paired observations are not independent samples.",
+    "Four of twelve pairs are unknown in the primary view because the Agent ran a check while editing, so the P5 process evidence cannot prove the check/edit order.",
+    "Only the fixed six P5 tasks; this does not measure general repair capability.",
+    "Costs are native provider reports, not reconciled billing."
+  ]
+}
