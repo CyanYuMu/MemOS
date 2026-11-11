@@ -1,6 +1,6 @@
 # 验收契约与公开复现验收记录
 
-日期：2026-11-11。开发范围见 [计划](skill-prototype-contract-repro-v1.md)，使用说明见 [公开复现指南](skill-prototype-public-reproduction.md)。本轮在 `codex/skill-contract-repro-v1` 本机提交，未推送；不修改 Go/前端或已发布 Skill。
+日期：2026-11-11。开发范围见 [计划](skill-prototype-contract-repro-v1.md)，使用说明见 [公开复现指南](skill-prototype-public-reproduction.md)。本轮在 `codex/skill-contract-repro-v1` 提交，同日快进推送到 PR #7 分支；不修改 Go/前端或已发布 Skill。
 
 ## 1 契约与历史审阅
 

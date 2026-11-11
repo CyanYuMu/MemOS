@@ -1,6 +1,6 @@
 # Skill 本机可用性优化：操作与验收
 
-日期：2026-11-11。对应 [开发计划](skill-prototype-usability-v1.md)，补充 [原型交付入口](skill-prototype-handoff.md)。本轮代码仅在本机三个优化分支提交，未推送或更新原 PR。原 P4/P5 批次、Skill 内容、Release 和来源记录不改写。
+日期：2026-11-11。对应 [开发计划](skill-prototype-usability-v1.md)，补充 [原型交付入口](skill-prototype-handoff.md)。本轮代码先在本机三个优化分支提交，同日已快进推送到原 PR #7、#8、#9 的分支，未改写已有提交。原 P4/P5 批次、Skill 内容、Release 和来源记录不改写。
 
 配套分支为 `codex/skill-usability-v1`、`codex/skill-usability-v1-be`、`codex/skill-usability-v1-fe`。后两者当前提交分别为 `c0b474bc`、`f2129825`；Python 生产改动包括 `68c3c910`、`c6e41a7e`、`9cdae826`、`c1306c37` 和实验模块 `5c034c8f`，后续中文提交记录测试与验收资料。
 

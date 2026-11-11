@@ -2,7 +2,7 @@
 
 日期：2026-11-09。对应 [Issue #6](https://github.com/hugegraph/MemOS/issues/6)。本原型完成从受控任务经验、Memory 回读、候选提炼与图谱，到独立验证、受托审阅和正式发布的链路。当前范围是 **Dream UPDATE 调用中移除多余位置参数**；不声称具备通用 Python mock/fixture 修复能力。
 
-2026-11-11 本机增量：[可用性优化操作与验收](skill-prototype-usability-results.md)。新增常驻服务正常运行、未知反馈恢复、追加监测绑定及同合同新任务探测；下文保留原交付批次和 PR 的历史记录。本轮优化分支尚未推送。
+2026-11-11 本机增量：[可用性优化操作与验收](skill-prototype-usability-results.md)。新增常驻服务正常运行、未知反馈恢复、追加监测绑定及同合同新任务探测；下文保留原交付批次和 PR 的历史记录。这些增量已于同日快进推送到 PR #7、#8、#9 的分支。
 
 后续本机增量：[公开复现入口](skill-prototype-public-reproduction.md) 提供全新来源到候选图谱的分阶段命令；[契约审阅与复现结果](skill-prototype-contract-repro-results.md) 补充检查语义、历史实验受托审阅和新批次结果。旧文中“同合同迁移”仅指共享参数调用缺陷族；审阅确认新任务的 None、空字符串及其他动作语义不同，不构成原 Skill 完整合同等价。
 
@@ -90,7 +90,7 @@ go test ./...
 
 ## 5 实验结论与限制
 
-[P4 三组对照](skill-prototype-p4-results.md) 的三个主修复任务，各组均为 3/3，未观察到修复率提升；Skill 组在这些任务上更慢、更贵。旧失败、验收器问题及 [P4.1 修正](skill-prototype-p41.md) 均保留。新七单元是发布资格验证，不是新一轮三组效果实验，也不增加独立问题族。
+[P4 三组对照](skill-prototype-p4-results.md) 的三个主修复任务，各组均为 3/3，未观察到修复率提升；Skill 组在这些任务上更慢、更贵。旧失败、验收器问题及 [P4.1 修正](skill-prototype-p41.md) 均保留。新七单元是发布资格验证，不是新一轮三组效果实验，也不增加独立问题族。11 月 11 日在已发布 c7 上补做了边界任务对照（六个 P5 任务、none 与 skill 各两轮）：12 个可比较配对两组全部通过，Skill 组更慢更贵，仍无可测量差异；见 [边界对照](skill-prototype-boundary-ab.md)。
 
 当前来源样本和场景很窄，不能证明广泛复用能力。候选经来源复核和受控修订收窄；成功补丁不证明模型每句话都正确，裁决明确排除无依据的细部解释。当前 P5 只演示专用工具副本失效，不冒称完成原双根因来源服务故障演示。`skill_release_v2` 跨模块接入、来源 URI 公共投影和实际 pending 并发窗口仍是后续工作。自动组合多个依赖 Skill、广泛任务研究、成本优化和协议公共层重构均未纳入本次交付。
 
@@ -106,5 +106,6 @@ go test ./...
 - [原 P5 扩展合同及范围调整](skill-prototype-p5.md)
 - [本机可用性优化范围](skill-prototype-usability-v1.md)、[可用性优化结果](skill-prototype-usability-results.md)
 - [验收契约与公开复现计划](skill-prototype-contract-repro-v1.md)、[契约审阅与复现结果](skill-prototype-contract-repro-results.md)、[公开复现指南](skill-prototype-public-reproduction.md)
+- [Issue #6 验收对照](skill-prototype-acceptance.md)、[已发布 Skill 的边界任务对照](skill-prototype-boundary-ab.md)
 
 管理决定统一注明“用户授权、助手受托审阅/执行”，不冒称用户逐项亲审。公开资料只包含安全摘要；完整私有证据由操作者保管。
