@@ -1,0 +1,100 @@
+{
+  "candidate": {
+    "manifestId": "45cebd21084c72858f7b37d9e380554f9fae8d4a53f798afb34826b0fa3e4325",
+    "publicationEligible": false,
+    "revision": "499d379f29225a724418200816faf49b757a433ef756a8e6fe4969e17639d5df",
+    "ruleCount": 6,
+    "ruleEvidenceLinkCount": 29,
+    "semanticReview": "pending",
+    "skillId": "demo-dream-contract",
+    "status": "candidate"
+  },
+  "date": "2026-11-11",
+  "generation": {
+    "calls": 1,
+    "elapsed_seconds": 86.025,
+    "reported_model": "deepseek-v4-1-flash-261017",
+    "requested_model": "deepseek-v4.1-flash-1017",
+    "usage": {
+      "completion_tokens": 14661,
+      "prompt_tokens": 13694,
+      "reasoning_tokens": 10454,
+      "total_tokens": 28355
+    }
+  },
+  "graph": {
+    "initialImport": {
+      "edge_count": 37,
+      "edges_added": 37,
+      "node_count": 17,
+      "nodes_added": 17,
+      "status": "stored"
+    },
+    "repeatImport": {
+      "edge_count": 37,
+      "edges_added": 0,
+      "node_count": 17,
+      "nodes_added": 0,
+      "status": "stored"
+    },
+    "rulesWithSourceTrace": 6
+  },
+  "limits": [
+    "New candidate, not the published c7 revision.",
+    "No new independent release qualification, publication or effectiveness claim.",
+    "macOS single host; private credentials remain operator supplied."
+  ],
+  "memoryReadback": {
+    "lineageCount": 2,
+    "planDigest": "ef7aa8a4e118516f05e46c47527000e5b924bd7d622cb39ced4fee226d567f90",
+    "repeatPreservedMemoryIds": true,
+    "sourceCount": 2
+  },
+  "modelSourceCalls": 2,
+  "projectId": "skill-public-demo-20261111",
+  "protocol": "fresh-demo-public-summary-1",
+  "repeatRejections": [
+    {
+      "command": "collect",
+      "errorCode": "demo_collect_failed",
+      "exitCode": 2,
+      "sourceAndDraftArtifactsUnchanged": true
+    },
+    {
+      "command": "draft",
+      "errorCode": "demo_draft_failed",
+      "exitCode": 2,
+      "sourceAndDraftArtifactsUnchanged": true
+    }
+  ],
+  "sourceReportedCostUsd": 0.810265,
+  "sourceRuns": [
+    {
+      "caseId": "source-dream-update",
+      "elapsedSeconds": 93.733,
+      "eventsSha256": "f9607cd839420ef5434f3f0537399385ebbd10c7720d18d85f2155e9ad34990b",
+      "evidenceRevision": "45dd0feed7fc423d0334e498651d9fd32378865c7b6e3e5f7b9154811a1e2b4c",
+      "qualification": "qualified_success",
+      "reportedCostUsd": 0.2600398,
+      "skillLoading": "not_requested",
+      "taskStatus": "passed"
+    },
+    {
+      "caseId": "source-scoped-update",
+      "elapsedSeconds": 181.535,
+      "eventsSha256": "e42c78b8147cf70b67645a3a08a82a053f7aca54691844bab18ff34ef8700392",
+      "evidenceRevision": "563cb7315203fca4c6a68d77bcfc262ad3a7c780f4272bc4b4fc9d0c39b59cca",
+      "qualification": "qualified_success",
+      "reportedCostUsd": 0.5502252,
+      "skillLoading": "not_requested",
+      "taskStatus": "passed"
+    }
+  ],
+  "summaryId": "a1e73b4527e0b953abb8afbd922ef7e092a7bcbca4fbeebe45870847eddc6567",
+  "validation": {
+    "selfcheckSourcePreflights": 2,
+    "selfcheckTransferVariants": 10,
+    "skipped": 0,
+    "targetedTestsPassed": 357
+  }
+}

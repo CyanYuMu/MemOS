@@ -74,6 +74,6 @@ Memory 操作结果不确定时，可再次运行 **ingest**：已有账本沿�
 
 audit-transfer 只读原批次，回读六次报告、原生检查交付、最终补丁和收据；输出不能位于旧批次内部，不执行模型或验收程序，也不写管理图。完整工件缺失、摘要变化或收据不匹配时拒绝审计。目录内哈希用于宿主工件绑定，不是第三方签名；操作者仍须保管原始批次。
 
-公开的 [审计结果](../examples/skill_prototype/contract-repro-v1/transfer-audit.json) 与 [受托审阅](../examples/skill_prototype/contract-repro-v1/semantic-review.json) 仅追加解释，不改写原评分、不计分支覆盖、不扩大发布范围。检查契约逐项包含独立后端调用、fake 拒绝非法参数、实际 UPDATE、其他动作语义、无目标不写、无内容保留正文、不合资格不写。P5 的完整公开检查清单与全部语义输入也有区别：无内容及不合资格的细部输入由隐藏验收补证，不能说 Agent 亲自执行过。
+公开的 [审计结果](../examples/skill_prototype/contract-repro-v1/transfer-audit-final.json) 与 [受托审阅](../examples/skill_prototype/contract-repro-v1/semantic-review-final.json) 仅追加解释，不改写原评分、不计分支覆盖、不扩大发布范围。检查契约逐项包含独立后端调用、fake 拒绝非法参数、实际 UPDATE、其他动作语义、无目标不写、无内容保留正文、不合资格不写。P5 的完整公开检查清单与全部语义输入也有区别：无内容及不合资格的细部输入由隐藏验收补证，不能说 Agent 亲自执行过。
 
 transfer 的 `update_contract` 只对应实际 UPDATE；隐藏的拒绝检查另支持 fake 合同，其余缺口保留。新任务在 None、空字符串、其他动作上与原 Dream 行为不同，不是换个检查名称就等价。要获得完整资格，需收窄并重新发布一个明确的新过程，或使用满足原合同的任务；本轮不改写历史 Skill 或任务。

@@ -4,6 +4,8 @@
 
 2026-11-11 本机增量：[可用性优化操作与验收](skill-prototype-usability-results.md)。新增常驻服务正常运行、未知反馈恢复、追加监测绑定及同合同新任务探测；下文保留原交付批次和 PR 的历史记录。本轮优化分支尚未推送。
 
+后续本机增量：[公开复现入口](skill-prototype-public-reproduction.md) 提供全新来源到候选图谱的分阶段命令；[契约审阅与复现结果](skill-prototype-contract-repro-results.md) 补充检查语义、历史实验受托审阅和新批次结果。旧文中“同合同迁移”仅指共享参数调用缺陷族；审阅确认新任务的 None、空字符串及其他动作语义不同，不构成原 Skill 完整合同等价。
+
 ## 1 当前交付结论
 
 Python 数据面、Go 控制面和 React 审阅工作台可共同运行。真实 Claude 任务形成三条 MemorySnapshot，来源包含成功、失败及未确定归因；候选规则可追溯到固定来源和执行证据。新 `skill_p5` 七单元批次通过发布资格，六分支、三种停止边界完成“用户授权、助手受托审阅”，发布事务已产生真实 Release：

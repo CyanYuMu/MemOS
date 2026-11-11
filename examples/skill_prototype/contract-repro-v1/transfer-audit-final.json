@@ -1,0 +1,534 @@
+{
+  "auditId": "63802e13b0e4df9e7760dd3f87df554aa3a68a6f9c3880e4259f31967de9f0a3",
+  "catalogDigest": "907e57351d9d8301b65066131e4931d466cb55c468f46688dbbbc8144663fb08",
+  "experimentId": "6184b13fdfd7630317c02d61753b022d6b4ab48573328dab0c39773c416d9caa",
+  "historicalResultsChanged": false,
+  "manifestSha256": "dece3abd1f6e70a9631dcc587e2b20099e917073e9994c898b7963d52c5562ea",
+  "protocol": "transfer-contract-audit-1",
+  "publicationEvidence": false,
+  "resultsSha256": "4a9fb5248e888531cf59fb22789a5869ed9febc78ced5eeac363c2188444da56",
+  "rows": [
+    {
+      "branchCoverage": [],
+      "candidateSnapshot": "725e3f41e90ad1fc1b669547e84e65a98a171cf395a58ca3b44a7e8143cf68fe",
+      "caseId": "transfer-batch-update",
+      "declarations": [],
+      "eventsSha256": "ec5c6ef4939f7d3df8f8cf936160e7df711ce29d395ea0e05f140c18210c467d",
+      "fullSkillAcceptance": "needs_evidence",
+      "group": "none",
+      "hostEvidence": {
+        "allPassed": true,
+        "inventoryComplete": true,
+        "mappingDigest": "6cb143952460e615be41e7ffaa15ca2cb73dcdf55fda24567adb4dda071cc24e",
+        "missingObligations": [
+          "independent_caller_contract",
+          "ineligible_no_write",
+          "missing_target_no_write",
+          "other_action_semantics",
+          "preserve_missing_content"
+        ],
+        "observationsValid": true,
+        "scopeDifferences": [
+          "Non-UPDATE actions are skipped; CREATE/ARCHIVE/MERGE effects from the published Skill are absent.",
+          "None content skips the entire write; the original Dream task preserves body but still writes action metadata.",
+          "Empty string overwrites body here; the original Dream task preserves prior body for empty content."
+        ],
+        "semanticsComplete": false,
+        "supportedObligations": [
+          "caller_fake_write",
+          "fake_rejects_invalid"
+        ],
+        "visibility": "hidden"
+      },
+      "id": "transfer-batch-update-none",
+      "nativeDeliveries": [
+        {
+          "check_index": 1,
+          "completed_event": "543ba6baf05c44fe875981e1a561a55f:453499c333e646daa834828c2e55de1f:000069",
+          "native_tool_call_id": "toolu_01It3oGXRpB5cTwoZCDpLz5y",
+          "started_event": "543ba6baf05c44fe875981e1a561a55f:453499c333e646daa834828c2e55de1f:000061"
+        }
+      ],
+      "originalStatus": "passed",
+      "patchAccepted": true,
+      "publicEvidence": {
+        "allPassed": true,
+        "inventoryComplete": true,
+        "mappingDigest": "6cb143952460e615be41e7ffaa15ca2cb73dcdf55fda24567adb4dda071cc24e",
+        "missingObligations": [
+          "fake_rejects_invalid",
+          "independent_caller_contract",
+          "ineligible_no_write",
+          "missing_target_no_write",
+          "other_action_semantics",
+          "preserve_missing_content"
+        ],
+        "observationsValid": true,
+        "scopeDifferences": [
+          "Non-UPDATE actions are skipped; CREATE/ARCHIVE/MERGE effects from the published Skill are absent.",
+          "None content skips the entire write; the original Dream task preserves body but still writes action metadata.",
+          "Empty string overwrites body here; the original Dream task preserves prior body for empty content."
+        ],
+        "semanticsComplete": false,
+        "supportedObligations": [
+          "caller_fake_write"
+        ],
+        "visibility": "public"
+      },
+      "publicationEvidence": false,
+      "receiptSha256": "5b14f34da8899615d189c89683f958122786a3ca7e85c96f073b803bc039d40f",
+      "reportSha256": "05bb934a3ae3b8035179cd185fb741f5ebb371ae619e5f96a6eacce6855ce7c0",
+      "ruleUsageReview": "not_applicable",
+      "taskDigest": "06b08210ac69057e551a48ebd38b5dbe061487fd2827639eac338071b64734a1"
+    },
+    {
+      "branchCoverage": [],
+      "candidateSnapshot": "725e3f41e90ad1fc1b669547e84e65a98a171cf395a58ca3b44a7e8143cf68fe",
+      "caseId": "transfer-batch-update",
+      "declarations": [],
+      "eventsSha256": "13c29b52862f48d35152cf4ede354ef261f5144572e7e7759b33641d9ae7f51c",
+      "fullSkillAcceptance": "needs_evidence",
+      "group": "raw_memory",
+      "hostEvidence": {
+        "allPassed": true,
+        "inventoryComplete": true,
+        "mappingDigest": "6cb143952460e615be41e7ffaa15ca2cb73dcdf55fda24567adb4dda071cc24e",
+        "missingObligations": [
+          "independent_caller_contract",
+          "ineligible_no_write",
+          "missing_target_no_write",
+          "other_action_semantics",
+          "preserve_missing_content"
+        ],
+        "observationsValid": true,
+        "scopeDifferences": [
+          "Non-UPDATE actions are skipped; CREATE/ARCHIVE/MERGE effects from the published Skill are absent.",
+          "None content skips the entire write; the original Dream task preserves body but still writes action metadata.",
+          "Empty string overwrites body here; the original Dream task preserves prior body for empty content."
+        ],
+        "semanticsComplete": false,
+        "supportedObligations": [
+          "caller_fake_write",
+          "fake_rejects_invalid"
+        ],
+        "visibility": "hidden"
+      },
+      "id": "transfer-batch-update-raw_memory",
+      "nativeDeliveries": [
+        {
+          "check_index": 1,
+          "completed_event": "92248f1bf1604e68b99297d4733adad9:f4db54213aff4e1c944b3322d8b4e002:000080",
+          "native_tool_call_id": "toolu_01CYIYXx7R4VpmQ7OH3UAQrl",
+          "started_event": "92248f1bf1604e68b99297d4733adad9:f4db54213aff4e1c944b3322d8b4e002:000072"
+        }
+      ],
+      "originalStatus": "passed",
+      "patchAccepted": true,
+      "publicEvidence": {
+        "allPassed": true,
+        "inventoryComplete": true,
+        "mappingDigest": "6cb143952460e615be41e7ffaa15ca2cb73dcdf55fda24567adb4dda071cc24e",
+        "missingObligations": [
+          "fake_rejects_invalid",
+          "independent_caller_contract",
+          "ineligible_no_write",
+          "missing_target_no_write",
+          "other_action_semantics",
+          "preserve_missing_content"
+        ],
+        "observationsValid": true,
+        "scopeDifferences": [
+          "Non-UPDATE actions are skipped; CREATE/ARCHIVE/MERGE effects from the published Skill are absent.",
+          "None content skips the entire write; the original Dream task preserves body but still writes action metadata.",
+          "Empty string overwrites body here; the original Dream task preserves prior body for empty content."
+        ],
+        "semanticsComplete": false,
+        "supportedObligations": [
+          "caller_fake_write"
+        ],
+        "visibility": "public"
+      },
+      "publicationEvidence": false,
+      "receiptSha256": "867c0b3c6d168a7f8b3984007d413326150a85682b0a1ad9464a56a495833276",
+      "reportSha256": "d52c4ba3dc04882ab6f786402e1598ecb5a6ebf6e7a715c684f1fca5171323cb",
+      "ruleUsageReview": "not_applicable",
+      "taskDigest": "06b08210ac69057e551a48ebd38b5dbe061487fd2827639eac338071b64734a1"
+    },
+    {
+      "branchCoverage": [],
+      "candidateSnapshot": "725e3f41e90ad1fc1b669547e84e65a98a171cf395a58ca3b44a7e8143cf68fe",
+      "caseId": "transfer-batch-update",
+      "declarations": [
+        {
+          "decision": "Route to repair_and_verify_update: contract complete, current failure observed, supported minimal candidate is removing only the extra new_content positional argument.",
+          "eventId": "4150a5dc11664110b75e72f02920efde:9f1eb2cafe0f48749b9be7f775b39ed1:000075",
+          "observation": "TASK.md states authoritative signature update_node(id, fields, user_name=cube) with dict fields; fake_graph.FakeGraph.update_node(self, id, fields, *, user_name) enforces that. Initial visible check update_contract fails with TypeError because caller.py:7 passes item[\"new_content\"] as an extra positional before fields. Request is an in-scope Dream UPDATE calling repair, not a scoped-read request.",
+          "phase": "select",
+          "rule_id": "check_update_contract"
+        },
+        {
+          "decision": "Will remove only item[\"new_content\"] from the argument list on caller.py:7, leaving id, fields, user_name=cube and all surrounding behavior untouched.",
+          "eventId": "4150a5dc11664110b75e72f02920efde:9f1eb2cafe0f48749b9be7f775b39ed1:000086",
+          "observation": "Supported minimal edit: change graph.update_node(item[\"id\"], item[\"new_content\"], fields, user_name=cube) to graph.update_node(item[\"id\"], fields, user_name=cube).",
+          "phase": "act",
+          "rule_id": "repair_and_verify_update"
+        },
+        {
+          "decision": "One edit-and-check cycle used; all delivered checks pass. Exit success, with host-side independent acceptance still pending.",
+          "eventId": "4150a5dc11664110b75e72f02920efde:9f1eb2cafe0f48749b9be7f775b39ed1:000117",
+          "observation": "After the single edit removing the extra new_content positional, the visible check run (check_index 2) returned exit_code 0 with update_contract passed; the earlier failing run (check_index 1) raised TypeError. No other caller behavior was modified.",
+          "phase": "check",
+          "rule_id": "repair_and_verify_update"
+        },
+        {
+          "decision": "Exit success based on the passing visible check; no hidden or host-only check is claimed, and independent acceptance remains with the host.",
+          "eventId": "4150a5dc11664110b75e72f02920efde:9f1eb2cafe0f48749b9be7f775b39ed1:000128",
+          "observation": "Final state: caller.py calls update_node(item[\"id\"], fields, user_name=cube); visible update_contract check passes. Only caller.py modified; TASK.md, visible_checks.py, and fake_graph.py untouched.",
+          "phase": "exit",
+          "rule_id": "repair_and_verify_update"
+        }
+      ],
+      "eventsSha256": "71b1880a1bf39ca6158c4f8b61c045f04d2efa4194334e41c9faab1ad5077c09",
+      "fullSkillAcceptance": "needs_evidence",
+      "group": "skill",
+      "hostEvidence": {
+        "allPassed": true,
+        "inventoryComplete": true,
+        "mappingDigest": "6cb143952460e615be41e7ffaa15ca2cb73dcdf55fda24567adb4dda071cc24e",
+        "missingObligations": [
+          "independent_caller_contract",
+          "ineligible_no_write",
+          "missing_target_no_write",
+          "other_action_semantics",
+          "preserve_missing_content"
+        ],
+        "observationsValid": true,
+        "scopeDifferences": [
+          "Non-UPDATE actions are skipped; CREATE/ARCHIVE/MERGE effects from the published Skill are absent.",
+          "None content skips the entire write; the original Dream task preserves body but still writes action metadata.",
+          "Empty string overwrites body here; the original Dream task preserves prior body for empty content."
+        ],
+        "semanticsComplete": false,
+        "supportedObligations": [
+          "caller_fake_write",
+          "fake_rejects_invalid"
+        ],
+        "visibility": "hidden"
+      },
+      "id": "transfer-batch-update-skill",
+      "nativeDeliveries": [
+        {
+          "check_index": 1,
+          "completed_event": "4150a5dc11664110b75e72f02920efde:9f1eb2cafe0f48749b9be7f775b39ed1:000053",
+          "native_tool_call_id": "toolu_01zkF4gVoyAP6lxHP4CvqdMg",
+          "started_event": "4150a5dc11664110b75e72f02920efde:9f1eb2cafe0f48749b9be7f775b39ed1:000037"
+        },
+        {
+          "check_index": 2,
+          "completed_event": "4150a5dc11664110b75e72f02920efde:9f1eb2cafe0f48749b9be7f775b39ed1:000106",
+          "native_tool_call_id": "toolu_01jl6oBbTHgDcB1z9lWMr0Mq",
+          "started_event": "4150a5dc11664110b75e72f02920efde:9f1eb2cafe0f48749b9be7f775b39ed1:000098"
+        }
+      ],
+      "originalStatus": "passed",
+      "patchAccepted": true,
+      "publicEvidence": {
+        "allPassed": true,
+        "inventoryComplete": true,
+        "mappingDigest": "6cb143952460e615be41e7ffaa15ca2cb73dcdf55fda24567adb4dda071cc24e",
+        "missingObligations": [
+          "fake_rejects_invalid",
+          "independent_caller_contract",
+          "ineligible_no_write",
+          "missing_target_no_write",
+          "other_action_semantics",
+          "preserve_missing_content"
+        ],
+        "observationsValid": true,
+        "scopeDifferences": [
+          "Non-UPDATE actions are skipped; CREATE/ARCHIVE/MERGE effects from the published Skill are absent.",
+          "None content skips the entire write; the original Dream task preserves body but still writes action metadata.",
+          "Empty string overwrites body here; the original Dream task preserves prior body for empty content."
+        ],
+        "semanticsComplete": false,
+        "supportedObligations": [
+          "caller_fake_write"
+        ],
+        "visibility": "public"
+      },
+      "publicationEvidence": false,
+      "receiptSha256": "b5077972ae930de03887699ba49cd4afd40dfbbb3fc260f41ac1c394f389de04",
+      "reportSha256": "cbfd9af06df2c81608c91341650bcfea547f33ee3a308843712f15724304c2e8",
+      "ruleUsageReview": "requires_semantic_review",
+      "taskDigest": "06b08210ac69057e551a48ebd38b5dbe061487fd2827639eac338071b64734a1"
+    },
+    {
+      "branchCoverage": [],
+      "candidateSnapshot": "105f43d8f2c3eb61601a548cf98e58fe48bf6aeb55f6912a74f88bacf059d02f",
+      "caseId": "transfer-version-update",
+      "declarations": [
+        {
+          "decision": "Request is the in-scope Dream UPDATE caller repair, not a scoped read or unrelated API.",
+          "eventId": "3935d405a6fb4b698740b211eb877914:95b180bc403d4c1984f29db4f9f009bc:000073",
+          "observation": "TASK.md authorizes only the Dream update_node(id, fields, user_name=cube) contract with dictionary fields; initial visible check update_contract failed with TypeError (check_index 1); caller.py line 7 passes graph.update_node(item[\"id\"], item[\"new_content\"], fields, user_name=cube), i.e. an extra new_content positional argument before fields.",
+          "phase": "observe",
+          "rule_id": "check_update_contract"
+        },
+        {
+          "decision": "Enter repair_and_verify_update branch for a single-argument removal; the fake rejects positional extras via its keyword-only user_name signature.",
+          "eventId": "3935d405a6fb4b698740b211eb877914:95b180bc403d4c1984f29db4f9f009bc:000084",
+          "observation": "Contract complete (id, dict fields, keyword user_name=cube); FakeGraph.update_node(self, id, fields, *, user_name) raises TypeError for the extra positional new_content; current check has reliable evidence. Branch is supported minimal repair, not healthy zero-edit.",
+          "phase": "select",
+          "rule_id": "check_update_contract"
+        },
+        {
+          "decision": "Remove only item[\"new_content\"] from the update_node call, keeping id, fields, and user_name=cube unchanged.",
+          "eventId": "3935d405a6fb4b698740b211eb877914:95b180bc403d4c1984f29db4f9f009bc:000095",
+          "observation": "caller.py line 7 is the sole defect site: graph.update_node(item[\"id\"], item[\"new_content\"], fields, user_name=cube) has four arguments against a three-parameter contract. Planned edit yields graph.update_node(item[\"id\"], fields, user_name=cube); guards for action, None content, and version, plus the fields dict build, are unchanged.",
+          "phase": "act",
+          "rule_id": "repair_and_verify_update"
+        },
+        {
+          "decision": "Verification passed after one edit-and-check cycle; proceed to exit success.",
+          "eventId": "3935d405a6fb4b698740b211eb877914:95b180bc403d4c1984f29db4f9f009bc:000127",
+          "observation": "Post-edit visible check run returned exit_code 0 with update_contract passed (check_index 2); no other check names were delivered by this workspace's visible_checks.py, which defines only update_contract.",
+          "phase": "check",
+          "rule_id": "repair_and_verify_update"
+        },
+        {
+          "decision": "Exit success on current passing local evidence; host-side independent acceptance still pending.",
+          "eventId": "3935d405a6fb4b698740b211eb877914:95b180bc403d4c1984f29db4f9f009bc:000138",
+          "observation": "One edit made (removal of the extra new_content positional argument) and one check cycle used; all delivered applicable local Dream checks pass with exit_code 0. Remaining actions guards and dict fields build were untouched.",
+          "phase": "exit",
+          "rule_id": "repair_and_verify_update"
+        }
+      ],
+      "eventsSha256": "86c01ed7ec4748330d4a63613c17c15f7d334558923d9f80c84229fd06a69740",
+      "fullSkillAcceptance": "needs_evidence",
+      "group": "skill",
+      "hostEvidence": {
+        "allPassed": true,
+        "inventoryComplete": true,
+        "mappingDigest": "fbadcfc2a869ed0b513f103b9b8a169e8074afb1bc6331a3d3fca869e5cca829",
+        "missingObligations": [
+          "independent_caller_contract",
+          "ineligible_no_write",
+          "missing_target_no_write",
+          "other_action_semantics",
+          "preserve_missing_content"
+        ],
+        "observationsValid": true,
+        "scopeDifferences": [
+          "Non-UPDATE actions are skipped; CREATE/ARCHIVE/MERGE effects from the published Skill are absent.",
+          "None content skips the entire write; the original Dream task preserves body but still writes action metadata.",
+          "Empty string overwrites body here; the original Dream task preserves prior body for empty content."
+        ],
+        "semanticsComplete": false,
+        "supportedObligations": [
+          "caller_fake_write",
+          "fake_rejects_invalid"
+        ],
+        "visibility": "hidden"
+      },
+      "id": "transfer-version-update-skill",
+      "nativeDeliveries": [
+        {
+          "check_index": 1,
+          "completed_event": "3935d405a6fb4b698740b211eb877914:95b180bc403d4c1984f29db4f9f009bc:000052",
+          "native_tool_call_id": "toolu_019967OJK50ZeagCZidasS3a",
+          "started_event": "3935d405a6fb4b698740b211eb877914:95b180bc403d4c1984f29db4f9f009bc:000036"
+        },
+        {
+          "check_index": 2,
+          "completed_event": "3935d405a6fb4b698740b211eb877914:95b180bc403d4c1984f29db4f9f009bc:000116",
+          "native_tool_call_id": "toolu_01hDc0JIL7t77RDbf5SnksK0",
+          "started_event": "3935d405a6fb4b698740b211eb877914:95b180bc403d4c1984f29db4f9f009bc:000108"
+        }
+      ],
+      "originalStatus": "passed",
+      "patchAccepted": true,
+      "publicEvidence": {
+        "allPassed": true,
+        "inventoryComplete": true,
+        "mappingDigest": "fbadcfc2a869ed0b513f103b9b8a169e8074afb1bc6331a3d3fca869e5cca829",
+        "missingObligations": [
+          "fake_rejects_invalid",
+          "independent_caller_contract",
+          "ineligible_no_write",
+          "missing_target_no_write",
+          "other_action_semantics",
+          "preserve_missing_content"
+        ],
+        "observationsValid": true,
+        "scopeDifferences": [
+          "Non-UPDATE actions are skipped; CREATE/ARCHIVE/MERGE effects from the published Skill are absent.",
+          "None content skips the entire write; the original Dream task preserves body but still writes action metadata.",
+          "Empty string overwrites body here; the original Dream task preserves prior body for empty content."
+        ],
+        "semanticsComplete": false,
+        "supportedObligations": [
+          "caller_fake_write"
+        ],
+        "visibility": "public"
+      },
+      "publicationEvidence": false,
+      "receiptSha256": "f9db5ee6219a9a15aeeed443e2584df286d7f13e5358a802289d3cd943cb566a",
+      "reportSha256": "c4510ce6f4a5d2162621423e128f5dbc868463960e636f456d72d33491a834f0",
+      "ruleUsageReview": "requires_semantic_review",
+      "taskDigest": "90867cc23cf31bb8eb82adbb710f593b863f138b28327188a52a1493524ca5f1"
+    },
+    {
+      "branchCoverage": [],
+      "candidateSnapshot": "105f43d8f2c3eb61601a548cf98e58fe48bf6aeb55f6912a74f88bacf059d02f",
+      "caseId": "transfer-version-update",
+      "declarations": [],
+      "eventsSha256": "58968064df59240ac5353643adccc3a5b5808070374a886d49251f8672f8fb1e",
+      "fullSkillAcceptance": "needs_evidence",
+      "group": "raw_memory",
+      "hostEvidence": {
+        "allPassed": true,
+        "inventoryComplete": true,
+        "mappingDigest": "fbadcfc2a869ed0b513f103b9b8a169e8074afb1bc6331a3d3fca869e5cca829",
+        "missingObligations": [
+          "independent_caller_contract",
+          "ineligible_no_write",
+          "missing_target_no_write",
+          "other_action_semantics",
+          "preserve_missing_content"
+        ],
+        "observationsValid": true,
+        "scopeDifferences": [
+          "Non-UPDATE actions are skipped; CREATE/ARCHIVE/MERGE effects from the published Skill are absent.",
+          "None content skips the entire write; the original Dream task preserves body but still writes action metadata.",
+          "Empty string overwrites body here; the original Dream task preserves prior body for empty content."
+        ],
+        "semanticsComplete": false,
+        "supportedObligations": [
+          "caller_fake_write",
+          "fake_rejects_invalid"
+        ],
+        "visibility": "hidden"
+      },
+      "id": "transfer-version-update-raw_memory",
+      "nativeDeliveries": [
+        {
+          "check_index": 1,
+          "completed_event": "d126e018cc66404f8f161bd671885d81:f1f6a9041baf425f812525e2149ae7c9:000080",
+          "native_tool_call_id": "toolu_01If4xlo7zNzhTaSzA8IPLPj",
+          "started_event": "d126e018cc66404f8f161bd671885d81:f1f6a9041baf425f812525e2149ae7c9:000072"
+        }
+      ],
+      "originalStatus": "passed",
+      "patchAccepted": true,
+      "publicEvidence": {
+        "allPassed": true,
+        "inventoryComplete": true,
+        "mappingDigest": "fbadcfc2a869ed0b513f103b9b8a169e8074afb1bc6331a3d3fca869e5cca829",
+        "missingObligations": [
+          "fake_rejects_invalid",
+          "independent_caller_contract",
+          "ineligible_no_write",
+          "missing_target_no_write",
+          "other_action_semantics",
+          "preserve_missing_content"
+        ],
+        "observationsValid": true,
+        "scopeDifferences": [
+          "Non-UPDATE actions are skipped; CREATE/ARCHIVE/MERGE effects from the published Skill are absent.",
+          "None content skips the entire write; the original Dream task preserves body but still writes action metadata.",
+          "Empty string overwrites body here; the original Dream task preserves prior body for empty content."
+        ],
+        "semanticsComplete": false,
+        "supportedObligations": [
+          "caller_fake_write"
+        ],
+        "visibility": "public"
+      },
+      "publicationEvidence": false,
+      "receiptSha256": "0fefdbf5d859f847c25f3cde2d36dcecb22df782e7148a8f714aec8c7be5a5b2",
+      "reportSha256": "ec77f98581d8a5b1a0106aa5d13d54ea7040156683e4c4a4a1b96627158a2c28",
+      "ruleUsageReview": "not_applicable",
+      "taskDigest": "90867cc23cf31bb8eb82adbb710f593b863f138b28327188a52a1493524ca5f1"
+    },
+    {
+      "branchCoverage": [],
+      "candidateSnapshot": "105f43d8f2c3eb61601a548cf98e58fe48bf6aeb55f6912a74f88bacf059d02f",
+      "caseId": "transfer-version-update",
+      "declarations": [],
+      "eventsSha256": "d4332a3c316e09cbae55cbfff1a4ca02176d7fb1ece539b37d34a93a840332be",
+      "fullSkillAcceptance": "needs_evidence",
+      "group": "none",
+      "hostEvidence": {
+        "allPassed": true,
+        "inventoryComplete": true,
+        "mappingDigest": "fbadcfc2a869ed0b513f103b9b8a169e8074afb1bc6331a3d3fca869e5cca829",
+        "missingObligations": [
+          "independent_caller_contract",
+          "ineligible_no_write",
+          "missing_target_no_write",
+          "other_action_semantics",
+          "preserve_missing_content"
+        ],
+        "observationsValid": true,
+        "scopeDifferences": [
+          "Non-UPDATE actions are skipped; CREATE/ARCHIVE/MERGE effects from the published Skill are absent.",
+          "None content skips the entire write; the original Dream task preserves body but still writes action metadata.",
+          "Empty string overwrites body here; the original Dream task preserves prior body for empty content."
+        ],
+        "semanticsComplete": false,
+        "supportedObligations": [
+          "caller_fake_write",
+          "fake_rejects_invalid"
+        ],
+        "visibility": "hidden"
+      },
+      "id": "transfer-version-update-none",
+      "nativeDeliveries": [
+        {
+          "check_index": 1,
+          "completed_event": "1292fd4ce8944c79a0fe7d0f86768509:751c207898984faebb0b452bac9ddd25:000060",
+          "native_tool_call_id": "toolu_01BsfXAzWEHkIQS7zH8KMZ4Z",
+          "started_event": "1292fd4ce8944c79a0fe7d0f86768509:751c207898984faebb0b452bac9ddd25:000052"
+        },
+        {
+          "check_index": 2,
+          "completed_event": "1292fd4ce8944c79a0fe7d0f86768509:751c207898984faebb0b452bac9ddd25:000081",
+          "native_tool_call_id": "toolu_01tQsungF3gBmpOvcXiScUzR",
+          "started_event": "1292fd4ce8944c79a0fe7d0f86768509:751c207898984faebb0b452bac9ddd25:000073"
+        }
+      ],
+      "originalStatus": "passed",
+      "patchAccepted": true,
+      "publicEvidence": {
+        "allPassed": true,
+        "inventoryComplete": true,
+        "mappingDigest": "fbadcfc2a869ed0b513f103b9b8a169e8074afb1bc6331a3d3fca869e5cca829",
+        "missingObligations": [
+          "fake_rejects_invalid",
+          "independent_caller_contract",
+          "ineligible_no_write",
+          "missing_target_no_write",
+          "other_action_semantics",
+          "preserve_missing_content"
+        ],
+        "observationsValid": true,
+        "scopeDifferences": [
+          "Non-UPDATE actions are skipped; CREATE/ARCHIVE/MERGE effects from the published Skill are absent.",
+          "None content skips the entire write; the original Dream task preserves body but still writes action metadata.",
+          "Empty string overwrites body here; the original Dream task preserves prior body for empty content."
+        ],
+        "semanticsComplete": false,
+        "supportedObligations": [
+          "caller_fake_write"
+        ],
+        "visibility": "public"
+      },
+      "publicationEvidence": false,
+      "receiptSha256": "4ddab3e3b93f545606ad2f62a9174a8beaf00435fc2b4deea1fed279ebd440b3",
+      "reportSha256": "8bdcf93a738903fb61d00f33c198687ac42f569c21809cec91839ba3149f3129",
+      "ruleUsageReview": "not_applicable",
+      "taskDigest": "90867cc23cf31bb8eb82adbb710f593b863f138b28327188a52a1493524ca5f1"
+    }
+  ],
+  "trustBoundary": "Local retained host artifacts; hashes establish binding, not third-party signatures."
+}
