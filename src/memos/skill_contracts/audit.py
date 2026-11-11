@@ -163,7 +163,9 @@ def audit_batch(batch, output):
                 "publicEvidence": public,
                 "hostEvidence": hidden,
                 "fullSkillAcceptance": "needs_evidence",
-                "ruleUsageReview": "requires_semantic_review",
+                "ruleUsageReview": "requires_semantic_review"
+                if unit["group"] == "skill"
+                else "not_applicable",
                 "publicationEvidence": False,
                 "branchCoverage": [],
             }
