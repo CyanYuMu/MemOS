@@ -11,6 +11,10 @@ def test_collect_command_passes_explicit_budget_and_credentials_only_in_memory(
 ):
     calls = []
     secret = "synthetic-cli-provider-secret"
+    # The shell that runs the suite may itself hold provider variables. Clear the
+    # whole forwarding set so this asserts the command's projection, not the host.
+    for name in cli._PROVIDER_KEYS:
+        monkeypatch.delenv(name, raising=False)
     monkeypatch.setenv("ANTHROPIC_AUTH_TOKEN", secret)
     monkeypatch.setenv("UNRELATED_PRIVATE_VALUE", "not-forwarded")
 

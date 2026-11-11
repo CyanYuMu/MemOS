@@ -52,3 +52,22 @@ def test_final_patch_or_receipt_changes_cannot_support_audit(tmp_path):
     path.write_text(json.dumps(receipt))
     with pytest.raises(ValueError, match="contract_receipt_unverified"):
         verified_receipt(tmp_path)
+
+
+@pytest.mark.parametrize("rows", [[{"name": "x"}], [{"passed": True}], [1], ["x"], {"name": "x"}])
+def test_rows_rejects_shape_errors_as_artifact_mismatch(rows):
+    """A corrupt check row is bad evidence, not an AttributeError/KeyError escape."""
+    from memos.skill_contracts.audit import _rows
+
+    with pytest.raises(ValueError, match="contract_artifact_mismatch"):
+        _rows(rows)
+
+
+def test_read_json_does_not_depend_on_the_host_locale(tmp_path, monkeypatch):
+    """Retained UTF-8 artifacts must decode the same under a C/ASCII locale."""
+    from memos.skill_contracts.audit import read_json
+
+    path = tmp_path / "artifact.json"
+    path.write_text(json.dumps({"note": "中文"}, ensure_ascii=False), encoding="utf-8")
+    monkeypatch.setattr("locale.getpreferredencoding", lambda do_setlocale=True: "ascii")
+    assert read_json(path) == {"note": "中文"}

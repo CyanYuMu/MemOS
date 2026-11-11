@@ -33,9 +33,14 @@ def parse(data):
     return json.loads(data, object_pairs_hook=_unique, parse_constant=_constant)
 
 
+def read_text(path):
+    """Decode retained UTF-8 artifacts explicitly; the host locale must not decide."""
+    return Path(path).read_text(encoding="utf-8")
+
+
 def read_json(path):
     sha(path)  # Bounded regular file; no link following.
-    return parse(Path(path).read_text())
+    return parse(read_text(path))
 
 
 def verified_receipt(root):
@@ -49,8 +54,16 @@ def verified_receipt(root):
 
 
 def _rows(checks):
+    """Normalize retained boolean check rows; any other shape is corrupt evidence."""
     require(isinstance(checks, list))
-    require(all(type(row.get("passed")) is bool for row in checks))
+    require(
+        all(
+            isinstance(row, dict)
+            and type(row.get("passed")) is bool
+            and isinstance(row.get("name"), str)
+            for row in checks
+        )
+    )
     return [
         {"name": row["name"], "status": "passed" if row["passed"] else "failed"} for row in checks
     ]
@@ -115,7 +128,7 @@ def audit_batch(batch, output):
             receipt["runId"] == context["run_id"] and receipt["attemptId"] == context["attempt_id"]
         )
         require(receipt["candidateSnapshot"] == report["candidate_snapshot"])
-        events = [parse(line) for line in (root / "events.jsonl").read_text().splitlines()]
+        events = [parse(line) for line in read_text(root / "events.jsonl").splitlines()]
         require(all(e["context"] == context for e in events))
         require(len({e["event_id"] for e in events}) == len(events))
         records = report["visible_checks"]
@@ -125,8 +138,7 @@ def audit_batch(batch, output):
             require(record == read_json(root / "visible-checks" / f"check-{index}.json"))
             phase = root / "visible-checks" / f"phase-{index}"
             require(
-                (phase / "program.py").read_text()
-                == (root / "candidate/visible_checks.py").read_text()
+                read_text(phase / "program.py") == read_text(root / "candidate/visible_checks.py")
             )
             require(parse(record["result"]["stdout"]) == read_json(phase / "report.json"))
         deliveries = _visible_deliveries(records, events, ())

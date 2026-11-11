@@ -125,3 +125,27 @@ def test_cli_error_does_not_echo_private_input(tmp_path, capsys):
 
     assert main(["collect", "--secret", "do-not-echo"]) == 2
     assert "do-not-echo" not in capsys.readouterr().out
+
+
+def test_doctor_reports_unavailable_instead_of_failing_on_a_missing_cli(config, tmp_path):
+    """Doctor diagnoses the environment; it must not exit 2 on the very gap it looks for."""
+    from memos.skill_demo.workflow import doctor
+
+    data = json.loads(config.read_text())
+    data["cliPath"] = str(tmp_path / "absent-claude")
+    config.write_text(json.dumps(data))
+    result = doctor(load_config(config))
+    assert result["status"] == "unavailable"
+    assert result["claudePinnedVersionMatches"] is False
+    assert result["modelCalls"] == 0
+
+
+def test_doctor_cli_returns_one_for_an_unavailable_environment(config, tmp_path, capsys):
+    from memos.skill_demo.__main__ import main
+
+    data = json.loads(config.read_text())
+    data["cliPath"] = str(tmp_path / "absent-claude")
+    config.write_text(json.dumps(data))
+    assert main(["doctor", "--config", str(config)]) == 1
+    printed = json.loads(capsys.readouterr().out.strip().splitlines()[-1])
+    assert printed["status"] == "unavailable"

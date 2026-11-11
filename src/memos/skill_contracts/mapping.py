@@ -26,7 +26,7 @@ def task_identity(case_id):
 
 
 def catalog():
-    return json.loads(Path(__file__).with_name("catalog.json").read_text())
+    return json.loads(Path(__file__).with_name("catalog.json").read_text(encoding="utf-8"))
 
 
 def contract(case_id):

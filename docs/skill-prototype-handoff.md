@@ -104,5 +104,7 @@ go test ./...
 - [当前 P5 开发与验收协议](skill-prototype-p5-minimal.md)、[P5 实际结果](skill-prototype-p5-results.md)
 - [操作与故障处理](skill-prototype-operations.md)、[历史及最新交付记录](skill-prototype-delivery-record.md)
 - [原 P5 扩展合同及范围调整](skill-prototype-p5.md)
+- [本机可用性优化范围](skill-prototype-usability-v1.md)、[可用性优化结果](skill-prototype-usability-results.md)
+- [验收契约与公开复现计划](skill-prototype-contract-repro-v1.md)、[契约审阅与复现结果](skill-prototype-contract-repro-results.md)、[公开复现指南](skill-prototype-public-reproduction.md)
 
 管理决定统一注明“用户授权、助手受托审阅/执行”，不冒称用户逐项亲审。公开资料只包含安全摘要；完整私有证据由操作者保管。

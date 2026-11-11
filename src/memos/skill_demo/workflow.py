@@ -152,23 +152,33 @@ def doctor(config=None):
         },
     }
     if config is not None:
-        from memos.skill_adapter.runner import PINNED_CLI_VERSION
-
-        run_config(config)
         # A version probe is local and carries no model/provider credentials.
         import subprocess
 
-        probe = subprocess.run(
-            [config["cliPath"], "--version"],
-            capture_output=True,
-            text=True,
-            timeout=10,
-            env={"PATH": os.environ.get("PATH", "/usr/bin:/bin")},
-        )
-        result["claudePinnedVersionMatches"] = (
-            probe.returncode == 0 and probe.stdout.strip() == PINNED_CLI_VERSION + " (Claude Code)"
-        )
-        if not result["claudePinnedVersionMatches"]:
+        from memos.skill_adapter.runner import PINNED_CLI_VERSION
+
+        # Doctor exists to locate a broken environment. A missing CLI, an invalid
+        # run configuration or a probe failure is a finding, not an internal error:
+        # failing the command here would hide the diagnosis the caller asked for.
+        matches = False
+        try:
+            run_config(config)
+            # A version probe is local and carries no model/provider credentials.
+            probe = subprocess.run(
+                [config["cliPath"], "--version"],
+                capture_output=True,
+                text=True,
+                timeout=10,
+                env={"PATH": os.environ.get("PATH", "/usr/bin:/bin")},
+            )
+            matches = (
+                probe.returncode == 0
+                and probe.stdout.strip() == PINNED_CLI_VERSION + " (Claude Code)"
+            )
+        except (OSError, ValueError, subprocess.SubprocessError):
+            matches = False
+        result["claudePinnedVersionMatches"] = matches
+        if not matches:
             result["status"] = "unavailable"
     return result
 
